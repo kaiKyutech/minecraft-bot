@@ -1,0 +1,50 @@
+# TODO: ドメイン定義。暫定的なスケルトン。
+goal: craft_wooden_pickaxe
+
+actions:
+  - name: gather_logs
+    preconditions:
+      inventory_space: true
+    effects:
+      has_log: "+4"
+    cost: 5
+    skill: gather_logs
+
+  - name: craft_planks
+    preconditions:
+      has_log: ">=1"
+    effects:
+      has_log: "-1"
+      has_plank: "+4"
+    cost: 2
+    skill: craft_planks
+
+  - name: craft_sticks
+    preconditions:
+      has_plank: ">=2"
+    effects:
+      has_plank: "-2"
+      has_stick: "+4"
+    cost: 2
+    skill: craft_sticks
+
+  - name: ensure_workbench
+    preconditions:
+      has_plank: ">=4"
+    effects:
+      has_plank: "-4"
+      has_workbench: true
+    cost: 5
+    skill: ensure_workbench
+
+  - name: craft_wooden_pickaxe
+    preconditions:
+      has_stick: ">=2"
+      has_plank: ">=3"
+      has_workbench: true
+    effects:
+      has_stick: "-2"
+      has_plank: "-3"
+      has_wooden_pickaxe: true
+    cost: 3
+    skill: craft_wooden_pickaxe

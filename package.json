@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "mineflayer": "^4.33.0",
-    "mineflayer-pathfinder": "^2.4.5"
+    "mineflayer-pathfinder": "^2.4.5",
+    "yaml": "^2.8.1"
   }
 }
