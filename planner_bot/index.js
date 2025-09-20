@@ -33,6 +33,11 @@ bot.on('chat', async (username, message) => {
     return
   }
 
+  if (trimmed.startsWith('!skill ')) {
+    await handleSkillCommand(trimmed)
+    return
+  }
+
   if (!trimmed.startsWith('!goal ')) return
 
   const goalName = trimmed.replace('!goal ', '').trim()
@@ -112,8 +117,11 @@ async function handlePrimitiveCommand(raw) {
 
   bot.chat(`プリミティブ実行: ${nameToken}`)
   try {
-    await primitiveFn(bot, params)
+    const result = await primitiveFn(bot, params)
     await stateManager.refresh(bot)
+    if (typeof result !== 'undefined') {
+      debugLog(`primitive result: ${JSON.stringify(result)}`)
+    }
     bot.chat('完了しました')
   } catch (error) {
     console.error('primitive execution error', error)
@@ -123,4 +131,42 @@ async function handlePrimitiveCommand(raw) {
 
 function snakeToCamel(value) {
   return value.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+async function handleSkillCommand(raw) {
+  const body = raw.replace('!skill ', '').trim()
+  if (!body) {
+    bot.chat('スキル名を指定してください')
+    return
+  }
+
+  const [nameToken, ...rest] = body.split(' ')
+  const paramString = rest.join(' ').trim()
+
+  const skillFn = skills[nameToken]
+  if (typeof skillFn !== 'function') {
+    bot.chat(`未知のスキルです: ${nameToken}`)
+    return
+  }
+
+  let params = {}
+  if (paramString) {
+    try {
+      params = JSON.parse(paramString)
+    } catch (error) {
+      bot.chat('スキルのパラメータは JSON 形式で指定してください')
+      debugLog(`skill param parse error: ${error.message}`)
+      return
+    }
+  }
+
+  bot.chat(`スキル実行: ${nameToken}`)
+  try {
+    await skillFn(bot, params, stateManager)
+    await stateManager.refresh(bot)
+    bot.chat('スキルが完了しました')
+  } catch (error) {
+    console.error('skill execution error', error)
+    bot.chat(`スキル実行に失敗しました: ${error.message}`)
+  }
 }

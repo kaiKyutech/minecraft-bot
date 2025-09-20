@@ -1,0 +1,20 @@
+items:
+  wooden_pickaxe:
+    requires:
+      stick: 2
+      oak_planks: 3
+    via: craft_tool
+
+  stick:
+    requires:
+      oak_planks: 2
+    via: craft_material
+
+  oak_planks:
+    requires:
+      oak_log: 1
+    via: craft_material
+
+materials:
+  oak_log:
+    gather_skill: gather_logs

@@ -5,6 +5,7 @@ const { goals, Movements } = require('mineflayer-pathfinder')
 const movementCache = new WeakMap()
 
 async function moveTo(bot, params = {}) {
+  // 指定座標まで pathfinder で移動する
   ensurePathfinder(bot)
 
   const position = resolvePosition(params)
@@ -21,6 +22,7 @@ async function moveTo(bot, params = {}) {
 }
 
 async function digBlock(bot, params = {}) {
+  // 指定座標のブロックを採掘する
   const targetPos = resolvePosition(params)
   if (!targetPos) {
     throw new Error('掘削対象の座標が必要です')
@@ -39,6 +41,7 @@ async function digBlock(bot, params = {}) {
 }
 
 async function collectDrops(bot, params = {}) {
+  // 半径内に落ちているアイテムを順番に拾いに行く
   ensurePathfinder(bot)
 
   const radius = params.radius ?? 6
@@ -68,6 +71,7 @@ async function collectDrops(bot, params = {}) {
 }
 
 async function craftItem(bot, params = {}) {
+  // 指定アイテムをクラフトする（レシピは自動選択）
   if (!params.itemName) {
     throw new Error('itemName が必要です')
   }
@@ -106,6 +110,7 @@ async function craftItem(bot, params = {}) {
 }
 
 async function placeBlock(bot, params = {}) {
+  // 手持ちのブロックを基準ブロックの指定面に設置する
   if (!params.reference) {
     throw new Error('reference 座標が必要です')
   }
@@ -128,6 +133,7 @@ async function placeBlock(bot, params = {}) {
 }
 
 async function equipItem(bot, params = {}) {
+  // インベントリ内のアイテムを指定スロットに装備する
   if (!params.itemName) {
     throw new Error('itemName が必要です')
   }
@@ -186,11 +192,82 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+async function findBlock(bot, params = {}) {
+  // 条件に一致するブロックを1つ探索し、位置情報を返す
+  const options = buildFindBlockOptions(params)
+  const block = bot.findBlock(options)
+  if (!block) throw new Error('条件に合うブロックが見つかりません')
+  return {
+    position: block.position.clone(),
+    name: block.name,
+    block
+  }
+}
+
+async function findBlocks(bot, params = {}) {
+  // 条件に一致するブロックを複数探索し、位置情報リストを返す
+  const options = buildFindBlockOptions(params)
+  const blocks = bot.findBlocks(options)
+  if (!blocks || blocks.length === 0) {
+    throw new Error('条件に合うブロックが見つかりません')
+  }
+  return blocks.map((pos) => ({
+    position: pos.clone(),
+    name: bot.blockAt(pos)?.name || null
+  }))
+}
+
+function buildFindBlockOptions(params) {
+  // findBlock(s) 用オプションを構築するヘルパー
+  if (!params.match) {
+    throw new Error('match 条件が必要です')
+  }
+
+  const maxDistance = params.maxDistance ?? 32
+  const count = params.count ?? 1
+  const useCube = params.useCube ?? true
+
+  return {
+    matching: buildMatchingPredicate(params.match),
+    maxDistance,
+    count,
+    useCube
+  }
+}
+
+function buildMatchingPredicate(match) {
+  // match 引数から block.name 評価用の述語関数を生成する
+  if (typeof match === 'string') {
+    return (block) => block && block.name === match
+  }
+
+  if (Array.isArray(match)) {
+    const set = new Set(match)
+    return (block) => block && set.has(block.name)
+  }
+
+  if (typeof match === 'object') {
+    const equals = Array.isArray(match.equals) ? new Set(match.equals) : null
+    const includes = typeof match.includes === 'string' ? match.includes : null
+
+    return (block) => {
+      if (!block) return false
+      if (equals && equals.has(block.name)) return true
+      if (includes && block.name.includes(includes)) return true
+      return false
+    }
+  }
+
+  throw new Error('match 条件の形式が不正です')
+}
+
 module.exports = {
   moveTo,
   digBlock,
   collectDrops,
   craftItem,
   placeBlock,
-  equipItem
+  equipItem,
+  findBlock,
+  findBlocks
 }
