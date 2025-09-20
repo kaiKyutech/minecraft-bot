@@ -1049,3 +1049,662 @@ HP または満腹度が変化したときに発火します。
 起床時に発火します。
 
 #### "experience"
+`bot.experience.*` が更新されたときに発火します。
+
+#### "scoreboardCreated" (scoreboard)
+
+スコアボードが追加されたときに発火。
+
+#### "scoreboardDeleted" (scoreboard)
+
+スコアボードが削除されたときに発火。
+
+#### "scoreboardTitleChanged" (scoreboard)
+
+スコアボードのタイトルが更新されたときに発火。
+
+#### "scoreUpdated" (scoreboard, item)
+
+スコアボード内の項目スコアが更新されたときに発火。
+
+#### "scoreRemoved" (scoreboard, item)
+
+スコアボード内の項目スコアが削除されたときに発火。
+
+#### "scoreboardPosition" (position, scoreboard)
+
+スコアボードの表示位置が更新されたときに発火。
+
+#### "teamCreated" (team)
+
+チームが追加されたときに発火。
+
+#### "teamRemoved" (team)
+
+チームが削除されたときに発火。
+
+#### "teamUpdated" (team)
+
+チームが更新されたときに発火。
+
+#### "teamMemberAdded" (team)
+
+チームにメンバーが追加されたときに発火。
+
+#### "teamMemberRemoved" (team)
+
+チームからメンバーが削除されたときに発火。
+
+#### "bossBarCreated" (bossBar)
+
+ボスバーが生成されたときに発火。
+
+#### "bossBarDeleted" (bossBar)
+
+ボスバーが削除されたときに発火。
+
+#### "bossBarUpdated" (bossBar)
+
+ボスバーが更新されたときに発火。
+
+#### "heldItemChanged" (heldItem)
+
+手持ちアイテムが変わったときに発火。
+
+#### "physicsTick" ()
+
+`bot.physicsEnabled` が true の場合、tick ごとに発火。
+
+#### "chat:name" (matches)
+
+チャットパターンの正規表現がすべてマッチしたときに発火。
+
+#### "particle"
+
+パーティクルが生成されたときに発火。
+
+### 関数
+
+#### bot.blockAt(point, extraInfos=true)
+
+`point` のブロックを返します。未ロードなら `null`。`extraInfos` が true の場合、看板・絵画・ブロックエンティティ情報も含めます (低速)。`Block` を参照。
+
+#### bot.waitForChunksToLoad()
+
+多数のチャンク読込完了時に `void` を返す `Promise` を返します。
+
+#### bot.blockInSight(maxSteps, vectorLength)
+
+非推奨。代わりに `blockAtCursor` を使用してください。
+
+視線先のブロック、または `null` を返します。
+ * `maxSteps` - レイトレースのステップ数。既定 256。
+ * `vectorLength` - レイの長さ。既定 `5/16`。
+
+#### bot.blockAtCursor(maxDistance=256)
+
+視線先のブロック、または `null` を返します。
+ * `maxDistance` - 目線からの最大距離。既定 256。
+
+#### bot.entityAtCursor(maxDistance=3.5)
+
+視線先のエンティティ、または `null` を返します。
+ * `maxDistance` - 目線からの最大距離。既定 3.5。
+
+#### bot.blockAtEntityCursor(entity=bot.entity, maxDistance=256)
+
+指定エンティティの視線先のブロック、または `null` を返します。
+ * `entity` - エンティティオブジェクト
+ * `maxDistance` - 目線からの最大距離。既定 256。
+
+#### bot.canSeeBlock(block)
+
+指定した `block` が視認可能かどうかを返します。
+
+#### bot.findBlocks(options)
+
+指定地点から近いブロックを検索します。
+ * `options`:
+   - `point` - 検索開始位置 (中心)。既定はボット位置。
+   - `matching` - ブロックが条件を満たすと true を返す関数。ブロック ID または ID 配列も指定可。
+   - `useExtraInfo` - 後方互換のため型で挙動が変化
+      - **boolean** - `matching` 関数へ追加情報を渡します (遅くなります)
+      - **function** - 二段階マッチング。`matching` が true の場合に追加情報付きで `useExtraInfo` を呼びます
+   - `maxDistance` - 探索距離上限。既定 16。
+   - `count` - 見つけるブロック数。既定 1。領域内に十分なブロックがなければ少ない件数で終了します。
+
+見つかったブロック座標 (ブロックではなく座標) の配列を距離順で返します。
+
+#### bot.findBlock(options)
+
+`bot.blockAt(bot.findBlocks(options)[0])` の別名。単一ブロックまたは `null` を返します。
+
+#### bot.canDigBlock(block)
+
+指定 `block` が採掘可能で射程内かどうかを返します。
+
+#### bot.recipesFor(itemType, metadata, minResultCount, craftingTable)
+
+`metadata` を持つ `itemType` をクラフトできる `Recipe` インスタンスの配列を返します。
+
+ * `itemType` - 作成したいアイテムの数値 ID
+ * `metadata` - 作成したいアイテムのメタデータ。`null` で任意。
+ * `minResultCount` - 現在のインベントリでこの個数以上作れるレシピのみを返します。`null` は 1。
+ * `craftingTable` - `Block` インスタンス。`null` ならインベントリクラフトのみ対象。
+
+
+#### bot.recipesAll(itemType, metadata, craftingTable)
+
+`bot.recipesFor` と同様ですが、手持ち材料のチェックを行いません。
+
+#### bot.nearestEntity(match = (entity) => { return true })
+
+条件に合致する最も近いエンティティを返します (既定はすべてのエンティティ)。見つからなければ `null`。
+
+```js
+const cow = bot.nearestEntity(entity => entity.name.toLowerCase() === 'cow')
+```
+
+### メソッド
+
+#### bot.end(reason)
+
+サーバーとの接続を終了します。
+* `reason` - 任意の文字列で終了理由を指定。
+
+#### bot.quit(reason)
+
+指定した理由で丁寧に切断します (既定 `'disconnect.quitting'`)。
+
+#### bot.tabComplete(str, [assumeCommand], [sendBlockInSight], [timeout])
+
+完了時に `matches` を返す `Promise` を返します。サーバーにコマンド補完を依頼します。
+ * `str` - 補完したい文字列
+ * `assumeCommand` - サーバーへ送るフラグ。既定 false
+ * `sendBlockInSight` - サーバーへ送るフラグ。既定 true。パフォーマンス重視なら false
+ * `timeout` - タイムアウト (ms)。既定 5000。期限超過時は空配列を返します。
+
+#### bot.chat(message)
+
+公開チャットへメッセージを送信します。長文は自動的に分割されます。
+
+#### bot.whisper(username, message)
+
+`/tell <username>` のショートカット。分割されたメッセージもすべてウィスパーされます。
+
+#### bot.chatAddPattern(pattern, chatType, description)
+
+非推奨。代わりに `addChatPattern` を使用してください。
+
+Bukkit 系などチャット形式が頻繁に変わるサーバー向けに、チャット解析用の正規表現パターンを追加します。
+ * `pattern` - マッチさせる正規表現
+ * `chatType` - マッチ時に発火するイベント名 (例: "chat"、"whisper")
+ * `description` - 任意の説明文
+
+#### bot.addChatPattern(name, pattern, chatPatternOptions)
+
+※ `bot.addChatPatternSet(name, [pattern], chatPatternOptions)` の別名です。
+
+指定パターンがメッセージにマッチするたびに `"chat:name"` イベントを発火させます。
+* `name` - 監視イベント名
+* `pattern` - 受信メッセージにマッチさせる正規表現
+* `chatPatternOptions` - オプション
+  * `repeat` - 既定 true。初回マッチ後も継続監視するか
+  * `parse` - マッチしたメッセージではなく正規表現のキャプチャグループを返す
+  * `deprecated` - (**不安定**) bot.chatAddPattern との互換性維持用。将来削除予定
+
+戻り値は `bot.removeChatPattern()` で削除する際に使える番号です。
+
+#### bot.addChatPatternSet(name, patterns, chatPatternOptions)
+
+複数パターンがすべてマッチしたときに `"chat:name"` イベントを発火させます。
+* `name` - 監視イベント名
+* `patterns` - メッセージにマッチさせる正規表現配列
+* `chatPatternOptions` - オプション
+  * `repeat` - 既定 true。初回マッチ後も継続するか
+  * `parse` - マッチしたメッセージではなくキャプチャグループを返す
+
+戻り値は `bot.removeChatPattern()` で削除する際に使える番号です。
+
+#### bot.removeChatPattern(name)
+
+チャットパターンを削除します。
+* `name` - 文字列または数値
+
+文字列を渡すとその名前のパターンをすべて削除します。数値なら該当する 1 つのみ削除します。
+
+#### bot.awaitMessage(...args)
+
+指定したメッセージのいずれかがチャットに現れたときに解決される Promise。
+
+```js
+async function wait () {
+  await bot.awaitMessage('<flatbot> hello world')
+  await bot.awaitMessage(['<flatbot> hello', '<flatbot> world'])
+  await bot.awaitMessage(['<flatbot> hello', '<flatbot> world'], ['<flatbot> im', '<flatbot> batman'])
+  await bot.awaitMessage('<flatbot> hello', '<flatbot> world')
+  await bot.awaitMessage(/<flatbot> (.+)/)
+}
+```
+
+#### bot.setSettings(options)
+
+`bot.settings` プロパティを参照してください。
+
+#### bot.loadPlugin(plugin)
+
+プラグインを注入します。既にロード済みなら何もしません。
+
+ * `plugin` - 関数
+
+```js
+function somePlugin (bot, options) {
+  function someFunction () {
+    bot.chat('Yay!')
+  }
+
+  bot.myPlugin = {}
+  bot.myPlugin.someFunction = someFunction
+}
+
+const bot = mineflayer.createBot({})
+bot.loadPlugin(somePlugin)
+bot.once('login', function () {
+  bot.myPlugin.someFunction()
+})
+```
+
+#### bot.loadPlugins(plugins)
+
+複数プラグインを注入します (`bot.loadPlugin` 参照)。
+ * `plugins` - 関数の配列
+
+#### bot.hasPlugin(plugin)
+
+指定プラグインがロード済み (またはロード予定) かを確認します。
+
+#### bot.sleep(bedBlock)
+
+完了時に `void` を返す `Promise` を返します。ベッド (`Block` インスタンス) で就寝します。
+
+#### bot.isABed(bedBlock)
+
+`bedBlock` がベッドなら true を返します。
+
+#### bot.wake()
+
+完了時に `void` を返す `Promise` を返します。ベッドから起き上がります。
+
+#### bot.setControlState(control, state)
+
+ボットの移動を制御する基本メソッドで、Minecraft のキー入力と同じ挙動です。`control` を true にすると該当方向へ移動し、false で停止します。`bot.lookAt` と組み合わせて移動方向を調整できます (例: `jumper.js`).
+
+ * `control` - `forward` / `back` / `left` / `right` / `jump` / `sprint` / `sneak`
+ * `state` - `true` または `false`
+
+#### bot.getControlState(control)
+
+指定した操作が有効かどうかを返します。
+
+#### bot.clearControlStates()
+
+すべての操作状態を解除します。
+
+#### bot.getExplosionDamages(entity, position, radius, [rawDamages])
+
+爆発地点と半径から、その範囲内のエンティティが受けるダメージ量を返します。
+防具がなく `rawDamages` が true でない場合は計算できないため `null` を返します。
+
+ * `entity` - Entity インスタンス
+ * `position` - [Vec3](https://github.com/andrewrk/node-vec3)
+ * `radius` - 爆発半径
+ * `rawDamages` - true で防具を無視して計算
+
+#### bot.lookAt(point, [force])
+
+指定座標を向き終えたら `void` を返す `Promise` を返します。
+
+ * `point` - Vec3 インスタンス。正確にこの点を向きます。
+ * `force` - `bot.look` の `force` を参照。
+
+#### bot.look(yaw, pitch, [force])
+
+指定した向きを向き終えたら `void` を返す `Promise` を返します。
+
+ * `yaw` - 垂直軸周りの回転 (東を基準に反時計回りラジアン)
+ * `pitch` - 上下方向の角度。0 が水平、`pi/2` が真上、`-pi/2` が真下。
+ * `force` - true でサーバー側のスムーズ移動を省略。アイテム投下や弓射撃など正確な視線が必要な場合に true。
+
+#### bot.updateSign(block, text, back = false)
+
+看板のテキストを書き換えます。1.20 以降で `back` を真にすると背面テキストも設定できます (壁付けでない場合)。
+
+#### bot.equip(item, destination)
+
+装備完了または失敗時に `void` を返す `Promise` を返します。インベントリからアイテムを装備します。`item` が `Item` インスタンスならそのスロットのアイテム、数値なら ID が一致する最初のアイテムを装備します (ホットバーが最後に検索されます)。
+
+ * `item` - `Item` インスタンス、またはアイテム ID
+ * `destination`
+   - `"hand"` (`null` も同義)
+   - `"head"`
+   - `"torso"`
+   - `"legs"`
+   - `"feet"`
+   - `"off-hand"` (対応バージョンのみ)
+
+#### bot.unequip(destination)
+
+指定部位の装備を外します。完了時に `void` を返す `Promise`。
+
+#### bot.tossStack(item)
+
+アイテムスタックを投げ捨てます。完了時に `void` を返す `Promise`。
+
+ * `item` - 捨てたいスタック。失敗した場合はエラーが発生します。
+
+#### bot.toss(itemType, metadata, count)
+
+指定アイテムを投げ捨てます。完了時に `void` を返す `Promise`。
+
+ * `itemType` - アイテム ID
+ * `metadata` - メタデータ。`null` で任意
+ * `count` - 捨てる個数。`null` で 1
+
+#### bot.elytraFly()
+
+エリトラ飛行を開始します。完了時に `void` を返す `Promise`。失敗時はエラーを投げます。
+
+#### bot.dig(block, [forceLook = true], [digFace])
+
+ブロック破壊完了または中断時に `void` を返す `Promise`。
+
+現在の装備で `block` を掘り始めます。`diggingCompleted` / `diggingAborted` イベントも参照。
+
+同時に別ブロックを掘ることはできず、破壊完了か `bot.stopDigging()` を呼ぶまで他のブロックは掘れません。
+
+ * `block` - 掘るブロック
+ * `forceLook` - true で即座に視線を合わせて掘り開始。false でゆっくり向きを変えます。`'ignore'` で視線移動なし。`'raycast'` で視線地点へレイキャスト。
+ * `digFace` - 既定 `'auto'`。ベクトルを指定するとその面を向いて掘削。`vec3(0, 1, 0)` なら上面。`'raycast'` で視線から見える面を選択 (アンチチート対策に有用)。
+
+掘削完了前に再度 `bot.dig` を呼ぶと致命的な `diggingAborted` エラーになります。
+
+#### bot.stopDigging()
+
+掘削を停止します。
+
+#### bot.digTime(block)
+
+指定ブロックを破壊するのに必要な時間 (ms) を返します。
+
+#### bot.acceptResourcePack()
+
+リソースパックを受け入れます。
+
+#### bot.denyResourcePack()
+
+リソースパックを拒否します。
+
+#### bot.placeBlock(referenceBlock, faceVector)
+
+サーバーが設置を確認すると `void` を返す `Promise` を返します。
+
+ * `referenceBlock` - 設置先の隣接ブロック
+ * `faceVector` - `new Vec3(0, 1, 0)` など、どの面に設置するかを示すベクトル
+
+新しいブロックは `referenceBlock.position.plus(faceVector)` に配置されます。
+
+#### bot.placeEntity(referenceBlock, faceVector)
+
+サーバーがエンティティ設置を確認すると `Entity` を返す `Promise`。
+`referenceBlock.position.plus(faceVector)` に新しいブロックが配置されます。
+
+#### bot.activateBlock(block, direction?: Vec3, cursorPos?: Vec3)
+
+ブロックをアクティブ化します (ノートブロックを叩く、ドアを開くなど)。完了時に `void` を返す `Promise`。
+
+ * `block` - 操作対象ブロック
+ * `direction` - 任意。既定 `new Vec3(0, 1, 0)` (上)。ブロックとどの面でインタラクトするか。
+ * `cursorPos` - 任意。既定 `new Vec3(0.5, 0.5, 0.5)`。クリック位置。コンテナエンティティ対象の場合は無視されます。
+
+#### bot.activateEntity(entity)
+
+エンティティをアクティブ化します (村人など)。完了時に `void` を返す `Promise`。
+
+#### bot.activateEntityAt(entity, position)
+
+指定位置をクリックしてエンティティをアクティブ化します (防具立てなど)。完了時に `void` を返す `Promise`。
+
+#### bot.consume()
+
+現在手に持っているアイテムを食べる・飲む。完了時に `void` を返す `Promise`。
+
+#### bot.fish()
+
+釣り竿を使用します。完了時に `void` を返す `Promise`。
+
+#### bot.activateItem(offHand=false)
+
+現在の手持ちアイテムを使用します (食事、弓、卵、花火等)。`offHand` が true ならオフハンド。
+
+#### bot.deactivateItem()
+
+アイテム使用を停止します (弓の射出、食事終了など)。
+
+#### bot.useOn(targetEntity)
+
+現在のアイテムをエンティティに使用します (鞍を付ける、ハサミを使う等)。
+
+#### bot.attack(entity, swing = true)
+
+プレイヤーやモブを攻撃します。
+
+ * `entity` - 攻撃対象。`bot.nearestEntity()` や `bot.entities` で取得。
+ * `swing` - 既定 true。false で腕振りアニメーションを行いません。
+
+#### bot.swingArm([hand], showHand)
+
+腕振りアニメーションを再生します。
+
+ * `hand` - `left` または `right`。既定 `right`
+ * `showHand` - パケットに手情報を含めるか。既定 true
+
+#### bot.mount(entity)
+
+乗り物に乗ります。降りるには `bot.dismount()`。
+
+#### bot.dismount()
+
+乗り物から降ります。
+
+#### bot.moveVehicle(left, forward)
+
+乗り物を操作します。
+
+ * `left` - `-1` (右) または `1` (左)
+ * `forward` - `-1` (後退) または `1` (前進)
+
+方向はボットの向きに対する相対値です。
+
+#### bot.setQuickBarSlot(slot)
+
+ホットバーのスロット (0〜8) を選択します。
+
+#### bot.craft(recipe, count, craftingTable)
+
+クラフト完了で `void` を返す `Promise`。
+
+ * `recipe` - `Recipe` インスタンス (`bot.recipesFor` 参照)
+ * `count` - 操作回数。例: 棒 8 本を作るなら 2 回。`null` は 1
+ * `craftingTable` - 使用するクラフト台の `Block`。不要なレシピなら `null`
+
+#### bot.writeBook(slot, pages)
+
+本と羽ペンに書き込む。完了時に `void` を返す `Promise`。
+
+ * `slot` - インベントリウィンドウ座標 (36 がホットバー先頭等)
+ * `pages` - ページ文字列配列
+
+#### bot.openContainer(containerBlock or containerEntity, direction?, cursorPos?)
+
+ブロックまたはエンティティのコンテナを開きます。`Container` インスタンスを返す Promise。
+
+ * `containerBlock` / `containerEntity` - 開く対象
+ * `direction` - 任意。既定 `new Vec3(0, 1, 0)`
+ * `cursorPos` - 任意。既定 `new Vec3(0.5, 0.5, 0.5)`
+
+#### bot.openChest(chestBlock or minecartchestEntity, direction?, cursorPos?)
+
+非推奨。`openContainer` と同じ。
+
+#### bot.openFurnace(furnaceBlock)
+
+開いたかまどを表す `Furnace` インスタンスを返す Promise。
+
+#### bot.openDispenser(dispenserBlock)
+
+非推奨。`openContainer` と同じ。
+
+#### bot.openEnchantmentTable(enchantmentTableBlock)
+
+エンチャントテーブルを表す `EnchantmentTable` インスタンスを返す Promise。
+
+#### bot.openAnvil(anvilBlock)
+
+金床を表す `anvil` インスタンスを返す Promise。
+
+#### bot.openVillager(villagerEntity)
+
+取引ウィンドウを表す `Villager` インスタンスを返す Promise を返します。`ready` イベントで準備完了を検出できます。
+
+#### bot.trade(villagerInstance, tradeIndex, [times])
+
+開いている `villagerInstance` を使って取引します。完了時に `void` を返す `Promise`。
+
+#### bot.setCommandBlock(pos, command, [options])
+
+`pos` のコマンドブロックを設定します。
+
+```js
+{
+  mode: 2,
+  trackOutput: true,
+  conditional: false,
+  alwaysActive: true
+}
+```
+
+`mode` は 0 (SEQUENCE)、1 (AUTO)、2 (REDSTONE)。既定値は 2。その他のオプションは既定 false。
+
+#### bot.supportFeature(name)
+
+現在の Minecraft バージョンで特定機能が利用可能か確認します。`lib/features.json` 参照。
+
+#### bot.waitForTicks(ticks)
+
+指定したゲーム内 tick が経過するまで待機する Promise ベースのタイマー。物理 tick 速度に依存せず、`setTimeout` のゲーム内版として利用可能。
+
+#### bot.respawn()
+
+`respawn` オプションを無効にしている場合、手動でリスポーンさせます。
+
+### 低レベルのインベントリ操作
+
+高レベル API が使えない場合に利用します。
+
+#### bot.clickWindow(slot, mouseButton, mode)
+
+ウィンドウ上でクリック操作を行います。完了時に `void` を返す `Promise`。
+
+- 安定実装:
+  - 0: 通常クリック
+- 実験的:
+  - 1: Shift クリック
+  - 2: 数字キー
+  - 3: 中クリック
+  - 4: Drop クリック
+- 未実装:
+  - 5: ドラッグ
+  - 6: ダブルクリック
+
+詳細は https://minecraft.wiki/w/Protocol#Click_Container を参照。通常は `bot.simpleClick.*` を推奨。
+
+#### bot.putSelectedItemRange(start, end, window, slot)
+
+`slot` のアイテムを指定範囲へ移動します。完了時に `void` を返す `Promise`。
+
+#### bot.putAway(slot)
+
+`slot` のアイテムをインベントリへしまいます。
+
+#### bot.closeWindow(window)
+
+指定ウィンドウを閉じます。
+
+#### bot.transfer(options)
+
+アイテムを別範囲へ移動します。完了時に `void` を返す `Promise`。`options`:
+
+ * `window` - 任意。対象ウィンドウ
+ * `itemType` - アイテム ID
+ * `metadata` - 任意。メタデータ
+ * `sourceStart`, `sourceEnd` - 元範囲 (`sourceEnd` 未指定で `sourceStart+1`)
+ * `destStart`, `destEnd` - 移動先範囲 (`destEnd` 未指定で `destStart+1`)
+ * `count` - 移動数。既定 1
+ * `nbt` - NBT 条件。既定 `nullish`
+
+#### bot.openBlock(block, direction?: Vec3, cursorPos?: Vec3)
+
+ブロックを開き、`Window` を表す Promise を返します。
+
+#### bot.openEntity(entity)
+
+インベントリ付きエンティティを開き、`Window` を返す Promise。
+
+#### bot.moveSlotItem(sourceSlot, destSlot)
+
+現在のウィンドウでスロット間を移動します。
+
+#### bot.updateHeldItem()
+
+`bot.heldItem` を最新化します。
+
+#### bot.getEquipmentDestSlot(destination)
+
+指定部位名の装備スロット ID を返します (head/torso/legs/feet/hand/off-hand)。
+
+### bot.creative
+
+クリエイティブモード向けの API 群です。ゲームモード変更検出は未実装なので、クリエイティブでの利用を前提とします。
+
+#### bot.creative.setInventorySlot(slot, item)
+
+サーバーがスロットを設定した時点で `void` を返す `Promise`。
+
+ * `slot` - インベントリ座標
+ * `item` - [prismarine-item](https://github.com/PrismarineJS/prismarine-item) インスタンス。`null` で削除
+
+変更がある場合は `bot.inventory.on("updateSlot")` で通知されます。
+
+#### bot.creative.clearSlot(slot)
+
+スロットを `null` にします。完了時に `void` を返す `Promise`。
+
+#### bot.creative.clearInventory()
+
+インベントリ全体をクリアします。完了時に `void` を返す `Promise`。
+
+#### bot.creative.flyTo(destination)
+
+`startFlying()` を呼んで一定速度で直線移動し、到着時に `void` を返す `Promise`。
+`destination` は Vec3。障害物があると失敗するので短距離の連続移動が推奨。経路探索は行いません。
+
+通常の物理に戻すには `stopFlying()`。
+
+#### bot.creative.startFlying()
+
+`bot.physics.gravity` を 0 にします。浮遊しながらの作業に便利。終了時は `stopFlying()`。
+浮遊しながら地面を掘りたい場合などに便利です。`flyTo()` の前に呼ぶ必要はありません。なお、飛行中は `bot.entity.velocity` が正確ではなくなります。
+
+#### bot.creative.stopFlying()
+
+`bot.physics.gravity` を元に戻します。
