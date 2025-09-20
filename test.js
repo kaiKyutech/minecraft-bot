@@ -11,7 +11,7 @@ const bot = mineflayer.createBot({
 // ログイン時
 bot.on("spawn", () => {
   console.log("Bot がログインしました！");
-  bot.chat("こんにちは！Bot君です！");
+  bot.chat("こんにちは！Bot君です！!");
 });
 
 // チャット受信時
@@ -20,7 +20,7 @@ bot.on("chat", (username, message) => {
   if (username === bot.username) return; // 自分の発言は無視
 
   if (message === "ping") {
-    bot.chat("pong!");
+    bot.chat(`[${username}] pong!`)
   }
 });
 
