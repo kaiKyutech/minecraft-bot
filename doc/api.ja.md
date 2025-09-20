@@ -1,5 +1,20 @@
 # API リファレンス
 
+<!-- START local TOC -->
+**目次**
+
+- [API リファレンス](#api-リファレンス)
+  - [列挙型 (Enums)](#列挙型-enums)
+  - [クラス](#クラス)
+  - [Bot](#bot)
+    - [プロパティ](#プロパティ)
+    - [イベント](#イベント)
+    - [関数](#関数)
+    - [メソッド](#メソッド)
+  - [低レベルのインベントリ操作](#低レベルのインベントリ操作)
+  - [bot.creative](#botcreative)
+<!-- END local TOC -->
+
 ## 列挙型 (Enums)
 
 これらの列挙型は言語非依存の [minecraft-data](https://github.com/PrismarineJS/minecraft-data) プロジェクトに保存されており、
