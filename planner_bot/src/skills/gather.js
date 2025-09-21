@@ -51,11 +51,28 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
       await primitives.digBlock(bot, { position: blockInfo.position })
 
-      await primitives.collectDrops(bot, {
-        itemName: collectName,
-        radius: collectRadius,
-        waitMs: params.collectWaitMs
-      })
+      const collectAttempts = params.collectAttempts ?? 5
+      const collectDelayMs = params.collectRetryDelayMs ?? 200
+      let dropCount = 0
+
+      for (let attempt = 0; attempt < collectAttempts; attempt++) {
+        dropCount = await primitives.collectDrops(bot, {
+          itemName: collectName,
+          radius: collectRadius,
+          waitMs: params.collectWaitMs
+        })
+
+        if (dropCount > 0) break
+        await delay(collectDelayMs)
+      }
+
+      if (dropCount === 0) {
+        await primitives.moveTo(bot, {
+          position: blockInfo.position,
+          range: 0.6
+        })
+        await delay(collectDelayMs)
+      }
     } catch (error) {
       throw new Error(`資源の収集に失敗しました: ${error.message}`)
     }
@@ -73,4 +90,8 @@ function resolveItemName(params) {
     return params.itemName
   }
   throw new Error('収集対象の素材名 (itemName) が指定されていません')
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

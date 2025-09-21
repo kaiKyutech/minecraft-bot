@@ -12,7 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "mineflayer": "^4.33.0",
-    "mineflayer-pathfinder": "^2.4.5",
+    "mineflayer-pathfinder": "github:Hatadi-v/mineflayer-pathfinder#patch-1",
     "yaml": "^2.8.1"
   }
 }

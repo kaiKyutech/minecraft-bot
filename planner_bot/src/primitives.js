@@ -68,6 +68,8 @@ async function collectDrops(bot, params = {}) {
     await moveTo(bot, { position: drop.position, range: 1.5 })
     await delay(params.waitMs ?? 400)
   }
+
+  return drops.length
 }
 
 async function craftItem(bot, params = {}) {
