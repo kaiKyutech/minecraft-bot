@@ -35,6 +35,15 @@ class StateManager {
       counts
     }
   }
+
+  clear() {
+    this.cache = null
+  }
 }
 
-module.exports = new StateManager()
+function createStateManager() {
+  return new StateManager()
+}
+
+module.exports = createStateManager
+module.exports.StateManager = StateManager

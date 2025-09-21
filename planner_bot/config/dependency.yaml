@@ -17,4 +17,4 @@ items:
 
 materials:
   oak_log:
-    gather_skill: gather_logs
+    gather_skill: gather

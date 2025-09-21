@@ -1,12 +1,14 @@
 const mineflayer = require('mineflayer')
 const { pathfinder } = require('mineflayer-pathfinder')
 
-const stateManager = require('./src/planner/state_manager')
+const createStateManager = require('./src/planner/state_manager')
 const goapPlanner = require('./src/planner/goap')
 const skills = require('./src/skills')
 const primitives = require('./src/primitives')
 
 debugLog('initialising planner bot')
+
+const stateManager = createStateManager()
 
 const bot = mineflayer.createBot({
   host: process.env.MC_HOST || 'localhost',
