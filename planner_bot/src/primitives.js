@@ -40,6 +40,162 @@ async function digBlock(bot, params = {}) {
   await bot.dig(block)
 }
 
+// 指定ブロックに最適なツールを装備する
+async function equipBestToolForBlock(bot, block) {
+  try {
+    // インベントリから最適なツールを探索
+    const bestTool = await findBestTool(bot, block)
+
+    if (bestTool) {
+      const mcData = minecraftData(bot.version)
+      const toolName = mcData.items[bestTool.type].name
+      console.log(`[TOOL] ${block.name}用に${toolName}を装備`)
+      await bot.equip(bestTool, 'hand')
+    } else {
+      console.log(`[TOOL] ${block.name}用の適切なツールが見つからず、素手で掘削`)
+      await bot.unequip('hand')
+    }
+  } catch (error) {
+    console.log(`[TOOL] ツール装備に失敗、素手で掘削: ${error.message}`)
+  }
+}
+
+// インベントリから指定ブロックに最も効果的なツールを見つける
+async function findBestTool(bot, block) {
+  if (!bot.version) return null
+
+  const mcData = minecraftData(bot.version)
+
+  // 実際のツール（武器・道具）のみを対象にする
+  const validToolTypes = [
+    'wooden_pickaxe', 'stone_pickaxe', 'iron_pickaxe', 'golden_pickaxe', 'diamond_pickaxe', 'netherite_pickaxe',
+    'wooden_axe', 'stone_axe', 'iron_axe', 'golden_axe', 'diamond_axe', 'netherite_axe',
+    'wooden_shovel', 'stone_shovel', 'iron_shovel', 'golden_shovel', 'diamond_shovel', 'netherite_shovel',
+    'wooden_hoe', 'stone_hoe', 'iron_hoe', 'golden_hoe', 'diamond_hoe', 'netherite_hoe',
+    'wooden_sword', 'stone_sword', 'iron_sword', 'golden_sword', 'diamond_sword', 'netherite_sword',
+    'shears'
+  ]
+
+  const availableTools = bot.inventory.items()
+    .filter(item => {
+      if (!item || !mcData.items[item.type]) return false
+      const itemName = mcData.items[item.type].name
+      return validToolTypes.includes(itemName)
+    })
+
+  const blockData = mcData.blocks[block.type]
+  console.log(`[TOOL] ${block.name}に最適ツール選択中...`)
+  // console.log(`[TOOL] ブロック詳細:`, {
+  //   name: block.name,
+  //   displayName: blockData?.displayName,
+  //   material: blockData?.material,
+  //   harvestTools: blockData?.harvestTools
+  // })
+
+  if (availableTools.length === 0) return null
+
+  let bestTool = null
+  let bestTime = Infinity
+
+  // 現在の手持ちアイテムを保存
+  const originalHeldItem = bot.heldItem
+
+  // 各ツールでの採掘時間を計算（実際に装備して測定）
+  for (const tool of availableTools) {
+    try {
+      const toolName = mcData.items[tool.type].name
+      // ツールを装備
+      await bot.equip(tool, 'hand')
+      await delay(100) // 少し待つ
+
+      // 装備後の採掘時間を測定
+      const digTime = bot.digTime(block)
+      console.log(`[TOOL] ${toolName}: ${digTime.toFixed(2)}秒`)
+
+      if (digTime > 0 && digTime < bestTime) {
+        bestTime = digTime
+        bestTool = tool
+      }
+    } catch (error) {
+      // console.log(`[TOOL] ${mcData.items[tool.type].name}: テスト失敗 - ${error.message}`)
+    }
+  }
+
+  // 素手での採掘時間を測定（手に何も持たない状態）
+  try {
+    await bot.unequip('hand')
+    await delay(100)
+
+    const handDigTime = bot.digTime(block)
+    console.log(`[TOOL] 素手: ${handDigTime.toFixed(2)}秒`)
+
+    if (handDigTime > 0 && (!bestTool || handDigTime < bestTime)) {
+      console.log(`[TOOL] 素手が最適`)
+      bestTool = null
+      bestTime = handDigTime
+    }
+  } catch (error) {
+    console.log(`[TOOL] 素手: 計算失敗 - ${error.message}`)
+  }
+
+  // 元の手持ちアイテムを復元
+  try {
+    if (originalHeldItem) {
+      await bot.equip(originalHeldItem, 'hand')
+    } else {
+      await bot.unequip('hand')
+    }
+  } catch (error) {
+    // 復元失敗は無視
+  }
+
+  if (bestTool) {
+    console.log(`[TOOL] 最適ツール: ${mcData.items[bestTool.type].name} (${bestTime.toFixed(2)}秒)`)
+  } else {
+    console.log(`[TOOL] 素手が最適`)
+  }
+
+  return bestTool
+}
+
+// minecraft-dataを使った手動採掘時間計算（デバッグ用）
+function calculateDigTimeManual(block, tool, mcData) {
+  try {
+    const blockData = mcData.blocks[block.type]
+    if (!blockData || typeof blockData.hardness !== 'number') {
+      return Infinity
+    }
+
+    const hardness = blockData.hardness
+
+    if (tool) {
+      const toolData = mcData.items[tool.type]
+      if (!toolData) return Infinity
+
+      // ツールの採掘速度を取得（簡略化）
+      const toolSpeeds = {
+        'wooden_pickaxe': 2.0, 'stone_pickaxe': 4.0, 'iron_pickaxe': 6.0,
+        'wooden_axe': 2.0, 'stone_axe': 4.0, 'iron_axe': 6.0,
+        'wooden_shovel': 2.0, 'stone_shovel': 4.0, 'iron_shovel': 6.0
+      }
+
+      const speed = toolSpeeds[toolData.name] || 1.0
+
+      // 適切なツールかチェック（詳細化）
+      const isCorrectTool = checkToolSuitability(block.name, toolData.name)
+
+      console.log(`[MANUAL] ${toolData.name} for ${block.name}: isCorrect=${isCorrectTool}, speed=${speed}, hardness=${hardness}`)
+
+      return isCorrectTool ? hardness / speed : (hardness * 5) / speed
+    } else {
+      // 素手
+      return hardness * 5
+    }
+  } catch (error) {
+    return Infinity
+  }
+}
+
 async function collectDrops(bot, params = {}) {
   // 半径内に落ちているアイテムを順番に拾いに行く
   ensurePathfinder(bot)
@@ -54,7 +210,7 @@ async function collectDrops(bot, params = {}) {
   // デバッグ: 近くのエンティティを確認
   const nearbyEntities = Object.values(bot.entities)
     .filter((entity) => entity && bot.entity.position.distanceTo(entity.position) <= radius)
-  console.log(`[COLLECT] 範囲内エンティティ: ${nearbyEntities.map(e => `${e.name}(${e.id})`).join(', ')}`)
+  // console.log(`[COLLECT] 範囲内エンティティ: ${nearbyEntities.map(e => `${e.name}(${e.id})`).join(', ')}`)
 
   const drops = Object.values(bot.entities)
     .filter((entity) => entity && entity.name === 'item')
@@ -62,7 +218,7 @@ async function collectDrops(bot, params = {}) {
       if (itemName) {
         const held = entity.metadata?.[entity.metadata.length - 1]
         const displayName = held?.itemId ? mcData.items[held.itemId]?.name : null
-        console.log(`[COLLECT] アイテムドロップ: ${displayName} (期待: ${itemName})`)
+        // console.log(`[COLLECT] アイテムドロップ: ${displayName} (期待: ${itemName})`)
         return displayName === itemName
       }
       return true
@@ -70,7 +226,7 @@ async function collectDrops(bot, params = {}) {
     .filter((entity) => bot.entity.position.distanceTo(entity.position) <= radius)
     .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
 
-  console.log(`[COLLECT] 対象ドロップ数: ${drops.length}`)
+  // console.log(`[COLLECT] 対象ドロップ数: ${drops.length}`)
 
   let pickedUpCount = 0
 
@@ -98,7 +254,7 @@ async function collectDrops(bot, params = {}) {
         pickedUpCount++
       }
     } catch (error) {
-      console.log(`[COLLECT] Failed to collect drop: ${error.message}`)
+      // console.log(`[COLLECT] Failed to collect drop: ${error.message}`)
     }
   }
 
@@ -304,5 +460,7 @@ module.exports = {
   placeBlock,
   equipItem,
   findBlock,
-  findBlocks
+  findBlocks,
+  equipBestToolForBlock,
+  findBestTool
 }

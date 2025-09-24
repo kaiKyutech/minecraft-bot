@@ -25,6 +25,29 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   await stateManager.refresh(bot)
 
+  // whileループ開始前に1回だけ最適ツールを決定
+  let selectedTool = null
+  try {
+    // サンプルブロックを探して、そのタイプに最適なツールを選択
+    const sampleBlockInfo = await primitives.findBlock(bot, {
+      match: matchCondition,
+      maxDistance
+    })
+    const sampleBlock = bot.blockAt(sampleBlockInfo.position)
+    if (sampleBlock) {
+      selectedTool = await primitives.findBestTool(bot, sampleBlock)
+      if (selectedTool) {
+        const mcData = require('minecraft-data')(bot.version)
+        const toolName = mcData.items[selectedTool.type].name
+        console.log(`[GATHER] 最適ツールを選択: ${toolName}`)
+      } else {
+        console.log(`[GATHER] 素手が最適と判定`)
+      }
+    }
+  } catch (error) {
+    console.log('[GATHER] ツール選択用のサンプルブロックが見つからず、素手で開始')
+  }
+
   let completed = 0
   let attempts = 0
 
@@ -45,11 +68,31 @@ module.exports = async function gather(bot, params = {}, stateManager) {
     }
 
     try {
-      // ブロックまで接近 
+      // ブロックまで接近
       await primitives.moveTo(bot, {
         position: blockInfo.position,
         range: approachRange
       })
+
+      // 掘削直前に選択したツールを再装備
+      if (selectedTool) {
+        try {
+          await bot.equip(selectedTool, 'hand')
+          const mcData = require('minecraft-data')(bot.version)
+          const toolName = mcData.items[selectedTool.type].name
+          console.log(`[GATHER] ${toolName}を再装備`)
+        } catch (error) {
+          console.log(`[GATHER] ツール再装備に失敗: ${error.message}`)
+        }
+      } else {
+        // 素手が最適な場合
+        try {
+          await bot.unequip('hand')
+          console.log(`[GATHER] 素手で掘削`)
+        } catch (error) {
+          // 素手にできない場合は無視
+        }
+      }
 
       //掘削
       await primitives.digBlock(bot, { position: blockInfo.position })
@@ -60,14 +103,14 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       let dropCount = 0
 
       for (let attempt = 0; attempt < collectAttempts; attempt++) {
-        console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
+        // console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
         dropCount = await primitives.collectDrops(bot, {
           itemName: collectName,
           radius: collectRadius,
           waitMs: params.collectWaitMs
         })
 
-        console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
+        // console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
         if (dropCount > 0) break
         await delay(collectDelayMs)
       }
