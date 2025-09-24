@@ -3,8 +3,9 @@ const minecraftData = require('minecraft-data')
 
 /**
  * 中位スキル: gather
+ * 前提：(必須)itemName (推奨)回数、範囲
  * - 上位レイヤーが指定した `itemName` のブロックを、要求回数だけ掘って回収します。
- * - インベントリ確認などの前提評価は行わず、呼び出し元が正しい素材名や回数を決めていることを前提とします。
+ * - インベントリ確認などの前提評価は行わず、呼び出し元が正しい "素材名" や "回数" や "範囲" を決めていることを前提とします。
  * - ブロック探索 → 接近 → 掘削 → ドロップ回収 を 1 ループとし、指定回数だけ繰り返します。
  */
 module.exports = async function gather(bot, params = {}, stateManager) {
