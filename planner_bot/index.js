@@ -21,12 +21,33 @@ bot.loadPlugin(pathfinder)
 
 bot.once('spawn', () => {
   debugLog('bot spawned, ready to receive goals')
+
+  // remmychatプラグイン対策: 複数のチャンネル加入を試行
+  setTimeout(() => {
+    tryJoinGlobalChannel()
+  }, 2000)
 })
+
+// remmychat対応: ローカルチャンネル参加
+async function tryJoinGlobalChannel() {
+  try {
+    bot.chat('/remchat channel local')
+    await delay(1500)
+  } catch (error) {
+    console.log('[CHANNEL] Failed to join local channel')
+  }
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 
 bot.on('chat', async (username, message) => {
   if (username === bot.username) return
 
   debugLog(`chat from ${username}: ${message}`)
+
 
   const trimmed = message.trim()
 
@@ -168,7 +189,7 @@ async function handleSkillCommand(raw) {
     await stateManager.refresh(bot)
     bot.chat('スキルが完了しました')
   } catch (error) {
-    console.error('skill execution error', error)
+    console.error(`[SKILL ERROR] ${nameToken}:`, error)
     bot.chat(`スキル実行に失敗しました: ${error.message}`)
   }
 }
