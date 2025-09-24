@@ -106,9 +106,14 @@ async function findBestTool(bot, block) {
       const toolName = mcData.items[tool.type].name
       // ツールを装備
       await bot.equip(tool, 'hand')
-      await delay(100) // 少し待つ
+      await delay(75) // 装備完了を待つ
 
-      // 装備後の採掘時間を測定
+      // 装備確認してから採掘時間を測定
+      if (!bot.heldItem || bot.heldItem.type !== tool.type) {
+        console.log(`[TOOL] ${toolName}: 装備失敗をスキップ`)
+        continue
+      }
+
       const digTime = bot.digTime(block)
       console.log(`[TOOL] ${toolName}: ${digTime.toFixed(2)}秒`)
 
@@ -124,15 +129,21 @@ async function findBestTool(bot, block) {
   // 素手での採掘時間を測定（手に何も持たない状態）
   try {
     await bot.unequip('hand')
-    await delay(100)
+    await delay(75) // 装備解除完了を待つ
 
-    const handDigTime = bot.digTime(block)
-    console.log(`[TOOL] 素手: ${handDigTime.toFixed(2)}秒`)
+    // 素手確認してから測定
+    if (bot.heldItem) {
+      console.log(`[TOOL] 素手: 装備解除失敗をスキップ`)
+      // handDigTimeを定義しないのでスキップされる
+    } else {
+      const handDigTime = bot.digTime(block)
+      console.log(`[TOOL] 素手: ${handDigTime.toFixed(2)}秒`)
 
-    if (handDigTime > 0 && (!bestTool || handDigTime < bestTime)) {
-      console.log(`[TOOL] 素手が最適`)
-      bestTool = null
-      bestTime = handDigTime
+      if (handDigTime > 0 && (!bestTool || handDigTime < bestTime)) {
+        console.log(`[TOOL] 素手が最適`)
+        bestTool = null
+        bestTime = handDigTime
+      }
     }
   } catch (error) {
     console.log(`[TOOL] 素手: 計算失敗 - ${error.message}`)
@@ -236,7 +247,7 @@ async function collectDrops(bot, params = {}) {
       await moveTo(bot, { position: drop.position, range: 1.2 })
 
       // 少し待ってから再度エンティティの存在確認
-      await delay(params.waitMs ?? 500)
+      await delay(params.waitMs ?? 150)
 
       // エンティティがまだ存在するか確認（既に自動ピックアップされた可能性）
       const stillExists = bot.entities[drop.id]
@@ -247,7 +258,7 @@ async function collectDrops(bot, params = {}) {
 
       // より近づいて確実にピックアップを誘発
       await moveTo(bot, { position: drop.position, range: 0.8 })
-      await delay(200)
+      await delay(100)
 
       // もう一度存在確認
       if (!bot.entities[drop.id]) {

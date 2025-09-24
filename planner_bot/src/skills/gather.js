@@ -78,9 +78,16 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       if (selectedTool) {
         try {
           await bot.equip(selectedTool, 'hand')
+          await delay(100) // 装備完了を待つ
+
+          // 装備確認
           const mcData = require('minecraft-data')(bot.version)
           const toolName = mcData.items[selectedTool.type].name
-          console.log(`[GATHER] ${toolName}を再装備`)
+          if (bot.heldItem && bot.heldItem.type === selectedTool.type) {
+            console.log(`[GATHER] ${toolName}を装備確認済み`)
+          } else {
+            console.log(`[GATHER] 警告: ${toolName}装備に失敗、実際の装備: ${bot.heldItem?.name || '素手'}`)
+          }
         } catch (error) {
           console.log(`[GATHER] ツール再装備に失敗: ${error.message}`)
         }
@@ -88,7 +95,8 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         // 素手が最適な場合
         try {
           await bot.unequip('hand')
-          console.log(`[GATHER] 素手で掘削`)
+          await delay(100) // 装備解除完了を待つ
+          console.log(`[GATHER] 素手で掘削 (実際: ${bot.heldItem?.name || '素手'})`)
         } catch (error) {
           // 素手にできない場合は無視
         }
@@ -99,7 +107,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
       //ドロップを回収
       const collectAttempts = params.collectAttempts ?? 5
-      const collectDelayMs = params.collectRetryDelayMs ?? 200
+      const collectDelayMs = params.collectRetryDelayMs ?? 100
       let dropCount = 0
 
       for (let attempt = 0; attempt < collectAttempts; attempt++) {
