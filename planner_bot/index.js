@@ -51,12 +51,12 @@ bot.on('chat', async (username, message) => {
 
   const trimmed = message.trim()
 
-  if (trimmed.startsWith('!primitive ')) {
+  if (/^!primitive(\s|$)/.test(trimmed)) {
     await handlePrimitiveCommand(trimmed)
     return
   }
 
-  if (trimmed.startsWith('!skill ')) {
+  if (/^!skill(\s|$)/.test(trimmed)) {
     await handleSkillCommand(trimmed)
     return
   }
@@ -110,7 +110,8 @@ function debugLog(message) {
 }
 
 async function handlePrimitiveCommand(raw) {
-  const body = raw.replace('!primitive ', '').trim()
+  // !primitive の後の部分を取得（スペースやタブを考慮して柔軟に処理）
+  const body = raw.replace(/^!primitive\s*/, '').trim()
   if (!body) {
     bot.chat('プリミティブ名を指定してください')
     return
@@ -157,17 +158,26 @@ function snakeToCamel(value) {
 }
 
 async function handleSkillCommand(raw) {
-  const body = raw.replace('!skill ', '').trim()
+  console.log(`[SKILL DEBUG] Raw command: "${raw}"`)
+
+  // !skill の後の部分を取得（スペースやタブを考慮して柔軟に処理）
+  const body = raw.replace(/^!skill\s*/, '').trim()
+
+  console.log(`[SKILL DEBUG] Body after processing: "${body}"`)
+
   if (!body) {
+    console.log('[SKILL DEBUG] Body is empty, sending error message')
     bot.chat('スキル名を指定してください')
     return
   }
 
   const [nameToken, ...rest] = body.split(' ')
   const paramString = rest.join(' ').trim()
+  console.log(`[SKILL DEBUG] nameToken: "${nameToken}", paramString: "${paramString}"`)
 
   const skillFn = skills[nameToken]
   if (typeof skillFn !== 'function') {
+    console.log(`[SKILL DEBUG] Skill not found: ${nameToken}`)
     bot.chat(`未知のスキルです: ${nameToken}`)
     return
   }

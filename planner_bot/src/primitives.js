@@ -51,12 +51,18 @@ async function collectDrops(bot, params = {}) {
   }
   const mcData = minecraftData(bot.version)
 
+  // デバッグ: 近くのエンティティを確認
+  const nearbyEntities = Object.values(bot.entities)
+    .filter((entity) => entity && bot.entity.position.distanceTo(entity.position) <= radius)
+  console.log(`[COLLECT] 範囲内エンティティ: ${nearbyEntities.map(e => `${e.name}(${e.id})`).join(', ')}`)
+
   const drops = Object.values(bot.entities)
     .filter((entity) => entity && entity.name === 'item')
     .filter((entity) => {
       if (itemName) {
         const held = entity.metadata?.[entity.metadata.length - 1]
         const displayName = held?.itemId ? mcData.items[held.itemId]?.name : null
+        console.log(`[COLLECT] アイテムドロップ: ${displayName} (期待: ${itemName})`)
         return displayName === itemName
       }
       return true
@@ -64,12 +70,39 @@ async function collectDrops(bot, params = {}) {
     .filter((entity) => bot.entity.position.distanceTo(entity.position) <= radius)
     .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
 
+  console.log(`[COLLECT] 対象ドロップ数: ${drops.length}`)
+
+  let pickedUpCount = 0
+
   for (const drop of drops) {
-    await moveTo(bot, { position: drop.position, range: 1.5 })
-    await delay(params.waitMs ?? 400)
+    try {
+      // ドロップに近づく
+      await moveTo(bot, { position: drop.position, range: 1.2 })
+
+      // 少し待ってから再度エンティティの存在確認
+      await delay(params.waitMs ?? 500)
+
+      // エンティティがまだ存在するか確認（既に自動ピックアップされた可能性）
+      const stillExists = bot.entities[drop.id]
+      if (!stillExists) {
+        pickedUpCount++
+        continue
+      }
+
+      // より近づいて確実にピックアップを誘発
+      await moveTo(bot, { position: drop.position, range: 0.8 })
+      await delay(200)
+
+      // もう一度存在確認
+      if (!bot.entities[drop.id]) {
+        pickedUpCount++
+      }
+    } catch (error) {
+      console.log(`[COLLECT] Failed to collect drop: ${error.message}`)
+    }
   }
 
-  return drops.length
+  return pickedUpCount
 }
 
 async function craftItem(bot, params = {}) {
