@@ -1,53 +1,141 @@
-# TODO: ドメイン定義。暫定的なスケルトン。
-goal: craft_wooden_pickaxe
+# ドメイン定義 - 現在実装済みスキルのみ
+# 実装済み: gather
+# 未実装: craft_material, craft_tool, ensure_workbench
 
 actions:
+  # === 採掘関連（gather skill使用） ===
+  # カテゴリベースの採掘
   - name: gather_logs
     preconditions:
       inventory_space: true
+      nearby_log: true      # 任意の種類の原木が近くにある
     effects:
       has_log: "+4"
-    cost: 5
+    cost: 10
+    skill: gather
+    params:
+      itemName: log         # カテゴリ指定（将来gatherスキルで対応）
+      count: 4
+
+  - name: gather_basic_stone
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true  # 石・丸石・黒石のいずれかが近くにある
+    effects:
+      has_cobblestone: "+8"
+    cost: 15
+    skill: gather
+    params:
+      itemName: basic_stone     # カテゴリ指定（将来対応）
+      count: 8
+
+  # 個別指定版も残す（特定の種類が必要な場合）
+  - name: gather_oak_logs
+    preconditions:
+      inventory_space: true
+      nearby_oak_log: true
+    effects:
+      has_log: "+4"
+    cost: 12  # カテゴリ版より少しコスト高
     skill: gather
     params:
       itemName: oak_log
       count: 4
 
-  - name: craft_planks
+  # === テスト用の単発採掘 ===
+  - name: gather_one_log
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+    effects:
+      has_log: "+1"
+    cost: 3
+    skill: gather
+    params:
+      itemName: log         # カテゴリ指定
+      count: 1
+
+  # === 手クラフト（2x2グリッド）===
+  - name: craft_planks_from_logs
     preconditions:
       has_log: ">=1"
     effects:
       has_log: "-1"
-      has_plank: "+4"
+      has_plank: "+4"      # 1つの原木から4つの板
     cost: 2
-    skill: craft_planks
+    skill: hand_craft
+    params:
+      recipe: "log_to_planks"
 
-  - name: craft_sticks
+  - name: craft_sticks_from_planks
     preconditions:
       has_plank: ">=2"
     effects:
       has_plank: "-2"
-      has_stick: "+4"
+      has_stick: "+4"      # 2つの板から4つの棒
     cost: 2
-    skill: craft_sticks
+    skill: hand_craft
+    params:
+      recipe: "planks_to_sticks"
 
-  - name: ensure_workbench
+  - name: create_workbench
     preconditions:
       has_plank: ">=4"
     effects:
       has_plank: "-4"
-      has_workbench: true
+      has_workbench: true  # 4つの板から作業台
     cost: 5
-    skill: ensure_workbench
+    skill: hand_craft
+    params:
+      recipe: "crafting_table"
 
+  # === 作業台クラフト（3x3グリッド）===
   - name: craft_wooden_pickaxe
     preconditions:
-      has_stick: ">=2"
       has_plank: ">=3"
+      has_stick: ">=2"
       has_workbench: true
     effects:
-      has_stick: "-2"
       has_plank: "-3"
+      has_stick: "-2"
       has_wooden_pickaxe: true
-    cost: 3
-    skill: craft_wooden_pickaxe
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "wooden_pickaxe"
+
+  - name: craft_wooden_axe
+    preconditions:
+      has_plank: ">=3"
+      has_stick: ">=2"
+      has_workbench: true
+    effects:
+      has_plank: "-3"
+      has_stick: "-2"
+      has_wooden_axe: true
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "wooden_axe"
+
+  # === 目標定義 ===
+  - name: get_wooden_pickaxe
+    preconditions:
+      has_wooden_pickaxe: true
+    effects: {}
+    cost: 0
+    # skill不要（目標到達確認のみ）
+
+  - name: get_logs
+    preconditions:
+      has_log: ">=4"
+    effects: {}
+    cost: 0
+    # skill不要（目標到達確認のみ）
+
+  - name: get_cobblestone
+    preconditions:
+      has_cobblestone: ">=8"
+    effects: {}
+    cost: 0
+    # skill不要（目標到達確認のみ）

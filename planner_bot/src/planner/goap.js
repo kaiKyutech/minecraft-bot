@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const YAML = require('yaml')
+const { buildState } = require('./state_builder')
 
 const CONFIG_PATH = path.join(__dirname, '../../config/actions.yaml')
 const MAX_ITERATIONS = 500
@@ -29,6 +30,7 @@ function plan(goalName, worldState) {
   }
 
   const initialState = buildState(worldState)
+  // 結果: { inventory_space: true, has_log: 0, nearby_log: true, ...}
   const open = [{
     state: initialState,
     cost: 0,
@@ -72,33 +74,7 @@ function plan(goalName, worldState) {
   return null
 }
 
-function buildState(worldState) {
-  const facts = Object.create(null)
-
-  facts.inventory_space = true
-
-  const counts = worldState?.inventory?.counts || {}
-
-  let logCount = 0
-  let plankCount = 0
-
-  for (const [name, count] of Object.entries(counts)) {
-    if (name.endsWith('_log')) logCount += count
-    if (name.endsWith('_planks')) plankCount += count
-    if (name === 'stick') facts.has_stick = count
-    if (name === 'crafting_table') facts.has_workbench = count > 0
-    if (name === 'wooden_pickaxe') facts.has_wooden_pickaxe = count > 0
-  }
-
-  facts.has_log = logCount
-  facts.has_plank = plankCount
-
-  if (typeof facts.has_stick !== 'number') facts.has_stick = 0
-  if (typeof facts.has_workbench !== 'boolean') facts.has_workbench = false
-  if (typeof facts.has_wooden_pickaxe !== 'boolean') facts.has_wooden_pickaxe = false
-
-  return facts
-}
+// buildState関数は state_builder.js に移動
 
 function isGoalSatisfied(goalAction, state) {
   return arePreconditionsSatisfied(goalAction.preconditions, state)

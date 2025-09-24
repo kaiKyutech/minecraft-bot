@@ -1,0 +1,47 @@
+# ブロックカテゴリ定義
+# minecraft-dataから自動生成された情報を基に、GOAPで使用するカテゴリを定義
+
+categories:
+  log:
+    description: "原木系ブロック（通常・樹皮を剥いだもの含む）"
+    blocks:
+      - acacia_log
+      - birch_log
+      - cherry_log
+      - dark_oak_log
+      - jungle_log
+      - mangrove_log
+      - oak_log
+      - spruce_log
+      # 樹皮を剥いだ原木も含める
+      - stripped_acacia_log
+      - stripped_birch_log
+      - stripped_cherry_log
+      - stripped_dark_oak_log
+      - stripped_jungle_log
+      - stripped_mangrove_log
+      - stripped_oak_log
+      - stripped_spruce_log
+
+  plank:
+    description: "板系ブロック"
+    blocks:
+      - acacia_planks
+      - bamboo_planks
+      - birch_planks
+      - cherry_planks
+      - crimson_planks
+      - dark_oak_planks
+      - jungle_planks
+      - mangrove_planks
+      - oak_planks
+      - spruce_planks
+      - warped_planks
+
+  basic_stone:
+    description: "基本的な石系ブロック（採掘で丸石になるもの）"
+    blocks:
+      - stone
+      - cobblestone
+      # blackstoneも含める（黒石として別扱いも可能）
+      - blackstone

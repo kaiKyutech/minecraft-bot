@@ -1,0 +1,87 @@
+# GOAP状態変数の定義
+# actions.yamlの前提条件・効果で使用可能な変数を全て定義
+
+# === インベントリ関連 ===
+inventory_states:
+  inventory_space:
+    type: boolean
+    default: true
+    description: "インベントリに空きがある"
+
+  has_log:
+    type: number
+    default: 0
+    description: "所持している原木の合計数（oak_log, birch_log等の合計）"
+
+  has_plank:
+    type: number
+    default: 0
+    description: "所持している板の合計数（oak_planks, birch_planks等の合計）"
+
+  has_stick:
+    type: number
+    default: 0
+    description: "所持している棒の数"
+
+  has_cobblestone:
+    type: number
+    default: 0
+    description: "所持している丸石の数"
+
+  has_workbench:
+    type: boolean
+    default: false
+    description: "クラフト台を所持している"
+
+  has_wooden_pickaxe:
+    type: boolean
+    default: false
+    description: "木のツルハシを所持している"
+
+  has_wooden_axe:
+    type: boolean
+    default: false
+    description: "木の斧を所持している"
+
+# === 環境・リソース近接関連 ===
+environment_states:
+  # カテゴリベース近接状態
+  nearby_log:
+    type: boolean
+    default: false
+    description: "近く（32ブロック以内）に任意の種類の原木が存在する"
+    detection_method: "findBlockCategory"
+    category: "log"
+    max_distance: 32
+
+  nearby_basic_stone:
+    type: boolean
+    default: false
+    description: "近く（32ブロック以内）に基本的な石が存在する"
+    detection_method: "findBlockCategory"
+    category: "basic_stone"
+    max_distance: 32
+
+  # 個別指定も残しておく（特定の種類が必要な場合）
+  nearby_oak_log:
+    type: boolean
+    default: false
+    description: "近く（32ブロック以内）にオーク原木が存在する"
+    detection_method: "findBlock"
+    block_name: "oak_log"
+    max_distance: 32
+
+  nearby_stone:
+    type: boolean
+    default: false
+    description: "近く（32ブロック以内）に石が存在する"
+    detection_method: "findBlock"
+    block_name: "stone"
+    max_distance: 32
+
+# === 時間・環境条件 ===
+world_states:
+  is_day:
+    type: boolean
+    default: true
+    description: "昼間である"

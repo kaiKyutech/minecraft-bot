@@ -1,5 +1,6 @@
 const primitives = require('../primitives')
 const minecraftData = require('minecraft-data')
+const { loadBlockCategories } = require('../planner/state_builder')
 
 /**
  * 中位スキル: gather
@@ -155,7 +156,13 @@ function resolveItemName(params, bot) {
   const mcData = minecraftData(bot.version)
   const itemName = params.itemName
 
-  // ブロックとして存在するかチェック
+  // カテゴリ名の場合は近くで最適なブロックを選択
+  const categories = loadBlockCategories()
+  if (categories?.categories?.[itemName]) {
+    return selectBestBlockFromCategory(bot, itemName, categories, mcData)
+  }
+
+  // 個別ブロック名として存在するかチェック
   const blockData = mcData.blocksByName[itemName]
   if (blockData) {
     return itemName
@@ -169,6 +176,33 @@ function resolveItemName(params, bot) {
 
   // どちらにも存在しない場合はエラー
   throw new Error(`未知のアイテム名です: ${itemName} (Minecraft ${bot.version} には存在しません)`)
+}
+
+function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
+  const categoryBlocks = categories.categories[categoryName].blocks
+  console.log(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
+
+  // 近くにあるブロックを検索
+  for (const blockName of categoryBlocks) {
+    try {
+      const block = bot.findBlock({
+        matching: (block) => block && block.name === blockName,
+        maxDistance: 100,
+        count: 1
+      })
+
+      if (block) {
+        console.log(`[GATHER] カテゴリ「${categoryName}」から「${blockName}」を選択`)
+        return blockName
+      }
+    } catch (error) {
+      // この種類は見つからない、次を試す
+      continue
+    }
+  }
+
+  // どの種類も見つからない場合
+  throw new Error(`カテゴリ「${categoryName}」のブロックが近くに見つかりません: ${categoryBlocks.join(', ')}`)
 }
 
 function delay(ms) {

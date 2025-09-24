@@ -1,11 +1,9 @@
 const gather = require('./gather')
-const craftMaterial = require('./craft_material')
-const craftTool = require('./craft_tool')
-const ensureWorkbench = require('./ensure_workbench')
+const handCraft = require('./hand_craft')
+const workbenchCraft = require('./workbench_craft')
 
 module.exports = {
   gather,
-  craft_material: craftMaterial,
-  craft_tool: craftTool,
-  ensure_workbench: ensureWorkbench
+  hand_craft: handCraft,
+  workbench_craft: workbenchCraft
 }

@@ -78,6 +78,12 @@ bot.on('chat', async (username, message) => {
     bot.chat(`計画されたアクション: ${plan.map((step) => step.action).join(' -> ')}`)
 
     for (const step of plan) {
+      // スキルがない場合は目標アクション（実行不要）
+      if (!step.skill) {
+        console.log(`目標達成: ${step.action}`)
+        continue
+      }
+
       const skill = skills[step.skill]
       if (typeof skill !== 'function') {
         throw new Error(`スキル ${step.skill} が見つかりません`)
