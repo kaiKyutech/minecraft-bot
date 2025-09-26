@@ -35,34 +35,29 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   }
 
   try {
-    // まず近くに設置済み作業台があるかチェック
-    let workbench = bot.findBlock({
+    // GOAPが nearby_workbench: true を保証済みのため、近くの作業台を検索
+    console.log(`[WORKBENCH_CRAFT] ボット位置: ${JSON.stringify(bot.entity.position)}`)
+
+    const workbench = bot.findBlock({
       matching: (block) => block && block.name === 'crafting_table',
-      maxDistance: 32
+      maxDistance: 5
     })
 
     if (!workbench) {
-      // 近くにない場合、インベントリから作業台を設置
-      const workbenchItem = bot.inventory.items().find(item => item.name === 'crafting_table')
-      if (!workbenchItem) {
-        throw new Error('作業台がインベントリにありません')
-      }
-
-      console.log('[WORKBENCH_CRAFT] 作業台をインベントリから設置中...')
-
-      // 作業台を設置
-      await placeWorkbench(bot, workbenchItem)
-
-      // 設置後に再検索
-      workbench = bot.findBlock({
+      // デバッグ用: より広範囲で作業台を探してログ出力
+      const distantWorkbench = bot.findBlock({
         matching: (block) => block && block.name === 'crafting_table',
-        maxDistance: 5
+        maxDistance: 100
       })
-
-      if (!workbench) {
-        throw new Error('作業台の設置に失敗しました')
+      if (distantWorkbench) {
+        const distance = bot.entity.position.distanceTo(distantWorkbench.position)
+        console.log(`[WORKBENCH_CRAFT] 遠くの作業台発見: ${JSON.stringify(distantWorkbench.position)} (distance: ${distance.toFixed(2)})`)
       }
+      throw new Error('近くに作業台が見つかりません（GOAPの前提条件エラー）')
     }
+
+    const distance = bot.entity.position.distanceTo(workbench.position)
+    console.log(`[WORKBENCH_CRAFT] 作業台発見: ${JSON.stringify(workbench.position)} (distance: ${distance.toFixed(2)})`)
 
     console.log(`[WORKBENCH_CRAFT] 作業台(${workbench.position})を使用`)
 
@@ -81,70 +76,4 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   } catch (error) {
     throw new Error(`作業台クラフトに失敗しました: ${error.message}`)
   }
-}
-
-/**
- * 作業台をボットの近くに設置
- */
-async function placeWorkbench(bot, workbenchItem) {
-  try {
-    // 作業台を手に装備
-    await bot.equip(workbenchItem, 'hand')
-    await delay(100) // 装備待ち
-
-    // ボットの位置を取得
-    const botPos = bot.entity.position.floored()
-
-    // 設置候補位置（ボットの隣接する位置）
-    const placeOptions = [
-      botPos.offset(1, 0, 0),   // 東側
-      botPos.offset(-1, 0, 0),  // 西側
-      botPos.offset(0, 0, 1),   // 南側
-      botPos.offset(0, 0, -1),  // 北側
-      botPos.offset(1, 0, 1),   // 南東
-      botPos.offset(-1, 0, -1)  // 北西
-    ]
-
-    let placed = false
-    for (const placePos of placeOptions) {
-      // 設置位置が空いているかチェック
-      const targetBlock = bot.blockAt(placePos)
-      if (!targetBlock || targetBlock.name !== 'air') {
-        continue // この位置は使用不可
-      }
-
-      // 参照ブロック（設置位置の下のブロック）をチェック
-      const referenceBlock = bot.blockAt(placePos.offset(0, -1, 0))
-      if (!referenceBlock || referenceBlock.name === 'air') {
-        continue // 参照ブロックがない
-      }
-
-      try {
-        // primitives.placeBlockを使用
-        await primitives.placeBlock(bot, {
-          reference: referenceBlock.position,
-          face: { x: 0, y: 1, z: 0 }  // 上面に設置
-        })
-
-        console.log(`[WORKBENCH_CRAFT] 作業台を${placePos}に設置完了`)
-        placed = true
-        break
-
-      } catch (placeError) {
-        console.log(`[WORKBENCH_CRAFT] ${placePos}への設置失敗、次の位置を試行`)
-        continue
-      }
-    }
-
-    if (!placed) {
-      throw new Error('適切な設置位置が見つかりませんでした')
-    }
-
-  } catch (error) {
-    throw new Error(`作業台設置に失敗: ${error.message}`)
-  }
-}
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
 }

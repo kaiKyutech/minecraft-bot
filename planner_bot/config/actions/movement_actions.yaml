@@ -1,0 +1,29 @@
+# 移動関連アクション
+actions:
+  # === 作業台への移動 ===
+  - name: move_to_workbench
+    preconditions:
+      visible_workbench: true
+      nearby_workbench: false
+    effects:
+      nearby_workbench: true
+    cost: 5
+    skill: move_to
+    params:
+      blockType: "crafting_table"
+      maxDistance: 100
+      range: 3.0
+
+  # === 作業台の設置 ===
+  - name: place_workbench
+    preconditions:
+      has_workbench: true
+      visible_workbench: false
+    effects:
+      has_workbench: false
+      nearby_workbench: true
+      visible_workbench: true
+    cost: 3
+    skill: place_block
+    params:
+      blockName: "crafting_table"

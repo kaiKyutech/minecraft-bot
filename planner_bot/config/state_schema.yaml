@@ -43,6 +43,21 @@ inventory_states:
     default: false
     description: "木の斧を所持している"
 
+  has_wooden_sword:
+    type: boolean
+    default: false
+    description: "木の剣を所持している"
+
+  has_wooden_shovel:
+    type: boolean
+    default: false
+    description: "木のシャベルを所持している"
+
+  has_wooden_hoe:
+    type: boolean
+    default: false
+    description: "木のクワを所持している"
+
 # === 環境・リソース近接関連 ===
 environment_states:
   # カテゴリベース近接状態
@@ -78,6 +93,22 @@ environment_states:
     detection_method: "findBlock"
     block_name: "stone"
     max_distance: 32
+
+  nearby_workbench:
+    type: boolean
+    default: false
+    description: "使用可能距離（5ブロック以内）に作業台が存在する"
+    detection_method: "findBlock"
+    block_name: "crafting_table"
+    max_distance: 5
+
+  visible_workbench:
+    type: boolean
+    default: false
+    description: "視認可能距離（100ブロック以内）に作業台が存在する"
+    detection_method: "findBlock"
+    block_name: "crafting_table"
+    max_distance: 100
 
 # === 時間・環境条件 ===
 world_states:

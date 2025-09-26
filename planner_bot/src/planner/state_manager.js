@@ -23,6 +23,10 @@ class StateManager {
       isDay: bot.time ? bot.time.isDay : true,
       nearby_blocks: this.extractNearbyBlocks(bot) // 周辺ブロック検索
     }
+
+    // デバッグ用: GOAP状態をログ出力
+    this.logCurrentState(bot)
+
     return this.cache
   }
 
@@ -57,9 +61,15 @@ class StateManager {
             maxDistance: config.max_distance || 32,
             count: 1
           })
-          nearbyBlocks[config.block_name] = !!block
+          nearbyBlocks[stateName] = !!block
+
+          // 作業台の場合、詳細情報をログ出力
+          if (config.block_name === 'crafting_table' && block) {
+            const distance = bot.entity.position.distanceTo(block.position)
+            console.log(`[STATE] ${stateName}: found crafting_table at ${JSON.stringify(block.position)} (distance: ${distance.toFixed(2)})`)
+          }
         } catch (error) {
-          nearbyBlocks[config.block_name] = false
+          nearbyBlocks[stateName] = false
         }
       } else if (config.detection_method === 'findBlockCategory') {
         // カテゴリベースブロック検索
@@ -70,15 +80,35 @@ class StateManager {
             maxDistance: config.max_distance || 32,
             count: 1
           })
-          nearbyBlocks[config.category] = !!block
+          nearbyBlocks[stateName] = !!block
         } catch (error) {
-          nearbyBlocks[config.category] = false
+          nearbyBlocks[stateName] = false
         }
       }
     }
 
     return nearbyBlocks
     // 結果例: { oak_log: 5, birch_log: 2, stone_pickaxe: 1 }
+  }
+
+  logCurrentState(bot) {
+    const { buildState } = require('./state_builder')
+    const goapState = buildState(this.cache)
+
+    // Boolean値のみを1/0で表示
+    const booleanStates = []
+    const numericStates = []
+
+    for (const [key, value] of Object.entries(goapState)) {
+      if (typeof value === 'boolean') {
+        booleanStates.push(`${key}:${value ? 1 : 0}`)
+      } else if (typeof value === 'number') {
+        numericStates.push(`${key}:${value}`)
+      }
+    }
+
+    console.log(`[STATE] Boolean: ${booleanStates.join(' ')}`)
+    console.log(`[STATE] Numeric: ${numericStates.join(' ')}`)
   }
 
   clear() {

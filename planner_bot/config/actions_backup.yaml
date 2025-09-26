@@ -118,6 +118,48 @@ actions:
     params:
       recipe: "wooden_axe"
 
+  - name: craft_wooden_sword
+    preconditions:
+      has_plank: ">=2"
+      has_stick: ">=1"
+      has_workbench: true
+    effects:
+      has_plank: "-2"
+      has_stick: "-1"
+      has_wooden_sword: true
+    cost: 7
+    skill: workbench_craft
+    params:
+      recipe: "wooden_sword"
+
+  - name: craft_wooden_shovel
+    preconditions:
+      has_plank: ">=1"
+      has_stick: ">=2"
+      has_workbench: true
+    effects:
+      has_plank: "-1"
+      has_stick: "-2"
+      has_wooden_shovel: true
+    cost: 6
+    skill: workbench_craft
+    params:
+      recipe: "wooden_shovel"
+
+  - name: craft_wooden_hoe
+    preconditions:
+      has_plank: ">=2"
+      has_stick: ">=2"
+      has_workbench: true
+    effects:
+      has_plank: "-2"
+      has_stick: "-2"
+      has_wooden_hoe: true
+    cost: 7
+    skill: workbench_craft
+    params:
+      recipe: "wooden_hoe"
+
   # === 目標定義 ===
   - name: get_wooden_pickaxe
     preconditions:
@@ -125,6 +167,40 @@ actions:
     effects: {}
     cost: 0
     # skill不要（目標到達確認のみ）
+
+  - name: get_wooden_axe
+    preconditions:
+      has_wooden_axe: true
+    effects: {}
+    cost: 0
+
+  - name: get_wooden_sword
+    preconditions:
+      has_wooden_sword: true
+    effects: {}
+    cost: 0
+
+  - name: get_wooden_shovel
+    preconditions:
+      has_wooden_shovel: true
+    effects: {}
+    cost: 0
+
+  - name: get_wooden_hoe
+    preconditions:
+      has_wooden_hoe: true
+    effects: {}
+    cost: 0
+
+  - name: get_all_wooden_tools
+    preconditions:
+      has_wooden_pickaxe: true
+      has_wooden_axe: true
+      has_wooden_sword: true
+      has_wooden_shovel: true
+      has_wooden_hoe: true
+    effects: {}
+    cost: 0
 
   - name: get_logs
     preconditions:

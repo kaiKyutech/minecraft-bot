@@ -79,6 +79,9 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
     if (name === 'crafting_table') facts.has_workbench = count > 0
     if (name === 'wooden_pickaxe') facts.has_wooden_pickaxe = count > 0
     if (name === 'wooden_axe') facts.has_wooden_axe = count > 0
+    if (name === 'wooden_sword') facts.has_wooden_sword = count > 0
+    if (name === 'wooden_shovel') facts.has_wooden_shovel = count > 0
+    if (name === 'wooden_hoe') facts.has_wooden_hoe = count > 0
   }
 
   // カテゴリ集計結果を設定
@@ -93,9 +96,9 @@ function buildEnvironmentStates(facts, worldState, environmentSchema) {
   // スキーマで定義された環境状態を設定
   for (const [stateName, config] of Object.entries(environmentSchema)) {
     if (config.detection_method === 'findBlock') {
-      facts[stateName] = nearbyBlocks[config.block_name] || config.default
+      facts[stateName] = nearbyBlocks[stateName] || config.default
     } else if (config.detection_method === 'findBlockCategory') {
-      facts[stateName] = nearbyBlocks[config.category] || config.default
+      facts[stateName] = nearbyBlocks[stateName] || config.default
     } else {
       facts[stateName] = config.default
     }

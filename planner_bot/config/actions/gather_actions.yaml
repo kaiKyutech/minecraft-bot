@@ -1,0 +1,68 @@
+# 採掘関連アクション
+actions:
+  # === 採掘関連（gather skill使用） ===
+  # カテゴリベースの採掘
+  - name: gather_logs
+    preconditions:
+      inventory_space: true
+      nearby_log: true      # 任意の種類の原木が近くにある
+    effects:
+      has_log: "+4"
+    cost: 10
+    skill: gather
+    params:
+      itemName: log         # カテゴリ指定
+      count: 4
+
+  - name: gather_basic_stone
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true  # 石・丸石・黒石のいずれかが近くにある
+    effects:
+      has_cobblestone: "+8"
+    cost: 15
+    skill: gather
+    params:
+      itemName: basic_stone     # カテゴリ指定
+      count: 8
+
+  # 個別指定版も残す（特定の種類が必要な場合）
+  - name: gather_oak_logs
+    preconditions:
+      inventory_space: true
+      nearby_oak_log: true
+    effects:
+      has_log: "+4"
+    cost: 12  # カテゴリ版より少しコスト高
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 4
+
+  # === テスト用の単発採掘 ===
+  - name: gather_one_log
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+    effects:
+      has_log: "+1"
+    cost: 3
+    skill: gather
+    params:
+      itemName: log         # カテゴリ指定
+      count: 1
+
+  # === 目標（採掘系） ===
+  - name: get_logs
+    preconditions:
+      has_log: ">=4"
+    effects: {}
+    cost: 0
+    # skill不要（目標到達確認のみ）
+
+  - name: get_cobblestone
+    preconditions:
+      has_cobblestone: ">=8"
+    effects: {}
+    cost: 0
+    # skill不要（目標到達確認のみ）

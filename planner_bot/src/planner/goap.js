@@ -3,19 +3,43 @@ const path = require('path')
 const YAML = require('yaml')
 const { buildState } = require('./state_builder')
 
-const CONFIG_PATH = path.join(__dirname, '../../config/actions.yaml')
+const ACTIONS_DIR = path.join(__dirname, '../../config/actions')
+const ACTION_FILES = [
+  'gather_actions.yaml',
+  'hand_craft_actions.yaml',
+  'workbench_craft_actions.yaml',
+  'movement_actions.yaml'
+]
 const MAX_ITERATIONS = 500
 
 let domain
 
 function loadDomain() {
   if (domain) return domain
-  const raw = fs.readFileSync(CONFIG_PATH, 'utf8')
-  const parsed = YAML.parse(raw)
-  if (!parsed || !Array.isArray(parsed.actions)) {
-    throw new Error('actions.yaml に actions 配列が定義されていません')
+
+  // 複数のアクションファイルを読み込んでマージ
+  let allActions = []
+
+  for (const filename of ACTION_FILES) {
+    const filepath = path.join(ACTIONS_DIR, filename)
+    try {
+      const raw = fs.readFileSync(filepath, 'utf8')
+      const parsed = YAML.parse(raw)
+      if (parsed && Array.isArray(parsed.actions)) {
+        allActions = allActions.concat(parsed.actions)
+        console.log(`[GOAP] ${filename} から ${parsed.actions.length} 個のアクションを読み込みました`)
+      }
+    } catch (error) {
+      console.error(`[GOAP] ${filename} の読み込みに失敗: ${error.message}`)
+    }
   }
-  domain = parsed
+
+  if (allActions.length === 0) {
+    throw new Error('アクションが1つも読み込まれませんでした')
+  }
+
+  domain = { actions: allActions }
+  console.log(`[GOAP] 合計 ${allActions.length} 個のアクションを読み込みました`)
   return domain
 }
 
