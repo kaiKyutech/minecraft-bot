@@ -16,18 +16,15 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
   while (stepIndex < currentPlan.length) {
     const step = currentPlan[stepIndex]
 
-    // スキルがない場合は目標アクション（実行不要）
     if (!step.skill) {
       console.log(`目標達成: ${step.action}`)
       stepIndex++
       continue
     }
 
-    // 前提条件チェック
     const preconditionsSatisfied = await checkStepPreconditions(bot, step, stateManager)
 
     if (!preconditionsSatisfied) {
-      // リプランニング実行
       console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。リプランニングを実行...`)
       console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
 
@@ -37,21 +34,20 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
       logReplanDetails(newPlan)
 
-      bot.chat(`プラン変更: ${newPlan.map(s => s.action).join(' -> ')}`)
 
       currentPlan = newPlan
       stepIndex = 0
       continue
     }
 
-    // ステップ実行
     await executeStep(bot, step, stateManager)
     stepIndex++
   }
 
   console.log(`[EXECUTION] 全${currentPlan.length}ステップ完了`)
   console.log(`[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
-  bot.chat('目標を完了しました!')
+
+  bot.chat('目標を完了しました')
 }
 
 /**
@@ -85,7 +81,6 @@ async function executeStep(bot, step, stateManager) {
     throw new Error(`スキル ${step.skill} が見つかりません`)
   }
 
-  bot.chat(`実行: ${step.action}`)
   console.log(`[EXECUTION] ステップ: ${step.action}`)
 
   await skill(bot, step.params || {}, stateManager)

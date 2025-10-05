@@ -8,23 +8,15 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
  * @param {Object} stateManager - 状態マネージャー
  */
 async function handleGoalCommand(bot, goalName, stateManager) {
-  bot.chat(`受信した目標: ${goalName}`)
-
-  // プランニング
   const worldState = await stateManager.getState(bot)
   const plan = goapPlanner.plan(goalName, worldState)
 
   if (!plan) {
-    bot.chat('実行可能なプランが見つかりませんでした。')
+    bot.chat('実行可能なプランが見つかりませんでした')
     return
   }
 
-  // プラン詳細をログ出力
   logPlanDetails(goalName, plan)
-
-  bot.chat(`計画されたアクション: ${plan.map((step) => step.action).join(' -> ')}`)
-
-  // プラン実行（リプランニング対応）
   await executePlanWithReplanning(bot, goalName, plan, stateManager)
 }
 

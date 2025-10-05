@@ -47,6 +47,8 @@ bot.on('chat', async (username, message) => {
   debugLog(`chat from ${username}: ${message}`)
 
   try {
+    // コマンド実行前に状態を更新
+    await stateManager.refresh(bot)
     await handleChatCommand(bot, username, message, stateManager)
   } catch (error) {
     console.error('command execution error', error)

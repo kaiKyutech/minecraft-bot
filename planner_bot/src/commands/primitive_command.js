@@ -7,7 +7,6 @@ const primitives = require('../primitives')
  * @param {Object} stateManager - 状態マネージャー
  */
 async function handlePrimitiveCommand(bot, message, stateManager) {
-  // !primitive の後の部分を取得
   const body = message.replace(/^!primitive\s*/, '').trim()
 
   if (!body) {
@@ -31,20 +30,13 @@ async function handlePrimitiveCommand(bot, message, stateManager) {
     try {
       params = JSON.parse(paramString)
     } catch (error) {
-      bot.chat('パラメータは JSON 形式で指定してください')
-      console.log(`[PRIMITIVE DEBUG] param parse error: ${error.message}`)
+      bot.chat('パラメータはJSON形式で指定してください')
       return
     }
   }
 
-  bot.chat(`プリミティブ実行: ${nameToken}`)
-  const result = await primitiveFn(bot, params)
+  await primitiveFn(bot, params)
   await stateManager.refresh(bot)
-
-  if (typeof result !== 'undefined') {
-    console.log(`[PRIMITIVE DEBUG] result: ${JSON.stringify(result)}`)
-  }
-
   bot.chat('完了しました')
 }
 
