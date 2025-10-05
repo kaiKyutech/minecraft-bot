@@ -64,35 +64,35 @@ environment_states:
   nearby_log:
     type: boolean
     default: false
-    description: "近く（32ブロック以内）に任意の種類の原木が存在する"
+    description: "近くに任意の種類の原木が存在する"
     detection_method: "findBlockCategory"
     category: "log"
-    max_distance: 32
+    max_distance: 100
 
   nearby_basic_stone:
     type: boolean
     default: false
-    description: "近く（32ブロック以内）に基本的な石が存在する"
+    description: "近くに基本的な石が存在する"
     detection_method: "findBlockCategory"
     category: "basic_stone"
-    max_distance: 32
+    max_distance: 100
 
   # 個別指定も残しておく（特定の種類が必要な場合）
   nearby_oak_log:
     type: boolean
     default: false
-    description: "近く（32ブロック以内）にオーク原木が存在する"
+    description: "近くにオーク原木が存在する"
     detection_method: "findBlock"
     block_name: "oak_log"
-    max_distance: 32
+    max_distance: 100
 
   nearby_stone:
     type: boolean
     default: false
-    description: "近く（32ブロック以内）に石が存在する"
+    description: "近くに石が存在する"
     detection_method: "findBlock"
     block_name: "stone"
-    max_distance: 32
+    max_distance: 100
 
   nearby_workbench:
     type: boolean

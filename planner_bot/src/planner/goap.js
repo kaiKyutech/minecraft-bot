@@ -112,7 +112,9 @@ function getGoalState(goalName) {
     'get_wooden_axe': { has_wooden_axe: true },
     'get_wooden_sword': { has_wooden_sword: true },
     'get_wooden_shovel': { has_wooden_shovel: true },
-    'get_wooden_hoe': { has_wooden_hoe: true }
+    'get_wooden_hoe': { has_wooden_hoe: true },
+    'gather_basic_stone': { has_cobblestone: 8 },
+    'gather_logs': { has_log: 4 }
   }
   return goalMapping[goalName] || null
 }
