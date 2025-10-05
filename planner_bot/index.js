@@ -99,10 +99,16 @@ bot.on('chat', async (username, message) => {
 
     bot.chat(`計画されたアクション: ${plan.map((step) => step.action).join(' -> ')}`)
 
-    for (const step of plan) {
+    let currentPlan = [...plan] // プランのコピー
+    let stepIndex = 0
+
+    while (stepIndex < currentPlan.length) {
+      const step = currentPlan[stepIndex]
+
       // スキルがない場合は目標アクション（実行不要）
       if (!step.skill) {
         console.log(`目標達成: ${step.action}`)
+        stepIndex++
         continue
       }
 
@@ -111,11 +117,45 @@ bot.on('chat', async (username, message) => {
         throw new Error(`スキル ${step.skill} が見つかりません`)
       }
 
+      // 現在の状態でこのステップがまだ有効かチェック
+      const currentState = await stateManager.getState(bot)
+      const builtState = goapPlanner.buildState ? goapPlanner.buildState(currentState) : require('./src/planner/state_builder').buildState(currentState)
+
+      if (!areStepPreconditionsSatisfied(step, builtState)) {
+        console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。リプランニングを実行...`)
+        console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
+
+        // リプランニング実行
+        const newPlan = goapPlanner.plan(goalName, currentState)
+        if (!newPlan) {
+          throw new Error('リプランニングに失敗しました。実行可能なプランが見つかりません。')
+        }
+
+        console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
+        console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
+        console.log(`[REACTIVE_GOAP] 新プランの詳細:`)
+        newPlan.forEach((planStep, index) => {
+          console.log(`  ${index + 1}. ${planStep.action} (skill: ${planStep.skill || 'なし'})`)
+        })
+        bot.chat(`プラン変更: ${newPlan.map(s => s.action).join(' -> ')}`)
+
+        currentPlan = newPlan
+        stepIndex = 0
+        continue
+      }
+
       bot.chat(`実行: ${step.action}`)
+      console.log(`[EXECUTION] ステップ ${stepIndex + 1}/${currentPlan.length}: ${step.action}`)
+
       await skill(bot, step.params || {}, stateManager)
       await stateManager.refresh(bot)
+
+      console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
+      stepIndex++
     }
 
+    console.log(`[EXECUTION] 全${currentPlan.length}ステップ完了`)
+    console.log(`[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
     bot.chat('目標を完了しました!')
   } catch (error) {
     console.error('goal execution error', error)
@@ -183,6 +223,78 @@ async function handlePrimitiveCommand(raw) {
 
 function snakeToCamel(value) {
   return value.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+function areStepPreconditionsSatisfied(step, currentState) {
+  // GOAPアクションから前提条件を取得するため、アクションを検索
+  const domain = require('./src/planner/goap').loadDomain?.() || (() => {
+    const fs = require('fs')
+    const path = require('path')
+    const YAML = require('yaml')
+    const ACTIONS_DIR = path.join(__dirname, 'config/actions')
+    const ACTION_FILES = ['gather_actions.yaml', 'hand_craft_actions.yaml', 'workbench_craft_actions.yaml', 'movement_actions.yaml']
+
+    let allActions = []
+    for (const filename of ACTION_FILES) {
+      try {
+        const raw = fs.readFileSync(path.join(ACTIONS_DIR, filename), 'utf8')
+        const parsed = YAML.parse(raw)
+        if (parsed?.actions) allActions = allActions.concat(parsed.actions)
+      } catch (error) {
+        console.error(`Failed to load ${filename}:`, error.message)
+      }
+    }
+    return { actions: allActions }
+  })()
+
+  const action = domain.actions.find(a => a.name === step.action)
+  if (!action || !action.preconditions) return true // 前提条件なしは常にOK
+
+  // 前提条件をチェック
+  return Object.entries(action.preconditions).every(([key, condition]) => {
+    const value = currentState[key]
+    return evaluateCondition(value, condition)
+  })
+}
+
+function evaluateCondition(value, condition) {
+  if (typeof condition === 'boolean') {
+    return Boolean(value) === condition
+  }
+
+  if (typeof condition === 'number') {
+    return Number(value) === condition
+  }
+
+  if (typeof condition === 'string') {
+    const trimmed = condition.trim()
+
+    if (trimmed === 'true' || trimmed === 'false') {
+      return Boolean(value) === (trimmed === 'true')
+    }
+
+    const comparison = trimmed.match(/^(>=|<=|==|!=|>|<)\s*(-?\d+)$/)
+    if (comparison) {
+      const [, operator, rawNumber] = comparison
+      const target = Number(rawNumber)
+      const actual = Number(value) || 0
+      switch (operator) {
+        case '>': return actual > target
+        case '>=': return actual >= target
+        case '<': return actual < target
+        case '<=': return actual <= target
+        case '==': return actual === target
+        case '!=': return actual !== target
+        default: return false
+      }
+    }
+
+    if (/^-?\d+$/.test(trimmed)) {
+      return Number(value) === Number(trimmed)
+    }
+  }
+
+  return value === condition
 }
 
 async function handleSkillCommand(raw) {

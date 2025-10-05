@@ -46,10 +46,11 @@ function loadDomain() {
 function plan(goalName, worldState) {
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
-  const goalAction = actions.find((action) => action.name === goalName)
 
-  if (!goalAction) {
-    console.warn(`goal ${goalName} に対応するアクションが見つかりません`)
+  // 目標名から目標状態を定義
+  const goalState = getGoalState(goalName)
+  if (!goalState) {
+    console.warn(`未知の目標です: ${goalName}`)
     return null
   }
 
@@ -70,12 +71,11 @@ function plan(goalName, worldState) {
     open.sort((a, b) => a.cost - b.cost)
     const current = open.shift()
 
-    if (isGoalSatisfied(goalAction, current.state)) {
-      return [...current.actions, toPlanStep(goalAction)]
+    if (isGoalSatisfied(goalState, current.state)) {
+      return current.actions // 目標達成時は追加アクション不要
     }
 
     for (const action of actions) {
-      if (action.name === goalAction.name) continue
       if (!arePreconditionsSatisfied(action.preconditions, current.state)) continue
 
       const nextState = applyEffects(action.effects, current.state)
@@ -100,8 +100,25 @@ function plan(goalName, worldState) {
 
 // buildState関数は state_builder.js に移動
 
-function isGoalSatisfied(goalAction, state) {
-  return arePreconditionsSatisfied(goalAction.preconditions, state)
+function getGoalState(goalName) {
+  // 目標名から目標状態への変換
+  const goalMapping = {
+    'craft_wooden_pickaxe': { has_wooden_pickaxe: true },
+    'craft_wooden_axe': { has_wooden_axe: true },
+    'craft_wooden_sword': { has_wooden_sword: true },
+    'craft_wooden_shovel': { has_wooden_shovel: true },
+    'craft_wooden_hoe': { has_wooden_hoe: true },
+    'get_wooden_pickaxe': { has_wooden_pickaxe: true },
+    'get_wooden_axe': { has_wooden_axe: true },
+    'get_wooden_sword': { has_wooden_sword: true },
+    'get_wooden_shovel': { has_wooden_shovel: true },
+    'get_wooden_hoe': { has_wooden_hoe: true }
+  }
+  return goalMapping[goalName] || null
+}
+
+function isGoalSatisfied(goalState, state) {
+  return arePreconditionsSatisfied(goalState, state)
 }
 
 function arePreconditionsSatisfied(preconditions = {}, state) {
