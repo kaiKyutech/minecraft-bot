@@ -29,34 +29,34 @@ inventory_states:
     description: "所持している丸石の数"
 
   has_workbench:
-    type: boolean
-    default: false
-    description: "クラフト台を所持している"
+    type: number
+    default: 0
+    description: "所持しているクラフト台の数"
 
   has_wooden_pickaxe:
-    type: boolean
-    default: false
-    description: "木のツルハシを所持している"
+    type: number
+    default: 0
+    description: "所持している木のツルハシの数"
 
   has_wooden_axe:
-    type: boolean
-    default: false
-    description: "木の斧を所持している"
+    type: number
+    default: 0
+    description: "所持している木の斧の数"
 
   has_wooden_sword:
-    type: boolean
-    default: false
-    description: "木の剣を所持している"
+    type: number
+    default: 0
+    description: "所持している木の剣の数"
 
   has_wooden_shovel:
-    type: boolean
-    default: false
-    description: "木のシャベルを所持している"
+    type: number
+    default: 0
+    description: "所持している木のシャベルの数"
 
   has_wooden_hoe:
-    type: boolean
-    default: false
-    description: "木のクワを所持している"
+    type: number
+    default: 0
+    description: "所持している木のクワの数"
 
 # === 環境・リソース近接関連 ===
 environment_states:

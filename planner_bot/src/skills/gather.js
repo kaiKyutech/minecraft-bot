@@ -104,31 +104,36 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
 
       //掘削
+      console.log(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
       await primitives.digBlock(bot, { position: blockInfo.position })
+      console.log(`[GATHER] ブロック掘削完了`)
 
       //ドロップを回収
       const collectAttempts = params.collectAttempts ?? 5
       const collectDelayMs = params.collectRetryDelayMs ?? 100
       let dropCount = 0
 
+      console.log(`[GATHER] ドロップ回収開始（最大${collectAttempts}回試行）`)
       for (let attempt = 0; attempt < collectAttempts; attempt++) {
-        // console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
+        console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
         dropCount = await primitives.collectDrops(bot, {
           itemName: collectName,
           radius: collectRadius,
           waitMs: params.collectWaitMs
         })
 
-        // console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
+        console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
         if (dropCount > 0) break
         await delay(collectDelayMs)
       }
 
       if (dropCount === 0) {
+        console.log(`[GATHER] ドロップが見つからないため、ブロック位置へ接近`)
         await primitives.moveTo(bot, {
           position: blockInfo.position,
           range: 0.6
         })
+        console.log(`[GATHER] 接近完了、待機中`)
         await delay(collectDelayMs)
       }
     } catch (error) {
@@ -178,11 +183,43 @@ function resolveItemName(params, bot) {
   throw new Error(`未知のアイテム名です: ${itemName} (Minecraft ${bot.version} には存在しません)`)
 }
 
+// カテゴリ選択のキャッシュ（botごと、カテゴリごと）
+const blockSelectionCache = new Map()
+
 function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
   const categoryBlocks = categories.categories[categoryName].blocks
+  const cacheKey = `${bot.username}_${categoryName}`
+
+  // キャッシュがあれば、まずそれを試す
+  const cachedBlock = blockSelectionCache.get(cacheKey)
+  if (cachedBlock) {
+    try {
+      const block = bot.findBlock({
+        matching: (block) => block && block.name === cachedBlock,
+        maxDistance: 100,
+        count: 1
+      })
+
+      if (block) {
+        console.log(`[GATHER] カテゴリ「${categoryName}」から「${cachedBlock}」を選択（キャッシュ使用）`)
+        return cachedBlock
+      } else {
+        console.log(`[GATHER] キャッシュされたブロック「${cachedBlock}」が見つからず、再探索します`)
+        blockSelectionCache.delete(cacheKey)
+      }
+    } catch (error) {
+      console.log(`[GATHER] キャッシュされたブロック「${cachedBlock}」の探索に失敗、再探索します`)
+      blockSelectionCache.delete(cacheKey)
+    }
+  }
+
+  // キャッシュがないか、キャッシュが使えない場合は全探索
   console.log(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
 
-  // 近くにあるブロックを検索
+  let closestBlock = null
+  let closestDistance = Infinity
+
+  // すべてのブロック種類を試して、最も近いものを選択
   for (const blockName of categoryBlocks) {
     try {
       const block = bot.findBlock({
@@ -192,13 +229,23 @@ function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
       })
 
       if (block) {
-        console.log(`[GATHER] カテゴリ「${categoryName}」から「${blockName}」を選択`)
-        return blockName
+        const distance = bot.entity.position.distanceTo(block.position)
+        if (distance < closestDistance) {
+          closestBlock = blockName
+          closestDistance = distance
+        }
       }
     } catch (error) {
       // この種類は見つからない、次を試す
       continue
     }
+  }
+
+  if (closestBlock) {
+    console.log(`[GATHER] カテゴリ「${categoryName}」から「${closestBlock}」を選択（距離: ${closestDistance.toFixed(2)}）`)
+    // キャッシュに保存
+    blockSelectionCache.set(cacheKey, closestBlock)
+    return closestBlock
   }
 
   // どの種類も見つからない場合

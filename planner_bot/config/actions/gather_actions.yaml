@@ -7,24 +7,24 @@ actions:
       inventory_space: true
       nearby_log: true      # 任意の種類の原木が近くにある
     effects:
-      has_log: "+4"
-    cost: 10
+      has_log: "+1"
+    cost: 3
     skill: gather
     params:
       itemName: log         # カテゴリ指定
-      count: 4
+      count: 1
 
   - name: gather_basic_stone
     preconditions:
       inventory_space: true
       nearby_basic_stone: true  # 石・丸石・黒石のいずれかが近くにある
     effects:
-      has_cobblestone: "+8"
-    cost: 15
+      has_cobblestone: "+1"
+    cost: 4
     skill: gather
     params:
       itemName: basic_stone     # カテゴリ指定
-      count: 8
+      count: 1
 
   # 個別指定版も残す（特定の種類が必要な場合）
   - name: gather_oak_logs
@@ -32,12 +32,12 @@ actions:
       inventory_space: true
       nearby_oak_log: true
     effects:
-      has_log: "+4"
-    cost: 12  # カテゴリ版より少しコスト高
+      has_log: "+1"
+    cost: 3  # カテゴリ版より少しコスト高
     skill: gather
     params:
       itemName: oak_log
-      count: 4
+      count: 1
 
   # === テスト用の単発採掘 ===
   - name: gather_one_log

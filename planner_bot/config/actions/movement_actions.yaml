@@ -17,10 +17,10 @@ actions:
   # === 作業台の設置 ===
   - name: place_workbench
     preconditions:
-      has_workbench: true
+      has_workbench: ">=1"
       visible_workbench: false
     effects:
-      has_workbench: false
+      has_workbench: "-1"
       nearby_workbench: true
       visible_workbench: true
     cost: 3

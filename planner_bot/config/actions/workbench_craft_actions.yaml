@@ -9,7 +9,7 @@ actions:
     effects:
       has_plank: "-3"
       has_stick: "-2"
-      has_wooden_pickaxe: true
+      has_wooden_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -23,7 +23,7 @@ actions:
     effects:
       has_plank: "-3"
       has_stick: "-2"
-      has_wooden_axe: true
+      has_wooden_axe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -37,7 +37,7 @@ actions:
     effects:
       has_plank: "-2"
       has_stick: "-1"
-      has_wooden_sword: true
+      has_wooden_sword: "+1"
     cost: 7
     skill: workbench_craft
     params:
@@ -51,7 +51,7 @@ actions:
     effects:
       has_plank: "-1"
       has_stick: "-2"
-      has_wooden_shovel: true
+      has_wooden_shovel: "+1"
     cost: 6
     skill: workbench_craft
     params:
@@ -65,7 +65,7 @@ actions:
     effects:
       has_plank: "-2"
       has_stick: "-2"
-      has_wooden_hoe: true
+      has_wooden_hoe: "+1"
     cost: 7
     skill: workbench_craft
     params:
