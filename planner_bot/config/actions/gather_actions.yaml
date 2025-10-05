@@ -52,17 +52,3 @@ actions:
       itemName: log         # カテゴリ指定
       count: 1
 
-  # === 目標（採掘系） ===
-  - name: get_logs
-    preconditions:
-      has_log: ">=4"
-    effects: {}
-    cost: 0
-    # skill不要（目標到達確認のみ）
-
-  - name: get_cobblestone
-    preconditions:
-      has_cobblestone: ">=8"
-    effects: {}
-    cost: 0
-    # skill不要（目標到達確認のみ）

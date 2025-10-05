@@ -101,22 +101,69 @@ function plan(goalName, worldState) {
 // buildState関数は state_builder.js に移動
 
 function getGoalState(goalName) {
-  // 目標名から目標状態への変換
-  const goalMapping = {
-    'craft_wooden_pickaxe': { has_wooden_pickaxe: true },
-    'craft_wooden_axe': { has_wooden_axe: true },
-    'craft_wooden_sword': { has_wooden_sword: true },
-    'craft_wooden_shovel': { has_wooden_shovel: true },
-    'craft_wooden_hoe': { has_wooden_hoe: true },
-    'get_wooden_pickaxe': { has_wooden_pickaxe: true },
-    'get_wooden_axe': { has_wooden_axe: true },
-    'get_wooden_sword': { has_wooden_sword: true },
-    'get_wooden_shovel': { has_wooden_shovel: true },
-    'get_wooden_hoe': { has_wooden_hoe: true },
-    'gather_basic_stone': { has_cobblestone: 8 },
-    'gather_logs': { has_log: 4 }
+  const domain = loadDomain()
+
+  // アクション名と一致するアクションを探す
+  const action = domain.actions.find(a => a.name === goalName)
+
+  if (!action) {
+    console.warn(`未知の目標です: ${goalName}`)
+    return null
   }
-  return goalMapping[goalName] || null
+
+  // そのアクションの正の効果（増加する効果）をゴール状態として返す
+  return extractPositiveEffects(action.effects)
+}
+
+/**
+ * アクションの効果から正の効果（増加する効果）のみを抽出
+ * @param {Object} effects - アクションの効果
+ * @returns {Object} 正の効果のみを含むオブジェクト
+ */
+function extractPositiveEffects(effects) {
+  if (!effects || typeof effects !== 'object') {
+    return {}
+  }
+
+  const positiveEffects = {}
+
+  for (const [key, value] of Object.entries(effects)) {
+    // 文字列で減少を示す場合（例: "-2", "-3"）はスキップ
+    if (typeof value === 'string' && value.startsWith('-')) {
+      continue
+    }
+
+    // 文字列で増加を示す場合（例: "+4"）
+    // これは相対的な増加なので絶対値に変換できない → スキップ
+    // （ただし、将来的には現在値を考慮して目標値を設定することも可能）
+    if (typeof value === 'string' && value.startsWith('+')) {
+      const delta = Number(value)
+      if (delta > 0) {
+        // とりあえず増加分をそのまま目標値とする
+        // 例: "+4" → 4 （現在値+4ではなく、4個を目標とする）
+        positiveEffects[key] = delta
+      }
+      continue
+    }
+
+    // 数値の場合: 正の値のみ
+    if (typeof value === 'number' && value > 0) {
+      positiveEffects[key] = value
+    }
+    // booleanでtrueの場合
+    else if (value === true || value === 'true') {
+      positiveEffects[key] = true
+    }
+    // 文字列で数値の場合
+    else if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) {
+      const num = Number(value.trim())
+      if (num > 0) {
+        positiveEffects[key] = num
+      }
+    }
+  }
+
+  return positiveEffects
 }
 
 function isGoalSatisfied(goalState, state) {
