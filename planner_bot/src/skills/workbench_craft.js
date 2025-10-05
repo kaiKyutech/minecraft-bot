@@ -15,24 +15,10 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
 
   console.log(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」を作業台で実行`)
 
-  // レシピ名からアイテム名への変換
-  const recipeToItem = {
-    'wooden_pickaxe': 'wooden_pickaxe',
-    'wooden_axe': 'wooden_axe',
-    'wooden_sword': 'wooden_sword',
-    'wooden_shovel': 'wooden_shovel',
-    'wooden_hoe': 'wooden_hoe',
-    'stone_pickaxe': 'stone_pickaxe',
-    'stone_axe': 'stone_axe',
-    'stone_sword': 'stone_sword',
-    'stone_shovel': 'stone_shovel',
-    'stone_hoe': 'stone_hoe'
-  }
-
-  const itemName = recipeToItem[params.recipe]
-  if (!itemName) {
-    throw new Error(`未知のレシピです: ${params.recipe}`)
-  }
+  // レシピ名をそのままアイテム名として使用
+  // Mineflayerのbot.recipesFor()が自動的にレシピを検索するため、
+  // 手動マッピングは不要。任意のMinecraftアイテム名を指定可能
+  const itemName = params.recipe
 
   try {
     // GOAPが nearby_workbench: true を保証済みのため、近くの作業台を検索
