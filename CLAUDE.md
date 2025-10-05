@@ -31,10 +31,17 @@ Advanced experimental bot with GOAP (Goal-Oriented Action Planning) system:
 
 **Core Components:**
 - **GOAP Planner** (`src/planner/goap.js`) - A* pathfinding algorithm for action planning
-- **State Manager** (`src/planner/state_manager.js`) - Manages bot's world state
+- **State Manager** (`src/planner/state_manager.js`) - Manages bot's world state and caching
+- **State Builder** (`src/planner/state_builder.js`) - Converts raw world state into GOAP facts based on state schema
 - **Skills System** (`src/skills/`) - High-level behaviors (gathering, crafting, etc.)
-- **Primitives** (`src/primitives.js`) - Low-level bot actions
-- **Configuration** (`config/actions.yaml`) - Defines available actions, preconditions, and effects
+- **Primitives** (`src/primitives.js`) - Low-level bot actions (moveTo, digBlock, craftItem, etc.)
+- **Action Configuration** (`config/actions/`) - Split into multiple YAML files defining actions:
+  - `gather_actions.yaml` - Resource gathering actions
+  - `hand_craft_actions.yaml` - Crafting without workbench
+  - `workbench_craft_actions.yaml` - Crafting table recipes
+  - `movement_actions.yaml` - Movement and placement actions
+- **State Schema** (`config/state_schema.yaml`) - Defines all available state variables (inventory, environment, world)
+- **Block Categories** (`config/block_categories.yaml`) - Groups similar blocks (logs, planks, stones) for flexible matching
 
 **Bot Commands:**
 - `!goal <goal_name>` - Execute a planned sequence of actions to achieve a goal
@@ -46,6 +53,7 @@ The bot uses GOAP to automatically plan action sequences. For example, requestin
 1. Analyze current world state vs goal requirements
 2. Generate optimal action sequence (gather logs → craft planks → craft sticks → craft pickaxe)
 3. Execute each step using the appropriate skills
+4. **Reactive Replanning** - If preconditions fail during execution (e.g., items dropped, resources lost), the planner automatically generates a new plan from the current state
 
 ## Code Conventions
 
@@ -67,3 +75,11 @@ The bot uses GOAP to automatically plan action sequences. For example, requestin
 - Mock Mineflayer sockets and chat for unit tests
 - Document manual verification with server version, seed, and plugin details
 - Test both simple command responses and complex GOAP planning scenarios
+
+## Planner Bot Refactoring Notes
+
+When refactoring `planner_bot/index.js`:
+- **Avoid duplicating logic** - `evaluateCondition` and precondition checking already exist in `goap.js`
+- **Separate concerns** - Consider extracting command handlers, plan execution, and replanning logic into separate modules
+- **Reuse domain loading** - Use `goap.loadDomain()` instead of duplicating YAML loading code
+- **Main responsibilities** should remain: bot initialization, chat command routing, plan execution orchestration

@@ -237,5 +237,8 @@ function toPlanStep(action) {
 }
 
 module.exports = {
-  plan
+  plan,
+  loadDomain,
+  evaluateCondition,
+  arePreconditionsSatisfied
 }
