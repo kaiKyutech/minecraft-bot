@@ -71,3 +71,74 @@ actions:
     params:
       recipe: "wooden_hoe"
 
+  # === 石のツール ===
+  - name: craft_stone_pickaxe
+    preconditions:
+      has_cobblestone: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-3"
+      has_stick: "-2"
+      has_stone_pickaxe: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "stone_pickaxe"
+
+  - name: craft_stone_axe
+    preconditions:
+      has_cobblestone: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-3"
+      has_stick: "-2"
+      has_stone_axe: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "stone_axe"
+
+  - name: craft_stone_sword
+    preconditions:
+      has_cobblestone: ">=2"
+      has_stick: ">=1"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-2"
+      has_stick: "-1"
+      has_stone_sword: "+1"
+    cost: 7
+    skill: workbench_craft
+    params:
+      recipe: "stone_sword"
+
+  - name: craft_stone_shovel
+    preconditions:
+      has_cobblestone: ">=1"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-1"
+      has_stick: "-2"
+      has_stone_shovel: "+1"
+    cost: 6
+    skill: workbench_craft
+    params:
+      recipe: "stone_shovel"
+
+  - name: craft_stone_hoe
+    preconditions:
+      has_cobblestone: ">=2"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-2"
+      has_stick: "-2"
+      has_stone_hoe: "+1"
+    cost: 7
+    skill: workbench_craft
+    params:
+      recipe: "stone_hoe"
+
