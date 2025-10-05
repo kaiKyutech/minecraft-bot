@@ -43,5 +43,3 @@ categories:
     blocks:
       - stone
       - cobblestone
-      # blackstoneも含める（黒石として別扱いも可能）
-      - blackstone
