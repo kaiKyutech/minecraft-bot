@@ -40,8 +40,26 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       continue
     }
 
-    await executeStep(bot, step, stateManager)
-    stepIndex++
+    // ステップ実行（実行時エラーもリプランニングで対応）
+    try {
+      await executeStep(bot, step, stateManager)
+      stepIndex++
+    } catch (error) {
+      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の実行中にエラーが発生: ${error.message}`)
+      console.log(`[REACTIVE_GOAP] 現在の状態から再度プランニングします...`)
+
+      // 状態を更新してリプランニング
+      await stateManager.refresh(bot)
+      const newPlan = await replan(bot, goalName, stateManager)
+
+      console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
+      console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
+      logReplanDetails(newPlan)
+
+      currentPlan = newPlan
+      stepIndex = 0
+      continue
+    }
   }
 
   console.log(`[EXECUTION] 全${currentPlan.length}ステップ完了`)

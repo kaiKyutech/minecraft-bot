@@ -1,54 +1,57 @@
 # 採掘関連アクション
 actions:
-  # === 採掘関連（gather skill使用） ===
-  # カテゴリベースの採掘
-  - name: gather_logs
-    preconditions:
-      inventory_space: true
-      nearby_log: true      # 任意の種類の原木が近くにある
-    effects:
-      has_log: "+1"
-    cost: 3
-    skill: gather
-    params:
-      itemName: log         # カテゴリ指定
-      count: 1
-
-  - name: gather_basic_stone
-    preconditions:
-      inventory_space: true
-      nearby_basic_stone: true  # 石・丸石・黒石のいずれかが近くにある
-    effects:
-      has_cobblestone: "+1"
-    cost: 4
-    skill: gather
-    params:
-      itemName: basic_stone     # カテゴリ指定
-      count: 1
-
-  # 個別指定版も残す（特定の種類が必要な場合）
-  - name: gather_oak_logs
-    preconditions:
-      inventory_space: true
-      nearby_oak_log: true
-    effects:
-      has_log: "+1"
-    cost: 3  # カテゴリ版より少しコスト高
-    skill: gather
-    params:
-      itemName: oak_log
-      count: 1
-
-  # === テスト用の単発採掘 ===
-  - name: gather_one_log
+  # === 木の伐採 ===
+  # 素手で木を伐る（非効率）
+  - name: gather_logs_barehand
     preconditions:
       inventory_space: true
       nearby_log: true
     effects:
       has_log: "+1"
-    cost: 3
+    cost: 10
     skill: gather
     params:
-      itemName: log         # カテゴリ指定
+      itemName: log
       count: 1
 
+  # 斧で木を伐る（効率的）
+  - name: gather_logs_with_axe
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+      has_any_axe: true
+    effects:
+      has_log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: log
+      count: 1
+
+  # === 石の採掘 ===
+  # 素手で石を掘る（非効率）
+  - name: gather_basic_stone_barehand
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true
+    effects:
+      has_cobblestone: "+1"
+    cost: 20
+    skill: gather
+    params:
+      itemName: basic_stone
+      count: 1
+
+  # ピッケルで石を掘る（効率的）
+  - name: gather_basic_stone_with_pickaxe
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true
+      has_any_pickaxe: true
+    effects:
+      has_cobblestone: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: basic_stone
+      count: 1

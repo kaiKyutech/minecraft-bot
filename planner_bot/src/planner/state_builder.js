@@ -76,18 +76,26 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   // 個別アイテムの処理
   for (const [name, count] of Object.entries(counts)) {
     if (name === 'stick') facts.has_stick = count
-    if (name === 'crafting_table') facts.has_workbench = count > 0
-    if (name === 'wooden_pickaxe') facts.has_wooden_pickaxe = count > 0
-    if (name === 'wooden_axe') facts.has_wooden_axe = count > 0
-    if (name === 'wooden_sword') facts.has_wooden_sword = count > 0
-    if (name === 'wooden_shovel') facts.has_wooden_shovel = count > 0
-    if (name === 'wooden_hoe') facts.has_wooden_hoe = count > 0
+    if (name === 'crafting_table') facts.has_workbench = count
+    if (name === 'wooden_pickaxe') facts.has_wooden_pickaxe = count
+    if (name === 'wooden_axe') facts.has_wooden_axe = count
+    if (name === 'wooden_sword') facts.has_wooden_sword = count
+    if (name === 'wooden_shovel') facts.has_wooden_shovel = count
+    if (name === 'wooden_hoe') facts.has_wooden_hoe = count
+    if (name === 'stone_pickaxe') facts.has_stone_pickaxe = count
+    if (name === 'stone_axe') facts.has_stone_axe = count
+    if (name === 'stone_sword') facts.has_stone_sword = count
+    if (name === 'stone_shovel') facts.has_stone_shovel = count
+    if (name === 'stone_hoe') facts.has_stone_hoe = count
   }
 
   // カテゴリ集計結果を設定
   facts.has_log = logCount
   facts.has_plank = plankCount
   facts.has_cobblestone = basicStoneCount // basic_stone → cobblestone として扱う
+
+  // 複合状態を計算
+  calculateCompositeStates(facts)
 }
 
 function buildEnvironmentStates(facts, worldState, environmentSchema) {
@@ -118,6 +126,27 @@ function buildWorldStates(facts, worldState, worldSchema) {
 }
 
 /**
+ * 複合状態を計算（state_schema.yamlの定義に基づく）
+ * @param {Object} state - 状態オブジェクト
+ */
+function calculateCompositeStates(state) {
+  const schema = loadStateSchema()
+
+  // inventory_states, environment_states, world_statesの全てをチェック
+  for (const section of ['inventory_states', 'environment_states', 'world_states']) {
+    if (!schema[section]) continue
+
+    for (const [stateName, config] of Object.entries(schema[section])) {
+      // computed: true かつ depends_on が定義されている場合
+      if (config.computed && Array.isArray(config.depends_on)) {
+        // depends_onの変数のいずれかが >= 1 なら true
+        state[stateName] = config.depends_on.some(depVar => (state[depVar] || 0) >= 1)
+      }
+    }
+  }
+}
+
+/**
  * 利用可能な状態変数の一覧を取得
  */
 function getAvailableStates() {
@@ -135,5 +164,6 @@ module.exports = {
   buildState,
   getAvailableStates,
   loadStateSchema,
-  loadBlockCategories
+  loadBlockCategories,
+  calculateCompositeStates
 }

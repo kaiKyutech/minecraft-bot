@@ -83,6 +83,21 @@ inventory_states:
     default: 0
     description: "所持している石のクワの数"
 
+  # === ツール所持の複合判定 ===
+  has_any_pickaxe:
+    type: boolean
+    default: false
+    description: "任意のピッケル（木・石・鉄・ダイヤ等）を所持している"
+    computed: true
+    depends_on: ["has_wooden_pickaxe", "has_stone_pickaxe"]
+
+  has_any_axe:
+    type: boolean
+    default: false
+    description: "任意の斧（木・石・鉄・ダイヤ等）を所持している"
+    computed: true
+    depends_on: ["has_wooden_axe", "has_stone_axe"]
+
 # === 環境・リソース近接関連 ===
 environment_states:
   # カテゴリベース近接状態

@@ -18,7 +18,30 @@ async function moveTo(bot, params = {}) {
     ? new goals.GoalNear(position.x, position.y, position.z, range)
     : new goals.GoalBlock(position.x, position.y, position.z)
 
-  await bot.pathfinder.goto(goal)
+  // タイムアウトの設定
+  let timeout = params.timeout
+  if (timeout === undefined) {
+    // タイムアウトが指定されていない場合は、距離に応じて動的に設定
+    const distance = bot.entity.position.distanceTo(position)
+    // 1ブロックあたり200ms + 基本10秒（最小10秒、最大60秒）
+    timeout = Math.max(10000, Math.min(60000, 10000 + distance * 200))
+  }
+
+  // タイムアウトがnullの場合はタイムアウトなし
+  if (timeout === null) {
+    await bot.pathfinder.goto(goal)
+    return
+  }
+
+  // タイムアウト付きでpathfindingを実行
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`moveTo timeout (${timeout}ms)`)), timeout)
+  })
+
+  await Promise.race([
+    bot.pathfinder.goto(goal),
+    timeoutPromise
+  ])
 }
 
 async function digBlock(bot, params = {}) {
@@ -243,8 +266,8 @@ async function collectDrops(bot, params = {}) {
 
   for (const drop of drops) {
     try {
-      // ドロップに近づく
-      await moveTo(bot, { position: drop.position, range: 1.2 })
+      // ドロップに近づく（タイムアウト3秒）
+      await moveTo(bot, { position: drop.position, range: 1.2, timeout: 3000 })
 
       // 少し待ってから再度エンティティの存在確認
       await delay(params.waitMs ?? 150)
@@ -256,8 +279,8 @@ async function collectDrops(bot, params = {}) {
         continue
       }
 
-      // より近づいて確実にピックアップを誘発
-      await moveTo(bot, { position: drop.position, range: 0.8 })
+      // より近づいて確実にピックアップを誘発（タイムアウト2秒）
+      await moveTo(bot, { position: drop.position, range: 0.8, timeout: 2000 })
       await delay(100)
 
       // もう一度存在確認
@@ -265,7 +288,9 @@ async function collectDrops(bot, params = {}) {
         pickedUpCount++
       }
     } catch (error) {
-      // console.log(`[COLLECT] Failed to collect drop: ${error.message}`)
+      console.log(`[COLLECT] ドロップ回収失敗（スキップ）: ${error.message}`)
+      // ドロップ1個の回収失敗は許容して次に進む
+      continue
     }
   }
 

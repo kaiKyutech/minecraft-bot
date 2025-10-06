@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const YAML = require('yaml')
-const { buildState } = require('./state_builder')
+const { buildState, loadStateSchema, calculateCompositeStates } = require('./state_builder')
 
 const ACTIONS_DIR = path.join(__dirname, '../../config/actions')
 const ACTION_FILES = [
@@ -66,17 +66,33 @@ function plan(goalInput, worldState) {
   // 状態指定の場合は、現在値を考慮して調整
   const adjustedGoal = adjustGoalForCurrentState(goalState, initialState, parsedGoal)
 
-  console.log(`[GOAP Debug] goalInput: ${goalInput}`)
-  console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
-  console.log(`[GOAP Debug] goalState:`, goalState)
-  console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
-  console.log(`[GOAP Debug] initialState (relevant):`, {
-    has_log: initialState.has_log,
-    has_plank: initialState.has_plank,
-    has_stick: initialState.has_stick,
-    has_wooden_pickaxe: initialState.has_wooden_pickaxe,
-    nearby_workbench: initialState.nearby_workbench
-  })
+  // console.log(`[GOAP Debug] goalInput: ${goalInput}`)
+  // console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
+  // console.log(`[GOAP Debug] goalState:`, goalState)
+  // console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
+  // console.log(`[GOAP Debug] initialState (relevant):`, {
+  //   has_log: initialState.has_log,
+  //   has_plank: initialState.has_plank,
+  //   has_stick: initialState.has_stick,
+  //   has_wooden_pickaxe: initialState.has_wooden_pickaxe,
+  //   nearby_workbench: initialState.nearby_workbench
+  // })
+
+  // 関連性フィルタリング: ゴールに関連するアクションだけを抽出
+  const relevantVars = analyzeRelevantVariables(adjustedGoal, actions)
+  const filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
+
+  console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
+  console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+  console.log(`[GOAP] フィルタされたアクション:`, filteredActions.map(a => a.name))
+
+  // 斧関連のアクションが含まれているか確認
+  const axeRelated = filteredActions.filter(a => a.name.includes('axe') || a.name.includes('with_axe'))
+  if (axeRelated.length > 0) {
+    console.log(`[GOAP] 斧関連アクション:`, axeRelated.map(a => a.name))
+  } else {
+    console.log(`[GOAP] 警告: 斧関連アクションがフィルタされています`)
+  }
 
   const open = [{
     state: initialState,
@@ -93,29 +109,30 @@ function plan(goalInput, worldState) {
     open.sort((a, b) => a.cost - b.cost)
     const current = open.shift()
 
-    if (iterations <= 10 || current.state.has_workbench > 0) {
-      console.log(`[GOAP Debug Iter ${iterations}] Current state has_workbench: ${current.state.has_workbench}, has_plank: ${current.state.has_plank}, has_stick: ${current.state.has_stick}, nearby_workbench: ${current.state.nearby_workbench}`)
-    }
+    // if (iterations <= 10 || current.state.has_workbench > 0) {
+    //   console.log(`[GOAP Debug Iter ${iterations}] Current state has_workbench: ${current.state.has_workbench}, has_plank: ${current.state.has_plank}, has_stick: ${current.state.has_stick}, nearby_workbench: ${current.state.nearby_workbench}`)
+    // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
       return current.actions
     }
 
-    for (const action of actions) {
+    for (const action of filteredActions) {
       if (!arePreconditionsSatisfied(action.preconditions, current.state)) {
         // デバッグ: どのアクションが前提条件を満たさないか
-        if (iterations <= 5) {
-          console.log(`[GOAP Debug] Action ${action.name} failed preconditions`)
-          console.log(`  Preconditions:`, action.preconditions)
-          console.log(`  Current state:`, current.state)
-        }
+        // if (iterations <= 5) {
+        //   console.log(`[GOAP Debug] Action ${action.name} failed preconditions`)
+        //   console.log(`  Preconditions:`, action.preconditions)
+        //   console.log(`  Current state:`, current.state)
+        // }
         continue
       }
 
       const nextState = applyEffects(action.effects, current.state)
-      if (iterations <= 5) {
-        console.log(`[GOAP Debug] Action ${action.name} passed, nextState:`, nextState)
-      }
+      // if (iterations <= 5) {
+      //   console.log(`[GOAP Debug] Action ${action.name} passed, nextState:`, nextState)
+      //   console.log(`[GOAP Debug]   has_any_axe: ${nextState.has_any_axe}, has_wooden_axe: ${nextState.has_wooden_axe}`)
+      // }
       const stepCost = Number.isFinite(action.cost) ? action.cost : 1
       const totalCost = current.cost + stepCost
       const signature = serializeState(nextState)
@@ -355,7 +372,10 @@ function applyEffects(effects = {}, state) {
     next[key] = rawEffect
   }
 
-  return normaliseNumericState(next)
+  const normalized = normaliseNumericState(next)
+  // state_builder.jsの共有関数を使用して複合状態を再計算
+  calculateCompositeStates(normalized)
+  return normalized
 }
 
 function evaluateCondition(value, condition) {
@@ -420,6 +440,93 @@ function toPlanStep(action) {
     params: action.params || null,
     cost: Number.isFinite(action.cost) ? action.cost : 1
   }
+}
+
+/**
+ * state_schema.yamlから複合状態の依存関係を読み込む
+ * @returns {Object} 複合状態名をキー、依存変数配列を値とするマップ
+ */
+function loadCompositeStateDependencies() {
+  const schema = loadStateSchema()
+  const dependencies = {}
+
+  // inventory_states, environment_states, world_statesの全てをチェック
+  for (const section of ['inventory_states', 'environment_states', 'world_states']) {
+    if (!schema[section]) continue
+
+    for (const [stateName, config] of Object.entries(schema[section])) {
+      // computed: true かつ depends_on が定義されている場合
+      if (config.computed && Array.isArray(config.depends_on)) {
+        dependencies[stateName] = config.depends_on
+      }
+    }
+  }
+
+  return dependencies
+}
+
+/**
+ * 後方解析: ゴールに関連する状態変数を特定
+ * @param {Object} goal - 目標状態
+ * @param {Array} actions - 全アクション
+ * @returns {Set} 関連する状態変数のセット
+ */
+function analyzeRelevantVariables(goal, actions) {
+  const relevant = new Set(Object.keys(goal))
+  const queue = [...relevant]
+
+  // state_schema.yamlから複合状態の依存関係を動的に読み込む
+  const compositeStateDependencies = loadCompositeStateDependencies()
+
+  while (queue.length > 0) {
+    const variable = queue.shift()
+
+    // 複合状態の場合、その依存変数も追加
+    if (compositeStateDependencies[variable]) {
+      for (const depVar of compositeStateDependencies[variable]) {
+        if (!relevant.has(depVar)) {
+          relevant.add(depVar)
+          queue.push(depVar)
+        }
+      }
+    }
+
+    // この変数に影響を与えるアクションを探す
+    for (const action of actions) {
+      // このアクションの効果にvariableが含まれているか
+      if (action.effects && action.effects[variable] !== undefined) {
+        // このアクションの前提条件も関連する
+        if (action.preconditions) {
+          for (const preVar of Object.keys(action.preconditions)) {
+            if (!relevant.has(preVar)) {
+              relevant.add(preVar)
+              queue.push(preVar)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return relevant
+}
+
+/**
+ * アクションが関連変数に影響するかチェック
+ * @param {Object} action - アクション
+ * @param {Set} relevantVars - 関連変数のセット
+ * @returns {boolean} 関連があればtrue
+ */
+function isActionRelevant(action, relevantVars) {
+  // アクションの効果が関連変数のいずれかに影響するか
+  if (action.effects) {
+    for (const effectVar of Object.keys(action.effects)) {
+      if (relevantVars.has(effectVar)) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 module.exports = {
