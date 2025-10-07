@@ -3,11 +3,20 @@
 
 # === インベントリ関連 ===
 inventory_states:
+  # === 動的インベントリ（全アイテムを自動追跡） ===
+  inventory:
+    type: object
+    default: {}
+    description: "インベントリ内の全アイテムとその個数を自動追跡（例: {oak_log: 5, iron_ingot: 3}）"
+    dynamic: true
+    source: "bot.inventory.counts"
+
   inventory_space:
     type: boolean
     default: true
     description: "インベントリに空きがある"
 
+  # === カテゴリ集約（複数種類のアイテムを合計） ===
   has_log:
     type: number
     default: 0

@@ -50,6 +50,9 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
     facts[stateName] = config.default
   }
 
+  // 動的インベントリ: 全アイテムをそのまま保存（自動追跡）
+  facts.inventory = { ...counts }
+
   // カテゴリベースでインベントリを集計
   let logCount = 0
   let plankCount = 0

@@ -156,13 +156,22 @@ function plan(goalInput, worldState) {
 
 /**
  * 目標入力をパース
- * @param {string} input - ユーザー入力（例: "has_log:8", "craft_wooden_pickaxe"）
+ * @param {string} input - ユーザー入力（例: "has_log:8", "inventory.furnace:1", "craft_wooden_pickaxe"）
  * @returns {Object|null} パース結果
  */
 function parseGoalInput(input) {
   const trimmed = input.trim()
 
-  // パターン1: 状態指定（例: "has_log:8", "has_wooden_pickaxe:2"）
+  // パターン1: ドット記法の状態指定（例: "inventory.furnace:1", "inventory.iron_ingot:5"）
+  if (/^[a-z_]+\.[a-z_]+:\d+$/.test(trimmed)) {
+    const [key, value] = trimmed.split(':')
+    return {
+      type: 'state',
+      state: { [key]: Number(value) }
+    }
+  }
+
+  // パターン2: 従来の状態指定（例: "has_log:8", "has_wooden_pickaxe:2"）
   if (/^has_[a-z_]+:\d+$/.test(trimmed)) {
     const [key, value] = trimmed.split(':')
     return {
@@ -171,7 +180,7 @@ function parseGoalInput(input) {
     }
   }
 
-  // パターン2: アクション名（例: "craft_wooden_pickaxe", "gather_logs"）
+  // パターン3: アクション名（例: "craft_wooden_pickaxe", "gather_logs"）
   if (/^[a-z_]+$/.test(trimmed)) {
     return {
       type: 'action',
@@ -179,7 +188,7 @@ function parseGoalInput(input) {
     }
   }
 
-  // パターン3: アクション+パラメータ（将来の拡張用）
+  // パターン4: アクション+パラメータ（将来の拡張用）
   // 例: "gather_logs count:8"
   const match = trimmed.match(/^([a-z_]+)\s+(.+)$/)
   if (match) {
@@ -326,7 +335,20 @@ function isGoalSatisfied(goalState, state) {
 
 function arePreconditionsSatisfied(preconditions = {}, state) {
   return Object.entries(preconditions).every(([key, condition]) => {
-    const value = state[key]
+    let value
+
+    // ドット記法のサポート（例: "inventory.iron_ingot"）
+    if (key.includes('.')) {
+      const parts = key.split('.')
+      value = state
+      for (const part of parts) {
+        value = value?.[part]
+        if (value === undefined) break
+      }
+    } else {
+      value = state[key]
+    }
+
     return evaluateCondition(value, condition)
   })
 }
@@ -335,6 +357,38 @@ function applyEffects(effects = {}, state) {
   const next = { ...state }
 
   for (const [key, rawEffect] of Object.entries(effects)) {
+    // ドット記法のサポート（例: "inventory.iron_ingot: -3"）
+    if (key.includes('.')) {
+      const parts = key.split('.')
+      const lastKey = parts.pop()
+
+      // ネストされたオブジェクトをイミュータブルにコピー
+      let current = next
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        if (!current[part]) {
+          current[part] = {}
+        } else if (current[part] === state[part]) {
+          // 元のstateと同じ参照なら、コピーを作成
+          current[part] = { ...current[part] }
+        }
+        current = current[part]
+      }
+
+      // 効果を適用
+      if (typeof rawEffect === 'string' && /^[+-]\d+$/.test(rawEffect.trim())) {
+        const delta = Number(rawEffect)
+        const oldValue = typeof current[lastKey] === 'number' ? current[lastKey] : Number(current[lastKey]) || 0
+        current[lastKey] = Math.max(0, oldValue + delta)
+      } else if (typeof rawEffect === 'number') {
+        current[lastKey] = Math.max(0, rawEffect)
+      } else {
+        current[lastKey] = rawEffect
+      }
+      continue
+    }
+
+    // 既存のロジック（ドット記法以外）
     if (typeof rawEffect === 'number') {
       next[key] = rawEffect
       continue

@@ -142,3 +142,34 @@ actions:
     params:
       recipe: "stone_hoe"
 
+  # === 新システムの例：ドット記法を使用 ===
+  # state_schema.yamlへの追加不要！
+  # state_builder.jsへの追加不要！
+  # inventoryが自動的に追跡します
+
+  # かまど（作業台が必要）
+  - name: craft_furnace
+    preconditions:
+      has_cobblestone: ">=8"
+      nearby_workbench: true
+    effects:
+      has_cobblestone: "-8"
+      inventory.furnace: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "furnace"
+
+  # はさみ（鉄インゴットが必要、作業台必要）
+  - name: craft_shears
+    preconditions:
+      inventory.iron_ingot: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-2"
+      inventory.shears: "+1"
+    cost: 5
+    skill: workbench_craft
+    params:
+      recipe: "shears"
+
