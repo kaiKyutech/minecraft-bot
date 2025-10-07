@@ -109,9 +109,9 @@ function plan(goalInput, worldState) {
     open.sort((a, b) => a.cost - b.cost)
     const current = open.shift()
 
-    // if (iterations <= 10 || current.state.has_workbench > 0) {
-    //   console.log(`[GOAP Debug Iter ${iterations}] Current state has_workbench: ${current.state.has_workbench}, has_plank: ${current.state.has_plank}, has_stick: ${current.state.has_stick}, nearby_workbench: ${current.state.nearby_workbench}`)
-    // }
+    if (iterations <= 10 || current.state.has_workbench > 0) {
+      console.log(`[GOAP Debug Iter ${iterations}] Current state has_workbench: ${current.state.has_workbench}, has_plank: ${current.state.has_plank}, has_stick: ${current.state.has_stick}, nearby_workbench: ${current.state.nearby_workbench}`)
+    }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
       return current.actions
