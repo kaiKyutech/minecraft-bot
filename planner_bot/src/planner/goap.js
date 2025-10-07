@@ -509,9 +509,17 @@ function loadCompositeStateDependencies() {
     if (!schema[section]) continue
 
     for (const [stateName, config] of Object.entries(schema[section])) {
-      // computed: true かつ depends_on が定義されている場合
+      // computed: true かつ depends_on が定義されている場合（旧方式）
       if (config.computed && Array.isArray(config.depends_on)) {
         dependencies[stateName] = config.depends_on
+      }
+
+      // computed: true かつ depends_on_inventory が定義されている場合（新方式）
+      if (config.computed && Array.isArray(config.depends_on_inventory)) {
+        // inventoryアイテムを "inventory.item_name" 形式に変換
+        dependencies[stateName] = config.depends_on_inventory.map(
+          itemName => `inventory.${itemName}`
+        )
       }
     }
   }

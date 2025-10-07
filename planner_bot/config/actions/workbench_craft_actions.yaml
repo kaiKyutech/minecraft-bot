@@ -1,6 +1,6 @@
 # 作業台クラフト関連アクション（3x3グリッド）
 actions:
-  # === 作業台クラフト（3x3グリッド）===
+  # === 木のツール ===
   - name: craft_wooden_pickaxe
     preconditions:
       has_plank: ">=3"
@@ -9,7 +9,7 @@ actions:
     effects:
       has_plank: "-3"
       has_stick: "-2"
-      has_wooden_pickaxe: "+1"
+      inventory.wooden_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -23,7 +23,7 @@ actions:
     effects:
       has_plank: "-3"
       has_stick: "-2"
-      has_wooden_axe: "+1"
+      inventory.wooden_axe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -37,7 +37,7 @@ actions:
     effects:
       has_plank: "-2"
       has_stick: "-1"
-      has_wooden_sword: "+1"
+      inventory.wooden_sword: "+1"
     cost: 7
     skill: workbench_craft
     params:
@@ -51,7 +51,7 @@ actions:
     effects:
       has_plank: "-1"
       has_stick: "-2"
-      has_wooden_shovel: "+1"
+      inventory.wooden_shovel: "+1"
     cost: 6
     skill: workbench_craft
     params:
@@ -65,7 +65,7 @@ actions:
     effects:
       has_plank: "-2"
       has_stick: "-2"
-      has_wooden_hoe: "+1"
+      inventory.wooden_hoe: "+1"
     cost: 7
     skill: workbench_craft
     params:
@@ -80,7 +80,7 @@ actions:
     effects:
       has_cobblestone: "-3"
       has_stick: "-2"
-      has_stone_pickaxe: "+1"
+      inventory.stone_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -94,7 +94,7 @@ actions:
     effects:
       has_cobblestone: "-3"
       has_stick: "-2"
-      has_stone_axe: "+1"
+      inventory.stone_axe: "+1"
     cost: 8
     skill: workbench_craft
     params:
@@ -108,7 +108,7 @@ actions:
     effects:
       has_cobblestone: "-2"
       has_stick: "-1"
-      has_stone_sword: "+1"
+      inventory.stone_sword: "+1"
     cost: 7
     skill: workbench_craft
     params:
@@ -122,7 +122,7 @@ actions:
     effects:
       has_cobblestone: "-1"
       has_stick: "-2"
-      has_stone_shovel: "+1"
+      inventory.stone_shovel: "+1"
     cost: 6
     skill: workbench_craft
     params:
@@ -136,17 +136,13 @@ actions:
     effects:
       has_cobblestone: "-2"
       has_stick: "-2"
-      has_stone_hoe: "+1"
+      inventory.stone_hoe: "+1"
     cost: 7
     skill: workbench_craft
     params:
       recipe: "stone_hoe"
 
-  # === 新システムの例：ドット記法を使用 ===
-  # state_schema.yamlへの追加不要！
-  # state_builder.jsへの追加不要！
-  # inventoryが自動的に追跡します
-
+  # === その他のアイテム ===
   # かまど（作業台が必要）
   - name: craft_furnace
     preconditions:
@@ -172,4 +168,3 @@ actions:
     skill: workbench_craft
     params:
       recipe: "shears"
-

@@ -42,55 +42,12 @@ inventory_states:
     default: 0
     description: "所持しているクラフト台の数"
 
-  has_wooden_pickaxe:
-    type: number
-    default: 0
-    description: "所持している木のツルハシの数"
-
-  has_wooden_axe:
-    type: number
-    default: 0
-    description: "所持している木の斧の数"
-
-  has_wooden_sword:
-    type: number
-    default: 0
-    description: "所持している木の剣の数"
-
-  has_wooden_shovel:
-    type: number
-    default: 0
-    description: "所持している木のシャベルの数"
-
-  has_wooden_hoe:
-    type: number
-    default: 0
-    description: "所持している木のクワの数"
-
-  has_stone_pickaxe:
-    type: number
-    default: 0
-    description: "所持している石のツルハシの数"
-
-  has_stone_axe:
-    type: number
-    default: 0
-    description: "所持している石の斧の数"
-
-  has_stone_sword:
-    type: number
-    default: 0
-    description: "所持している石の剣の数"
-
-  has_stone_shovel:
-    type: number
-    default: 0
-    description: "所持している石のシャベルの数"
-
-  has_stone_hoe:
-    type: number
-    default: 0
-    description: "所持している石のクワの数"
+  # === 個別ツールは削除（inventory.xxx で参照） ===
+  # 以前の定義:
+  #   has_wooden_pickaxe, has_wooden_axe, has_wooden_sword, has_wooden_shovel, has_wooden_hoe
+  #   has_stone_pickaxe, has_stone_axe, has_stone_sword, has_stone_shovel, has_stone_hoe
+  # 新しい参照方法:
+  #   inventory.wooden_pickaxe, inventory.stone_axe 等のドット記法を使用
 
   # === ツール所持の複合判定 ===
   has_any_pickaxe:
@@ -98,14 +55,14 @@ inventory_states:
     default: false
     description: "任意のピッケル（木・石・鉄・ダイヤ等）を所持している"
     computed: true
-    depends_on: ["has_wooden_pickaxe", "has_stone_pickaxe"]
+    depends_on_inventory: ["wooden_pickaxe", "stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
 
   has_any_axe:
     type: boolean
     default: false
     description: "任意の斧（木・石・鉄・ダイヤ等）を所持している"
     computed: true
-    depends_on: ["has_wooden_axe", "has_stone_axe"]
+    depends_on_inventory: ["wooden_axe", "stone_axe", "iron_axe", "diamond_axe", "netherite_axe"]
 
 # === 環境・リソース近接関連 ===
 environment_states:

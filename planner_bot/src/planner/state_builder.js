@@ -76,20 +76,11 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
     }
   }
 
-  // 個別アイテムの処理
+  // 特定アイテムの個別処理（カテゴリに含まれないもの）
   for (const [name, count] of Object.entries(counts)) {
     if (name === 'stick') facts.has_stick = count
     if (name === 'crafting_table') facts.has_workbench = count
-    if (name === 'wooden_pickaxe') facts.has_wooden_pickaxe = count
-    if (name === 'wooden_axe') facts.has_wooden_axe = count
-    if (name === 'wooden_sword') facts.has_wooden_sword = count
-    if (name === 'wooden_shovel') facts.has_wooden_shovel = count
-    if (name === 'wooden_hoe') facts.has_wooden_hoe = count
-    if (name === 'stone_pickaxe') facts.has_stone_pickaxe = count
-    if (name === 'stone_axe') facts.has_stone_axe = count
-    if (name === 'stone_sword') facts.has_stone_sword = count
-    if (name === 'stone_shovel') facts.has_stone_shovel = count
-    if (name === 'stone_hoe') facts.has_stone_hoe = count
+    // 個別ツールは削除（inventoryから直接参照するようになった）
   }
 
   // カテゴリ集計結果を設定
@@ -134,16 +125,25 @@ function buildWorldStates(facts, worldState, worldSchema) {
  */
 function calculateCompositeStates(state) {
   const schema = loadStateSchema()
+  const inventory = state.inventory || {}
 
   // inventory_states, environment_states, world_statesの全てをチェック
   for (const section of ['inventory_states', 'environment_states', 'world_states']) {
     if (!schema[section]) continue
 
     for (const [stateName, config] of Object.entries(schema[section])) {
-      // computed: true かつ depends_on が定義されている場合
+      // computed: true かつ depends_on が定義されている場合（旧方式）
       if (config.computed && Array.isArray(config.depends_on)) {
         // depends_onの変数のいずれかが >= 1 なら true
         state[stateName] = config.depends_on.some(depVar => (state[depVar] || 0) >= 1)
+      }
+
+      // computed: true かつ depends_on_inventory が定義されている場合（新方式）
+      if (config.computed && Array.isArray(config.depends_on_inventory)) {
+        // inventoryから直接チェック
+        state[stateName] = config.depends_on_inventory.some(
+          itemName => (inventory[itemName] || 0) >= 1
+        )
       }
     }
   }
