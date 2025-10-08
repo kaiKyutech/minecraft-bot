@@ -1,0 +1,74 @@
+# かまど関連アクション
+actions:
+  # === 木炭の精錬 ===
+  # 原木を燃料として使い、別の原木を木炭に変換
+  - name: smelt_charcoal_with_log
+    preconditions:
+      has_log: ">=2"        # 材料1個 + 燃料1個
+      nearby_furnace: true
+    effects:
+      has_log: "-2"
+      inventory.charcoal: "+1"
+    cost: 15
+    skill: furnace_smelt
+    params:
+      input: "log"
+      fuel: "log"
+      output: "charcoal"
+      fuel_count: 1
+
+  # 板を燃料として使う（より効率的）
+  - name: smelt_charcoal_with_planks
+    preconditions:
+      has_log: ">=1"
+      has_plank: ">=1"      # 燃料として板を使用
+      nearby_furnace: true
+    effects:
+      has_log: "-1"
+      has_plank: "-1"
+      inventory.charcoal: "+1"
+    cost: 12
+    skill: furnace_smelt
+    params:
+      input: "log"
+      fuel: "planks"
+      output: "charcoal"
+      fuel_count: 1
+
+  # === 鉄インゴットの精錬（将来の拡張用） ===
+  # 鉄鉱石の採掘アクションを作成したら有効化
+  # - name: smelt_iron_ingot
+  #   preconditions:
+  #     inventory.iron_ore: ">=1"
+  #     inventory.charcoal: ">=1"  # または has_log
+  #     nearby_furnace: true
+  #   effects:
+  #     inventory.iron_ore: "-1"
+  #     inventory.charcoal: "-1"
+  #     inventory.iron_ingot: "+1"
+  #   cost: 20
+  #   skill: furnace_smelt
+  #   params:
+  #     input: "iron_ore"
+  #     fuel: "charcoal"
+  #     output: "iron_ingot"
+  #     fuel_count: 1
+
+  # === ガラスの精錬 ===
+  # 砂を精錬してガラスを作る
+  # - name: smelt_glass
+  #   preconditions:
+  #     inventory.sand: ">=1"
+  #     inventory.charcoal: ">=1"
+  #     nearby_furnace: true
+  #   effects:
+  #     inventory.sand: "-1"
+  #     inventory.charcoal: "-1"
+  #     inventory.glass: "+1"
+  #   cost: 15
+  #   skill: furnace_smelt
+  #   params:
+  #     input: "sand"
+  #     fuel: "charcoal"
+  #     output: "glass"
+  #     fuel_count: 1

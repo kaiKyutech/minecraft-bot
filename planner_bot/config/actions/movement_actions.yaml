@@ -17,13 +17,41 @@ actions:
   # === 作業台の設置 ===
   - name: place_workbench
     preconditions:
-      has_workbench: ">=1"
+      inventory.crafting_table: ">=1"
       visible_workbench: false
     effects:
-      has_workbench: "-1"
+      inventory.crafting_table: "-1"
       nearby_workbench: true
       visible_workbench: true
     cost: 3
     skill: place_block
     params:
       blockName: "crafting_table"
+
+  # === かまどへの移動 ===
+  - name: move_to_furnace
+    preconditions:
+      visible_furnace: true
+      nearby_furnace: false
+    effects:
+      nearby_furnace: true
+    cost: 5
+    skill: move_to
+    params:
+      blockType: "furnace"
+      maxDistance: 100
+      range: 3.0
+
+  # === かまどの設置 ===
+  - name: place_furnace
+    preconditions:
+      inventory.furnace: ">=1"
+      visible_furnace: false
+    effects:
+      inventory.furnace: "-1"
+      nearby_furnace: true
+      visible_furnace: true
+    cost: 3
+    skill: place_block
+    params:
+      blockName: "furnace"

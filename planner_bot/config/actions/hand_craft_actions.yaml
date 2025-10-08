@@ -29,7 +29,7 @@ actions:
       visible_workbench: false
     effects:
       has_plank: "-4"
-      has_workbench: "+1"  # 4つの板から作業台
+      inventory.crafting_table: "+1"  # 4つの板から作業台
     cost: 5
     skill: hand_craft
     params:

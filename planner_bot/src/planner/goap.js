@@ -8,7 +8,8 @@ const ACTION_FILES = [
   'gather_actions.yaml',
   'hand_craft_actions.yaml',
   'workbench_craft_actions.yaml',
-  'movement_actions.yaml'
+  'movement_actions.yaml',
+  'furnace_actions.yaml'
 ]
 const MAX_ITERATIONS = 2000
 
@@ -66,17 +67,11 @@ function plan(goalInput, worldState) {
   // 状態指定の場合は、現在値を考慮して調整
   const adjustedGoal = adjustGoalForCurrentState(goalState, initialState, parsedGoal)
 
-  // console.log(`[GOAP Debug] goalInput: ${goalInput}`)
-  // console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
-  // console.log(`[GOAP Debug] goalState:`, goalState)
-  // console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
-  // console.log(`[GOAP Debug] initialState (relevant):`, {
-  //   has_log: initialState.has_log,
-  //   has_plank: initialState.has_plank,
-  //   has_stick: initialState.has_stick,
-  //   has_wooden_pickaxe: initialState.has_wooden_pickaxe,
-  //   nearby_workbench: initialState.nearby_workbench
-  // })
+  console.log(`[GOAP Debug] goalInput: ${goalInput}`)
+  console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
+  console.log(`[GOAP Debug] goalState:`, goalState)
+  console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
+  console.log(`[GOAP Debug] initialState.inventory:`, initialState.inventory)
 
   // 関連性フィルタリング: ゴールに関連するアクションだけを抽出
   const relevantVars = analyzeRelevantVariables(adjustedGoal, actions)
@@ -109,8 +104,12 @@ function plan(goalInput, worldState) {
     open.sort((a, b) => a.cost - b.cost)
     const current = open.shift()
 
-    if (iterations <= 10 || current.state.has_workbench > 0) {
-      console.log(`[GOAP Debug Iter ${iterations}] Current state has_workbench: ${current.state.has_workbench}, has_plank: ${current.state.has_plank}, has_stick: ${current.state.has_stick}, nearby_workbench: ${current.state.nearby_workbench}`)
+    if (iterations <= 10) {
+      console.log(`[GOAP Debug Iter ${iterations}] open.length: ${open.length}, visited.size: ${visited.size}`)
+      console.log(`[GOAP Debug Iter ${iterations}]   inventory.charcoal: ${current.state.inventory?.charcoal || 0}`)
+      console.log(`[GOAP Debug Iter ${iterations}]   has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
+      console.log(`[GOAP Debug Iter ${iterations}]   current actions: [${current.actions.map(a => a.action).join(' → ')}]`)
+      console.log(`[GOAP Debug Iter ${iterations}]   Goal satisfied? ${isGoalSatisfied(adjustedGoal, current.state)}`)
     }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
@@ -120,12 +119,17 @@ function plan(goalInput, worldState) {
     for (const action of filteredActions) {
       if (!arePreconditionsSatisfied(action.preconditions, current.state)) {
         // デバッグ: どのアクションが前提条件を満たさないか
-        // if (iterations <= 5) {
-        //   console.log(`[GOAP Debug] Action ${action.name} failed preconditions`)
-        //   console.log(`  Preconditions:`, action.preconditions)
-        //   console.log(`  Current state:`, current.state)
-        // }
+        if (iterations === 5 && action.name.includes('gather_logs')) {
+          console.log(`[GOAP Debug Iter 5] Action ${action.name} failed preconditions`)
+          console.log(`  Preconditions:`, action.preconditions)
+          console.log(`  Current state nearby_log:`, current.state.nearby_log)
+          console.log(`  Current state inventory_space:`, current.state.inventory_space)
+        }
         continue
+      }
+
+      if (iterations === 5 && action.name.includes('gather_logs')) {
+        console.log(`[GOAP Debug Iter 5] Action ${action.name} PASSED preconditions, will be added to open list`)
       }
 
       const nextState = applyEffects(action.effects, current.state)
@@ -148,7 +152,12 @@ function plan(goalInput, worldState) {
     }
   }
 
-  console.warn(`goal ${goalInput} のプランを見つけられませんでした`)
+  console.log(`[GOAP Debug] Loop terminated: iterations=${iterations}, open.length=${open.length}, MAX_ITERATIONS=${MAX_ITERATIONS}`)
+  if (iterations >= MAX_ITERATIONS) {
+    console.warn(`goal ${goalInput} のプランを見つけられませんでした (MAX_ITERATIONS reached)`)
+  } else {
+    console.warn(`goal ${goalInput} のプランを見つけられませんでした (open list exhausted after ${iterations} iterations)`)
+  }
   return null
 }
 
@@ -252,7 +261,24 @@ function adjustGoalForCurrentState(goalState, currentState, parsedGoal) {
   // これにより、同じアイテムを複数回作成したり、既に持っているアイテムをさらに追加できる
   const adjusted = {}
   for (const [key, targetValue] of Object.entries(goalState)) {
-    const current = currentState[key] || 0
+    let current = 0
+
+    // ドット記法の処理（例: "inventory.charcoal"）
+    if (key.includes('.')) {
+      const parts = key.split('.')
+      let value = currentState
+      for (const part of parts) {
+        value = value?.[part]
+        if (value === undefined) {
+          value = 0
+          break
+        }
+      }
+      current = typeof value === 'number' ? value : 0
+    } else {
+      current = currentState[key] || 0
+    }
+
     if (typeof targetValue === 'number') {
       // 現在の値に加算して目標とする
       adjusted[key] = current + targetValue

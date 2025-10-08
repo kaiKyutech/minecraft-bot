@@ -79,8 +79,8 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   // 特定アイテムの個別処理（カテゴリに含まれないもの）
   for (const [name, count] of Object.entries(counts)) {
     if (name === 'stick') facts.has_stick = count
-    if (name === 'crafting_table') facts.has_workbench = count
-    // 個別ツールは削除（inventoryから直接参照するようになった）
+    // 個別アイテムは削除（inventoryから直接参照するようになった）
+    // 例: inventory.crafting_table, inventory.furnace など
   }
 
   // カテゴリ集計結果を設定

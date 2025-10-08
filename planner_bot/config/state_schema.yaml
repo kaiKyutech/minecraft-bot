@@ -37,10 +37,10 @@ inventory_states:
     default: 0
     description: "所持している丸石の数"
 
-  has_workbench:
-    type: number
-    default: 0
-    description: "所持しているクラフト台の数"
+  # === 個別アイテムは inventory.xxx で参照 ===
+  # inventory.crafting_table - 所持しているクラフト台の数
+  # inventory.furnace - 所持しているかまどの数
+  # 等々...
 
   # === 個別ツールは削除（inventory.xxx で参照） ===
   # 以前の定義:
@@ -114,6 +114,22 @@ environment_states:
     description: "視認可能距離（100ブロック以内）に作業台が存在する"
     detection_method: "findBlock"
     block_name: "crafting_table"
+    max_distance: 100
+
+  nearby_furnace:
+    type: boolean
+    default: false
+    description: "使用可能距離（5ブロック以内）にかまどが存在する"
+    detection_method: "findBlock"
+    block_name: "furnace"
+    max_distance: 5
+
+  visible_furnace:
+    type: boolean
+    default: false
+    description: "視認可能距離（100ブロック以内）にかまどが存在する"
+    detection_method: "findBlock"
+    block_name: "furnace"
     max_distance: 100
 
 # === 時間・環境条件 ===
