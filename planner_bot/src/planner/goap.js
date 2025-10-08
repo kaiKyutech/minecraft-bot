@@ -67,27 +67,27 @@ function plan(goalInput, worldState) {
   // 状態指定の場合は、現在値を考慮して調整
   const adjustedGoal = adjustGoalForCurrentState(goalState, initialState, parsedGoal)
 
-  console.log(`[GOAP Debug] goalInput: ${goalInput}`)
-  console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
-  console.log(`[GOAP Debug] goalState:`, goalState)
-  console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
-  console.log(`[GOAP Debug] initialState.inventory:`, initialState.inventory)
+  // デバッグ出力（必要に応じてコメント解除）
+  // console.log(`[GOAP Debug] goalInput: ${goalInput}`)
+  // console.log(`[GOAP Debug] parsedGoal.type: ${parsedGoal.type}`)
+  // console.log(`[GOAP Debug] goalState:`, goalState)
+  // console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
+  // console.log(`[GOAP Debug] initialState.inventory:`, initialState.inventory)
 
   // 関連性フィルタリング: ゴールに関連するアクションだけを抽出
   const relevantVars = analyzeRelevantVariables(adjustedGoal, actions)
   const filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
 
-  console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
-  console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
-  console.log(`[GOAP] フィルタされたアクション:`, filteredActions.map(a => a.name))
-
-  // 斧関連のアクションが含まれているか確認
-  const axeRelated = filteredActions.filter(a => a.name.includes('axe') || a.name.includes('with_axe'))
-  if (axeRelated.length > 0) {
-    console.log(`[GOAP] 斧関連アクション:`, axeRelated.map(a => a.name))
-  } else {
-    console.log(`[GOAP] 警告: 斧関連アクションがフィルタされています`)
-  }
+  // デバッグ出力（必要に応じてコメント解除）
+  // console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
+  // console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+  // console.log(`[GOAP] フィルタされたアクション:`, filteredActions.map(a => a.name))
+  // const axeRelated = filteredActions.filter(a => a.name.includes('axe') || a.name.includes('with_axe'))
+  // if (axeRelated.length > 0) {
+  //   console.log(`[GOAP] 斧関連アクション:`, axeRelated.map(a => a.name))
+  // } else {
+  //   console.log(`[GOAP] 警告: 斧関連アクションがフィルタされています`)
+  // }
 
   const open = [{
     state: initialState,
@@ -101,47 +101,55 @@ function plan(goalInput, worldState) {
   let iterations = 0
 
   while (open.length > 0 && iterations++ < MAX_ITERATIONS) {
-    open.sort((a, b) => a.cost - b.cost)
+    // A*アルゴリズム: f(n) = g(n) + h(n)
+    // g(n) = これまでの実コスト (a.cost)
+    // h(n) = ゴールまでの推定コスト (heuristic)
+    open.sort((a, b) => {
+      const fA = a.cost + heuristic(a.state, adjustedGoal)
+      const fB = b.cost + heuristic(b.state, adjustedGoal)
+      return fA - fB
+    })
     const current = open.shift()
 
-    if (iterations <= 10) {
-      console.log(`[GOAP Debug Iter ${iterations}] open.length: ${open.length}, visited.size: ${visited.size}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   inventory.charcoal: ${current.state.inventory?.charcoal || 0}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   current actions: [${current.actions.map(a => a.action).join(' → ')}]`)
-      console.log(`[GOAP Debug Iter ${iterations}]   Goal satisfied? ${isGoalSatisfied(adjustedGoal, current.state)}`)
-    }
+    // デバッグ出力（最初の10回のみ）
+    // if (iterations <= 10) {
+    //   const h = heuristic(current.state, adjustedGoal)
+    //   const f = current.cost + h
+    //   console.log(`[GOAP Debug Iter ${iterations}] open.length: ${open.length}, visited.size: ${visited.size}`)
+    //   console.log(`[GOAP Debug Iter ${iterations}]   inventory.charcoal: ${current.state.inventory?.charcoal || 0}`)
+    //   console.log(`[GOAP Debug Iter ${iterations}]   has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
+    //   console.log(`[GOAP Debug Iter ${iterations}]   current actions: [${current.actions.map(a => a.action).join(' → ')}]`)
+    //   console.log(`[GOAP Debug Iter ${iterations}]   g(n)=${current.cost}, h(n)=${h}, f(n)=${f}`)
+    //   console.log(`[GOAP Debug Iter ${iterations}]   Goal satisfied? ${isGoalSatisfied(adjustedGoal, current.state)}`)
+    // }
+
+    // gather_logsを含む経路の追跡（デバッグ用）
+    // if (current.actions.some(a => a.action && a.action.includes('gather_logs'))) {
+    //   const h = heuristic(current.state, adjustedGoal)
+    //   console.log(`[GOAP Debug Iter ${iterations}] ★ Processing gather_logs path:`)
+    //   console.log(`  Actions: [${current.actions.map(a => a.action).join(' → ')}]`)
+    //   console.log(`  g(n)=${current.cost}, h(n)=${h}, f(n)=${current.cost + h}`)
+    //   console.log(`  has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
+    // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
+      console.log(`[GOAP] プラン発見: ${iterations} イテレーション, 総コスト: ${current.cost}`)
       return current.actions
     }
 
     for (const action of filteredActions) {
       if (!arePreconditionsSatisfied(action.preconditions, current.state)) {
-        // デバッグ: どのアクションが前提条件を満たさないか
-        if (iterations === 5 && action.name.includes('gather_logs')) {
-          console.log(`[GOAP Debug Iter 5] Action ${action.name} failed preconditions`)
-          console.log(`  Preconditions:`, action.preconditions)
-          console.log(`  Current state nearby_log:`, current.state.nearby_log)
-          console.log(`  Current state inventory_space:`, current.state.inventory_space)
-        }
         continue
       }
 
-      if (iterations === 5 && action.name.includes('gather_logs')) {
-        console.log(`[GOAP Debug Iter 5] Action ${action.name} PASSED preconditions, will be added to open list`)
-      }
-
       const nextState = applyEffects(action.effects, current.state)
-      // if (iterations <= 5) {
-      //   console.log(`[GOAP Debug] Action ${action.name} passed, nextState:`, nextState)
-      //   console.log(`[GOAP Debug]   has_any_axe: ${nextState.has_any_axe}, has_wooden_axe: ${nextState.has_wooden_axe}`)
-      // }
       const stepCost = Number.isFinite(action.cost) ? action.cost : 1
       const totalCost = current.cost + stepCost
       const signature = serializeState(nextState)
 
-      if (visited.has(signature) && visited.get(signature) <= totalCost) continue
+      if (visited.has(signature) && visited.get(signature) <= totalCost) {
+        continue
+      }
 
       visited.set(signature, totalCost)
       open.push({
@@ -152,11 +160,12 @@ function plan(goalInput, worldState) {
     }
   }
 
-  console.log(`[GOAP Debug] Loop terminated: iterations=${iterations}, open.length=${open.length}, MAX_ITERATIONS=${MAX_ITERATIONS}`)
   if (iterations >= MAX_ITERATIONS) {
-    console.warn(`goal ${goalInput} のプランを見つけられませんでした (MAX_ITERATIONS reached)`)
+    console.warn(`[GOAP] プラン未発見: ${iterations} イテレーション (MAX_ITERATIONS到達), 残り候補: ${open.length}`)
+    console.warn(`goal ${goalInput} のプランを見つけられませんでした`)
   } else {
-    console.warn(`goal ${goalInput} のプランを見つけられませんでした (open list exhausted after ${iterations} iterations)`)
+    console.warn(`[GOAP] プラン未発見: ${iterations} イテレーション (候補枯渇)`)
+    console.warn(`goal ${goalInput} のプランを見つけられませんでした`)
   }
   return null
 }
@@ -357,6 +366,73 @@ function extractPositiveEffects(effects) {
 
 function isGoalSatisfied(goalState, state) {
   return arePreconditionsSatisfied(goalState, state)
+}
+
+/**
+ * ヒューリスティック関数: ゴールまでの推定コストを計算
+ * @param {Object} state - 現在の状態
+ * @param {Object} goal - ゴール状態
+ * @returns {number} 推定コスト（h(n)）
+ */
+function heuristic(state, goal) {
+  let h = 0
+
+  for (const [key, targetValue] of Object.entries(goal)) {
+    let currentValue
+
+    // ドット記法の処理（例: "inventory.charcoal"）
+    if (key.includes('.')) {
+      const parts = key.split('.')
+      currentValue = state
+      for (const part of parts) {
+        currentValue = currentValue?.[part]
+        if (currentValue === undefined) {
+          currentValue = 0
+          break
+        }
+      }
+    } else {
+      currentValue = state[key]
+    }
+
+    // 数値型の場合: 不足分をペナルティとして加算
+    if (typeof targetValue === 'number') {
+      const current = typeof currentValue === 'number' ? currentValue : 0
+      const deficit = Math.max(0, targetValue - current)
+
+      // 不足分に応じてペナルティを設定
+      // インベントリアイテムは重要度が高い
+      if (key.startsWith('inventory.')) {
+        h += deficit * 50  // アイテム1つにつきペナルティ50
+      } else {
+        h += deficit * 20  // その他の数値は20
+      }
+      continue
+    }
+
+    // Boolean型の場合: 満たされていなければペナルティ
+    if (typeof targetValue === 'boolean') {
+      const current = Boolean(currentValue)
+      if (current !== targetValue) {
+        // 重要度に応じてペナルティを設定
+        if (key.includes('nearby_')) {
+          h += 15  // 近くにいる必要がある
+        } else if (key.includes('visible_')) {
+          h += 5   // 見えていればOK
+        } else {
+          h += 10  // その他のBoolean
+        }
+      }
+      continue
+    }
+
+    // その他の型: 一致しなければペナルティ
+    if (currentValue !== targetValue) {
+      h += 30
+    }
+  }
+
+  return h
 }
 
 function arePreconditionsSatisfied(preconditions = {}, state) {
