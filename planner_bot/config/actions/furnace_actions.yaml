@@ -71,6 +71,42 @@ actions:
       output: "iron_ingot"
       fuel_count: 1
 
+  # 原木を燃料として使用（非効率だが木炭不要）
+  - name: smelt_iron_ingot_with_log
+    preconditions:
+      inventory.raw_iron: ">=1"
+      has_log: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_iron: "-1"
+      has_log: "-1"
+      inventory.iron_ingot: "+1"
+    cost: 25
+    skill: furnace_smelt
+    params:
+      input: "raw_iron"
+      fuel: "log"
+      output: "iron_ingot"
+      fuel_count: 1
+
+  # 板を燃料として使用（原木より効率的）
+  - name: smelt_iron_ingot_with_planks
+    preconditions:
+      inventory.raw_iron: ">=1"
+      has_plank: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_iron: "-1"
+      has_plank: "-1"
+      inventory.iron_ingot: "+1"
+    cost: 22
+    skill: furnace_smelt
+    params:
+      input: "raw_iron"
+      fuel: "planks"
+      output: "iron_ingot"
+      fuel_count: 1
+
   # === 肉の調理 ===
   - name: cook_beef
     preconditions:

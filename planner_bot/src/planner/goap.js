@@ -11,7 +11,7 @@ const ACTION_FILES = [
   'movement_actions.yaml',
   'furnace_actions.yaml'
 ]
-const MAX_ITERATIONS = 2000
+const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 2000
 
 let domain
 
@@ -88,8 +88,17 @@ function plan(goalInput, worldState) {
   if (process.env.GOAP_DISABLE_ACTION_FILTER !== '1') {
     const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
     filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
-    console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
+    console.log(`[GOAP] 関連変数 (${relevantVars.size}個):`, Array.from(relevantVars).sort())
     console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+
+    // デバッグ: フィルタリングされたアクションのリスト
+    if (process.env.GOAP_DEBUG_ACTIONS === '1') {
+      console.log(`[GOAP] フィルタリング後のアクション:`)
+      filteredActions.forEach(a => console.log(`  - ${a.name}`))
+      console.log(`[GOAP] 除外されたアクション (${actions.length - filteredActions.length}個):`)
+      const excludedActions = actions.filter(a => !filteredActions.includes(a))
+      excludedActions.forEach(a => console.log(`  - ${a.name}`))
+    }
   } else {
     console.log(`[GOAP] アクション数: ${actions.length}`)
   }
@@ -130,8 +139,8 @@ function plan(goalInput, worldState) {
     const shouldLog = iterations <= 10 || iterations % debugInterval === 0
 
     if (shouldLog) {
-      const sig = serializeState(current.state)
-      const h = hCache.get(sig) ?? 0
+      // ログ出力時は必ずh(n)を計算（キャッシュミスを避ける）
+      const h = calculateHeuristic(current.state, heuristicContext)
       const f = current.cost + h
       const actionPreview = current.actions.length > 3
         ? `...${current.actions.slice(-3).map(a => a.action).join(' → ')}`
@@ -161,7 +170,30 @@ function plan(goalInput, worldState) {
         continue
       }
 
+      // リソース収集の合理的上限チェック（探索空間の爆発を防ぐ）
       const nextState = applyEffects(action.effects, current.state)
+
+      // 各リソースの合理的な上限（Minecraftの1スタック = 64個を基準）
+      const RESOURCE_LIMITS = {
+        'has_log': 32,
+        'has_plank': 64,
+        'has_stick': 64,
+        'has_cobblestone': 64
+      }
+
+      // 上限を超えるリソース収集は行わない
+      let exceedsLimit = false
+      for (const [key, limit] of Object.entries(RESOURCE_LIMITS)) {
+        if (nextState[key] && nextState[key] > limit) {
+          exceedsLimit = true
+          break
+        }
+      }
+
+      if (exceedsLimit) {
+        continue
+      }
+
       const stepCost = Number.isFinite(action.cost) ? action.cost : 1
       const totalCost = current.cost + stepCost
       const signature = serializeState(nextState)
@@ -190,7 +222,13 @@ function plan(goalInput, worldState) {
       console.warn(`\n  未展開候補トップ${frontierSample.length}件:`)
       frontierSample.forEach((entry, index) => {
         console.warn(`    ${index + 1}. f=${entry.f} (g=${entry.g}+h=${entry.h}) steps=${entry.depth}`)
-        console.warn(`       ${entry.sampleActions.join(' → ')}`)
+        if (entry.depth <= 10) {
+          // 短いプランは全アクション表示
+          console.warn(`       ${entry.allActions.join(' → ')}`)
+        } else {
+          // 長いプランは最後の5アクションのみ表示
+          console.warn(`       ...${entry.sampleActions.join(' → ')}`)
+        }
       })
     }
   } else {
@@ -399,25 +437,56 @@ function isGoalSatisfied(goalState, state) {
 const HEURISTIC_MAX = MAX_ITERATIONS * 2
 
 function calculateHeuristic(state, context = {}) {
-  if (!context) return 0
+  if (!context) {
+    if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+      console.log('[HEURISTIC] WARNING: context is null/undefined')
+    }
+    return 0
+  }
 
   const finalGoal = context.finalGoal || {}
   const actions = context.actions || []
 
   if (!finalGoal || Object.keys(finalGoal).length === 0) {
+    if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+      console.log('[HEURISTIC] WARNING: finalGoal is empty')
+    }
     return 0
   }
 
   const memo = new Map()
   let estimate = 0
 
+  if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+    console.log('[HEURISTIC] Computing h(n) for goal:', finalGoal)
+    console.log('[HEURISTIC] Current state summary:', {
+      has_log: state.has_log,
+      has_plank: state.has_plank,
+      has_cobblestone: state.has_cobblestone,
+      inventory_charcoal: state.inventory?.charcoal,
+      inventory_iron_ingot: state.inventory?.iron_ingot
+    })
+  }
+
   for (const [key, target] of Object.entries(finalGoal)) {
     const requirement = buildRequirementFromGoalTarget(target)
     const steps = estimateRequirement(key, requirement, state, actions, memo, new Set())
+
+    if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+      console.log(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
+    }
+
     if (!Number.isFinite(steps)) {
+      if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+        console.log(`[HEURISTIC] ERROR: ${key} returned non-finite value`)
+      }
       return HEURISTIC_MAX
     }
     estimate = Math.max(estimate, steps)
+  }
+
+  if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
+    console.log(`[HEURISTIC] Final h(n) = ${estimate}`)
   }
 
   return Math.min(estimate, HEURISTIC_MAX)
@@ -778,7 +847,8 @@ function summarizeFrontier(open, context, limit = 5) {
     h: entry.h,
     f: entry.f,
     depth: entry.node.actions?.length || 0,
-    sampleActions: (entry.node.actions || []).slice(-3).map(step => step.action || '?')
+    allActions: (entry.node.actions || []).map(step => step.action || '?'),
+    sampleActions: (entry.node.actions || []).slice(-5).map(step => step.action || '?')
   }))
 }
 
