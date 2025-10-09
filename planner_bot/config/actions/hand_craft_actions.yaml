@@ -17,7 +17,7 @@ actions:
       has_plank: ">=2"
     effects:
       has_plank: "-2"
-      has_stick: "+4"      # 2つの板から4つの棒
+      inventory.stick: "+4"      # 2つの板から4つの棒
     cost: 2
     skill: hand_craft
     params:
@@ -40,10 +40,10 @@ actions:
   - name: craft_torches_with_charcoal
     preconditions:
       inventory.charcoal: ">=1"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
     effects:
       inventory.charcoal: "-1"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.torch: "+4"  # 松明は4個作成される
     cost: 2
     skill: hand_craft
@@ -54,10 +54,10 @@ actions:
   - name: craft_torches_with_coal
     preconditions:
       inventory.coal: ">=1"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
     effects:
       inventory.coal: "-1"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.torch: "+4"  # 松明は4個作成される
     cost: 2
     skill: hand_craft

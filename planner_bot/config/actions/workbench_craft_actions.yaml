@@ -4,11 +4,11 @@ actions:
   - name: craft_wooden_pickaxe
     preconditions:
       has_plank: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_plank: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.wooden_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
@@ -18,11 +18,11 @@ actions:
   - name: craft_wooden_axe
     preconditions:
       has_plank: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_plank: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.wooden_axe: "+1"
     cost: 8
     skill: workbench_craft
@@ -32,11 +32,11 @@ actions:
   - name: craft_wooden_sword
     preconditions:
       has_plank: ">=2"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
       nearby_workbench: true
     effects:
       has_plank: "-2"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.wooden_sword: "+1"
     cost: 7
     skill: workbench_craft
@@ -46,11 +46,11 @@ actions:
   - name: craft_wooden_shovel
     preconditions:
       has_plank: ">=1"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_plank: "-1"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.wooden_shovel: "+1"
     cost: 6
     skill: workbench_craft
@@ -60,11 +60,11 @@ actions:
   - name: craft_wooden_hoe
     preconditions:
       has_plank: ">=2"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_plank: "-2"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.wooden_hoe: "+1"
     cost: 7
     skill: workbench_craft
@@ -75,11 +75,11 @@ actions:
   - name: craft_stone_pickaxe
     preconditions:
       has_cobblestone: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_cobblestone: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.stone_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
@@ -89,11 +89,11 @@ actions:
   - name: craft_stone_axe
     preconditions:
       has_cobblestone: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_cobblestone: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.stone_axe: "+1"
     cost: 8
     skill: workbench_craft
@@ -103,11 +103,11 @@ actions:
   - name: craft_stone_sword
     preconditions:
       has_cobblestone: ">=2"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
       nearby_workbench: true
     effects:
       has_cobblestone: "-2"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.stone_sword: "+1"
     cost: 7
     skill: workbench_craft
@@ -117,11 +117,11 @@ actions:
   - name: craft_stone_shovel
     preconditions:
       has_cobblestone: ">=1"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_cobblestone: "-1"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.stone_shovel: "+1"
     cost: 6
     skill: workbench_craft
@@ -131,11 +131,11 @@ actions:
   - name: craft_stone_hoe
     preconditions:
       has_cobblestone: ">=2"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       has_cobblestone: "-2"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.stone_hoe: "+1"
     cost: 7
     skill: workbench_craft
@@ -160,11 +160,11 @@ actions:
   - name: craft_iron_pickaxe
     preconditions:
       inventory.iron_ingot: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.iron_ingot: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.iron_pickaxe: "+1"
     cost: 8
     skill: workbench_craft
@@ -174,11 +174,11 @@ actions:
   - name: craft_iron_axe
     preconditions:
       inventory.iron_ingot: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.iron_ingot: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.iron_axe: "+1"
     cost: 8
     skill: workbench_craft
@@ -188,11 +188,11 @@ actions:
   - name: craft_iron_sword
     preconditions:
       inventory.iron_ingot: ">=2"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
       nearby_workbench: true
     effects:
       inventory.iron_ingot: "-2"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.iron_sword: "+1"
     cost: 8
     skill: workbench_craft
@@ -202,11 +202,11 @@ actions:
   - name: craft_iron_shovel
     preconditions:
       inventory.iron_ingot: ">=1"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.iron_ingot: "-1"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.iron_shovel: "+1"
     cost: 8
     skill: workbench_craft
@@ -216,11 +216,11 @@ actions:
   - name: craft_iron_hoe
     preconditions:
       inventory.iron_ingot: ">=2"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.iron_ingot: "-2"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.iron_hoe: "+1"
     cost: 8
     skill: workbench_craft
@@ -280,11 +280,11 @@ actions:
   - name: craft_diamond_pickaxe
     preconditions:
       inventory.diamond: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.diamond: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.diamond_pickaxe: "+1"
     cost: 10
     skill: workbench_craft
@@ -294,11 +294,11 @@ actions:
   - name: craft_diamond_axe
     preconditions:
       inventory.diamond: ">=3"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.diamond: "-3"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.diamond_axe: "+1"
     cost: 10
     skill: workbench_craft
@@ -308,11 +308,11 @@ actions:
   - name: craft_diamond_sword
     preconditions:
       inventory.diamond: ">=2"
-      has_stick: ">=1"
+      inventory.stick: ">=1"
       nearby_workbench: true
     effects:
       inventory.diamond: "-2"
-      has_stick: "-1"
+      inventory.stick: "-1"
       inventory.diamond_sword: "+1"
     cost: 10
     skill: workbench_craft
@@ -322,11 +322,11 @@ actions:
   - name: craft_diamond_shovel
     preconditions:
       inventory.diamond: ">=1"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.diamond: "-1"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.diamond_shovel: "+1"
     cost: 10
     skill: workbench_craft
@@ -336,11 +336,11 @@ actions:
   - name: craft_diamond_hoe
     preconditions:
       inventory.diamond: ">=2"
-      has_stick: ">=2"
+      inventory.stick: ">=2"
       nearby_workbench: true
     effects:
       inventory.diamond: "-2"
-      has_stick: "-2"
+      inventory.stick: "-2"
       inventory.diamond_hoe: "+1"
     cost: 10
     skill: workbench_craft

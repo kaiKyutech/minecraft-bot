@@ -27,11 +27,6 @@ inventory_states:
     default: 0
     description: "所持している板の合計数（oak_planks, birch_planks等の合計）"
 
-  has_stick:
-    type: number
-    default: 0
-    description: "所持している棒の数"
-
   has_cobblestone:
     type: number
     default: 0

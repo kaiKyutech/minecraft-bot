@@ -177,14 +177,15 @@ function plan(goalInput, worldState) {
       const RESOURCE_LIMITS = {
         'has_log': 32,
         'has_plank': 64,
-        'has_stick': 64,
+        'inventory.stick': 64,
         'has_cobblestone': 64
       }
 
       // 上限を超えるリソース収集は行わない
       let exceedsLimit = false
       for (const [key, limit] of Object.entries(RESOURCE_LIMITS)) {
-        if (nextState[key] && nextState[key] > limit) {
+        const value = getStateValue(nextState, key)
+        if (typeof value === 'number' && value > limit) {
           exceedsLimit = true
           break
         }
