@@ -84,19 +84,10 @@ function plan(goalInput, worldState) {
   // console.log(`[GOAP Debug] initialState.inventory:`, initialState.inventory)
 
   // 関連性フィルタリング: ゴールに関連するアクションだけを抽出
-  const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
-  const filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
+  const filteredActions = actions
 
-  // デバッグ出力（必要に応じてコメント解除）
-  console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
-  console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
-  console.log(`[GOAP] フィルタされたアクション:`, filteredActions.map(a => a.name))
-  // const axeRelated = filteredActions.filter(a => a.name.includes('axe') || a.name.includes('with_axe'))
-  // if (axeRelated.length > 0) {
-  //   console.log(`[GOAP] 斧関連アクション:`, axeRelated.map(a => a.name))
-  // } else {
-  //   console.log(`[GOAP] 警告: 斧関連アクションがフィルタされています`)
-  // }
+  console.log(`[GOAP] アクション数: ${actions.length}`)
+
 
   const open = [{
     state: initialState,
