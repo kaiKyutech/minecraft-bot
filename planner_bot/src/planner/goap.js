@@ -108,27 +108,37 @@ function plan(goalInput, worldState) {
 
   const heuristicContext = buildHeuristicContext(adjustedGoal, goalAction, filteredActions)
 
+  // ヒューリスティック値をキャッシュ
+  const hCache = new Map()
+  const getF = (node) => {
+    const sig = serializeState(node.state)
+    if (!hCache.has(sig)) {
+      hCache.set(sig, calculateHeuristic(node.state, heuristicContext))
+    }
+    return node.cost + hCache.get(sig)
+  }
+
   while (open.length > 0 && iterations++ < MAX_ITERATIONS) {
     // A*アルゴリズム: f(n) = g(n) + h(n)
     // g(n) = これまでの実コスト (a.cost)
     // h(n) = ゴールまでの推定コスト (heuristic)
-    open.sort((a, b) => {
-      const fA = a.cost + calculateHeuristic(a.state, heuristicContext)
-      const fB = b.cost + calculateHeuristic(b.state, heuristicContext)
-      return fA - fB
-    })
+    open.sort((a, b) => getF(a) - getF(b))
     const current = open.shift()
 
-    // デバッグ出力（最初の10回と、1000イテレーション毎）
-    if (iterations <= 10 || iterations % 1000 === 0) {
-      const h = calculateHeuristic(current.state, heuristicContext)
+    // デバッグ出力（環境変数で制御）
+    const debugInterval = process.env.GOAP_DEBUG_INTERVAL ? Number(process.env.GOAP_DEBUG_INTERVAL) : 100
+    const shouldLog = iterations <= 10 || iterations % debugInterval === 0
+
+    if (shouldLog) {
+      const sig = serializeState(current.state)
+      const h = hCache.get(sig) ?? 0
       const f = current.cost + h
-      console.log(`[GOAP Debug Iter ${iterations}] open.length: ${open.length}, visited.size: ${visited.size}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   inventory.raw_iron: ${current.state.inventory?.raw_iron || 0}, inventory.charcoal: ${current.state.inventory?.charcoal || 0}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   current actions: [${current.actions.map(a => a.action).join(' → ')}]`)
-      console.log(`[GOAP Debug Iter ${iterations}]   g(n)=${current.cost}, h(n)=${h}, f(n)=${f}`)
-      console.log(`[GOAP Debug Iter ${iterations}]   Goal satisfied? ${isGoalSatisfied(adjustedGoal, current.state)}`)
+      const actionPreview = current.actions.length > 3
+        ? `...${current.actions.slice(-3).map(a => a.action).join(' → ')}`
+        : current.actions.map(a => a.action).join(' → ')
+
+      console.log(`[GOAP Iter ${iterations}] queue:${open.length} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
+      console.log(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
     }
 
     // gather_logsを含む経路の追跡（デバッグ用）
@@ -141,7 +151,8 @@ function plan(goalInput, worldState) {
     // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
-      console.log(`[GOAP] プラン発見: ${iterations} イテレーション, 総コスト: ${current.cost}`)
+      console.log(`\n[GOAP] ✓ プラン発見`)
+      console.log(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
       return current.actions
     }
 
@@ -169,21 +180,24 @@ function plan(goalInput, worldState) {
   }
 
   if (iterations >= MAX_ITERATIONS) {
-    console.warn(`[GOAP] プラン未発見: ${iterations} イテレーション (MAX_ITERATIONS到達), 残り候補: ${open.length}`)
-    console.warn(`[GOAP] 訪問済み状態数: ${visited.size}`)
+    console.warn(`\n[GOAP] ❌ プラン未発見 (タイムアウト)`)
+    console.warn(`  目標: ${goalInput}`)
+    console.warn(`  イテレーション: ${iterations} (上限: ${MAX_ITERATIONS})`)
+    console.warn(`  残り候補: ${open.length}, 訪問済み: ${visited.size}`)
 
     const frontierSample = summarizeFrontier(open, heuristicContext)
     if (frontierSample.length > 0) {
-      console.warn(`[GOAP] 未展開候補トップ${frontierSample.length}件:`)
+      console.warn(`\n  未展開候補トップ${frontierSample.length}件:`)
       frontierSample.forEach((entry, index) => {
-        console.warn(`  ${index + 1}. f=${entry.f} (g=${entry.g}, h=${entry.h}) depth=${entry.depth} actions=${entry.sampleActions.join(' → ')}`)
+        console.warn(`    ${index + 1}. f=${entry.f} (g=${entry.g}+h=${entry.h}) steps=${entry.depth}`)
+        console.warn(`       ${entry.sampleActions.join(' → ')}`)
       })
     }
-
-    console.warn(`goal ${goalInput} のプランを見つけられませんでした`)
   } else {
-    console.warn(`[GOAP] プラン未発見: ${iterations} イテレーション (候補枯渇)`)
-    console.warn(`goal ${goalInput} のプランを見つけられませんでした`)
+    console.warn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
+    console.warn(`  目標: ${goalInput}`)
+    console.warn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
+    console.warn(`  原因: 実行可能なアクションがありません`)
   }
   return null
 }
