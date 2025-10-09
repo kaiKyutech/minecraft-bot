@@ -83,10 +83,16 @@ function plan(goalInput, worldState) {
   // console.log(`[GOAP Debug] adjustedGoal:`, adjustedGoal)
   // console.log(`[GOAP Debug] initialState.inventory:`, initialState.inventory)
 
-  // 関連性フィルタリング: ゴールに関連するアクションだけを抽出
-  const filteredActions = actions
+  let filteredActions = actions
 
-  console.log(`[GOAP] アクション数: ${actions.length}`)
+  if (process.env.GOAP_DISABLE_ACTION_FILTER !== '1') {
+    const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
+    filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
+    console.log(`[GOAP] 関連変数:`, Array.from(relevantVars))
+    console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+  } else {
+    console.log(`[GOAP] アクション数: ${actions.length}`)
+  }
 
 
   const open = [{
@@ -446,35 +452,36 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
       ? Math.max(1, Math.ceil(deficit / Math.max(contribution.gain, 1)))
       : 1
 
-    let preconditionSteps = 0
+    let preconditionCost = 0
     if (action.preconditions) {
       if (shouldDebugRequirement(key)) {
         console.log(`[HEURISTIC] ${key} <- ${action.name} (必要回数 ${repeats})`)
       }
       for (const [preKey, preCondition] of Object.entries(action.preconditions)) {
         const preRequirement = buildRequirementFromCondition(preCondition)
-        const subSteps = estimateRequirement(preKey, preRequirement, state, actions, memo, visiting)
-        if (!Number.isFinite(subSteps) || subSteps >= HEURISTIC_MAX) {
+        const subCost = estimateRequirement(preKey, preRequirement, state, actions, memo, visiting)
+        if (!Number.isFinite(subCost) || subCost >= HEURISTIC_MAX) {
           if (shouldDebugRequirement(key)) {
             console.log(`  [NG] 前提 ${preKey} ${formatRequirement(preRequirement)} の推定が失敗`)
           }
-          preconditionSteps = HEURISTIC_MAX
+          preconditionCost = HEURISTIC_MAX
           break
         }
-        preconditionSteps = Math.max(preconditionSteps, subSteps)
+        preconditionCost = Math.max(preconditionCost, subCost)
         if (shouldDebugRequirement(key)) {
-          console.log(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subSteps}`)
+          console.log(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
         }
       }
     }
 
-    if (preconditionSteps >= HEURISTIC_MAX) {
+    if (preconditionCost >= HEURISTIC_MAX) {
       continue
     }
 
-    const total = preconditionSteps + repeats
+    const actionCost = Number.isFinite(action.cost) ? action.cost : 1
+    const total = preconditionCost + (actionCost * repeats)
     if (shouldDebugRequirement(key)) {
-      console.log(`  => 推定ステップ ${total}`)
+      console.log(`  => 推定コスト ${total} (前提: ${preconditionCost}, アクション: ${actionCost} x ${repeats})`)
     }
     if (total < best) {
       best = total
