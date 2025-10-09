@@ -34,3 +34,44 @@ actions:
     skill: hand_craft
     params:
       recipe: "crafting_table"
+
+  # === 松明のクラフト ===
+  # 木炭を使った松明
+  - name: craft_torches_with_charcoal
+    preconditions:
+      inventory.charcoal: ">=1"
+      has_stick: ">=1"
+    effects:
+      inventory.charcoal: "-1"
+      has_stick: "-1"
+      inventory.torch: "+4"  # 松明は4個作成される
+    cost: 2
+    skill: hand_craft
+    params:
+      recipe: "torch_from_charcoal"
+
+  # 石炭を使った松明
+  - name: craft_torches_with_coal
+    preconditions:
+      inventory.coal: ">=1"
+      has_stick: ">=1"
+    effects:
+      inventory.coal: "-1"
+      has_stick: "-1"
+      inventory.torch: "+4"  # 松明は4個作成される
+    cost: 2
+    skill: hand_craft
+    params:
+      recipe: "torch_from_coal"
+
+  # === パンのクラフト ===
+  - name: craft_bread
+    preconditions:
+      inventory.wheat: ">=3"
+    effects:
+      inventory.wheat: "-3"
+      inventory.bread: "+1"
+    cost: 2
+    skill: hand_craft
+    params:
+      recipe: "bread"

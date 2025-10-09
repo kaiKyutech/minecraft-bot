@@ -43,3 +43,38 @@ categories:
     blocks:
       - stone
       - cobblestone
+
+  iron_ore:
+    description: "鉄鉱石（通常・深層岩）"
+    blocks:
+      - iron_ore
+      - deepslate_iron_ore
+
+  diamond_ore:
+    description: "ダイヤモンド鉱石（通常・深層岩）"
+    blocks:
+      - diamond_ore
+      - deepslate_diamond_ore
+
+  coal_ore:
+    description: "石炭鉱石（通常・深層岩）"
+    blocks:
+      - coal_ore
+      - deepslate_coal_ore
+
+  # 食材カテゴリ
+  raw_meat:
+    description: "生肉（牛・豚・鶏・羊）"
+    blocks:
+      - raw_beef
+      - raw_porkchop
+      - raw_chicken
+      - raw_mutton
+
+  cooked_meat:
+    description: "調理済み肉（牛・豚・鶏・羊）"
+    blocks:
+      - cooked_beef
+      - cooked_porkchop
+      - cooked_chicken
+      - cooked_mutton

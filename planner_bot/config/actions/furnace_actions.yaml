@@ -17,7 +17,7 @@ actions:
       output: "charcoal"
       fuel_count: 1
 
-  # 板を燃料として使う（より効率的）
+  # 板を燃料として使う（より効率的、原木1個から板4個作れる）
   - name: smelt_charcoal_with_planks
     preconditions:
       has_log: ">=1"
@@ -35,40 +35,107 @@ actions:
       output: "charcoal"
       fuel_count: 1
 
-  # === 鉄インゴットの精錬（将来の拡張用） ===
-  # 鉄鉱石の採掘アクションを作成したら有効化
-  # - name: smelt_iron_ingot
-  #   preconditions:
-  #     inventory.iron_ore: ">=1"
-  #     inventory.charcoal: ">=1"  # または has_log
-  #     nearby_furnace: true
-  #   effects:
-  #     inventory.iron_ore: "-1"
-  #     inventory.charcoal: "-1"
-  #     inventory.iron_ingot: "+1"
-  #   cost: 20
-  #   skill: furnace_smelt
-  #   params:
-  #     input: "iron_ore"
-  #     fuel: "charcoal"
-  #     output: "iron_ingot"
-  #     fuel_count: 1
+  # === 鉄インゴットの精錬 ===
+  - name: smelt_iron_ingot_with_charcoal
+    preconditions:
+      inventory.raw_iron: ">=1"
+      inventory.charcoal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_iron: "-1"
+      inventory.charcoal: "-1"
+      inventory.iron_ingot: "+1"
+    cost: 20
+    skill: furnace_smelt
+    params:
+      input: "raw_iron"
+      fuel: "charcoal"
+      output: "iron_ingot"
+      fuel_count: 1
 
-  # === ガラスの精錬 ===
-  # 砂を精錬してガラスを作る
-  # - name: smelt_glass
-  #   preconditions:
-  #     inventory.sand: ">=1"
-  #     inventory.charcoal: ">=1"
-  #     nearby_furnace: true
-  #   effects:
-  #     inventory.sand: "-1"
-  #     inventory.charcoal: "-1"
-  #     inventory.glass: "+1"
-  #   cost: 15
-  #   skill: furnace_smelt
-  #   params:
-  #     input: "sand"
-  #     fuel: "charcoal"
-  #     output: "glass"
-  #     fuel_count: 1
+  # 石炭を燃料として使用
+  - name: smelt_iron_ingot_with_coal
+    preconditions:
+      inventory.raw_iron: ">=1"
+      inventory.coal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_iron: "-1"
+      inventory.coal: "-1"
+      inventory.iron_ingot: "+1"
+    cost: 20
+    skill: furnace_smelt
+    params:
+      input: "raw_iron"
+      fuel: "coal"
+      output: "iron_ingot"
+      fuel_count: 1
+
+  # === 肉の調理 ===
+  - name: cook_beef
+    preconditions:
+      inventory.raw_beef: ">=1"
+      inventory.charcoal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_beef: "-1"
+      inventory.charcoal: "-1"
+      inventory.cooked_beef: "+1"
+    cost: 12
+    skill: furnace_smelt
+    params:
+      input: "raw_beef"
+      fuel: "charcoal"
+      output: "cooked_beef"
+      fuel_count: 1
+
+  - name: cook_porkchop
+    preconditions:
+      inventory.raw_porkchop: ">=1"
+      inventory.charcoal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_porkchop: "-1"
+      inventory.charcoal: "-1"
+      inventory.cooked_porkchop: "+1"
+    cost: 12
+    skill: furnace_smelt
+    params:
+      input: "raw_porkchop"
+      fuel: "charcoal"
+      output: "cooked_porkchop"
+      fuel_count: 1
+
+  - name: cook_chicken
+    preconditions:
+      inventory.raw_chicken: ">=1"
+      inventory.charcoal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_chicken: "-1"
+      inventory.charcoal: "-1"
+      inventory.cooked_chicken: "+1"
+    cost: 12
+    skill: furnace_smelt
+    params:
+      input: "raw_chicken"
+      fuel: "charcoal"
+      output: "cooked_chicken"
+      fuel_count: 1
+
+  - name: cook_mutton
+    preconditions:
+      inventory.raw_mutton: ">=1"
+      inventory.charcoal: ">=1"
+      nearby_furnace: true
+    effects:
+      inventory.raw_mutton: "-1"
+      inventory.charcoal: "-1"
+      inventory.cooked_mutton: "+1"
+    cost: 12
+    skill: furnace_smelt
+    params:
+      input: "raw_mutton"
+      fuel: "charcoal"
+      output: "cooked_mutton"
+      fuel_count: 1

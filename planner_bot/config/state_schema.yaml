@@ -64,6 +64,20 @@ inventory_states:
     computed: true
     depends_on_inventory: ["wooden_axe", "stone_axe", "iron_axe", "diamond_axe", "netherite_axe"]
 
+  has_stone_or_better_pickaxe:
+    type: boolean
+    default: false
+    description: "石以上のピッケル（石・鉄・ダイヤ等）を所持している"
+    computed: true
+    depends_on_inventory: ["stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
+
+  has_iron_or_better_pickaxe:
+    type: boolean
+    default: false
+    description: "鉄以上のピッケル（鉄・ダイヤ等）を所持している"
+    computed: true
+    depends_on_inventory: ["iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
+
 # === 環境・リソース近接関連 ===
 environment_states:
   # カテゴリベース近接状態
@@ -130,6 +144,30 @@ environment_states:
     description: "視認可能距離（100ブロック以内）にかまどが存在する"
     detection_method: "findBlock"
     block_name: "furnace"
+    max_distance: 100
+
+  nearby_iron_ore:
+    type: boolean
+    default: false
+    description: "採掘可能距離（100ブロック以内）に鉄鉱石が存在する"
+    detection_method: "findBlockCategory"
+    category: "iron_ore"
+    max_distance: 100
+
+  nearby_diamond_ore:
+    type: boolean
+    default: false
+    description: "採掘可能距離（100ブロック以内）にダイヤモンド鉱石が存在する"
+    detection_method: "findBlockCategory"
+    category: "diamond_ore"
+    max_distance: 100
+
+  nearby_coal_ore:
+    type: boolean
+    default: false
+    description: "採掘可能距離（100ブロック以内）に石炭鉱石が存在する"
+    detection_method: "findBlockCategory"
+    category: "coal_ore"
     max_distance: 100
 
 # === 時間・環境条件 ===

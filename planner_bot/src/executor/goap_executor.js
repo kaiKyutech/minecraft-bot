@@ -28,6 +28,8 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。リプランニングを実行...`)
       console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
 
+      // 状態を更新してからリプランニング
+      await stateManager.refresh(bot)
       const newPlan = await replan(bot, goalName, stateManager)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)

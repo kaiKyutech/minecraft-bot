@@ -156,6 +156,247 @@ actions:
     params:
       recipe: "furnace"
 
+  # === 鉄のツール ===
+  - name: craft_iron_pickaxe
+    preconditions:
+      inventory.iron_ingot: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-3"
+      has_stick: "-2"
+      inventory.iron_pickaxe: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_pickaxe"
+
+  - name: craft_iron_axe
+    preconditions:
+      inventory.iron_ingot: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-3"
+      has_stick: "-2"
+      inventory.iron_axe: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_axe"
+
+  - name: craft_iron_sword
+    preconditions:
+      inventory.iron_ingot: ">=2"
+      has_stick: ">=1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-2"
+      has_stick: "-1"
+      inventory.iron_sword: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_sword"
+
+  - name: craft_iron_shovel
+    preconditions:
+      inventory.iron_ingot: ">=1"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-1"
+      has_stick: "-2"
+      inventory.iron_shovel: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_shovel"
+
+  - name: craft_iron_hoe
+    preconditions:
+      inventory.iron_ingot: ">=2"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-2"
+      has_stick: "-2"
+      inventory.iron_hoe: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_hoe"
+
+  # === 鉄の防具 ===
+  - name: craft_iron_helmet
+    preconditions:
+      inventory.iron_ingot: ">=5"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-5"
+      inventory.iron_helmet: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_helmet"
+
+  - name: craft_iron_chestplate
+    preconditions:
+      inventory.iron_ingot: ">=8"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-8"
+      inventory.iron_chestplate: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_chestplate"
+
+  - name: craft_iron_leggings
+    preconditions:
+      inventory.iron_ingot: ">=7"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-7"
+      inventory.iron_leggings: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_leggings"
+
+  - name: craft_iron_boots
+    preconditions:
+      inventory.iron_ingot: ">=4"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-4"
+      inventory.iron_boots: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "iron_boots"
+
+  # === ダイヤモンドのツール ===
+  - name: craft_diamond_pickaxe
+    preconditions:
+      inventory.diamond: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-3"
+      has_stick: "-2"
+      inventory.diamond_pickaxe: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_pickaxe"
+
+  - name: craft_diamond_axe
+    preconditions:
+      inventory.diamond: ">=3"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-3"
+      has_stick: "-2"
+      inventory.diamond_axe: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_axe"
+
+  - name: craft_diamond_sword
+    preconditions:
+      inventory.diamond: ">=2"
+      has_stick: ">=1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-2"
+      has_stick: "-1"
+      inventory.diamond_sword: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_sword"
+
+  - name: craft_diamond_shovel
+    preconditions:
+      inventory.diamond: ">=1"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-1"
+      has_stick: "-2"
+      inventory.diamond_shovel: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_shovel"
+
+  - name: craft_diamond_hoe
+    preconditions:
+      inventory.diamond: ">=2"
+      has_stick: ">=2"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-2"
+      has_stick: "-2"
+      inventory.diamond_hoe: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_hoe"
+
+  # === ダイヤモンドの防具 ===
+  - name: craft_diamond_helmet
+    preconditions:
+      inventory.diamond: ">=5"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-5"
+      inventory.diamond_helmet: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_helmet"
+
+  - name: craft_diamond_chestplate
+    preconditions:
+      inventory.diamond: ">=8"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-8"
+      inventory.diamond_chestplate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_chestplate"
+
+  - name: craft_diamond_leggings
+    preconditions:
+      inventory.diamond: ">=7"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.diamond_leggings: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_leggings"
+
+  - name: craft_diamond_boots
+    preconditions:
+      inventory.diamond: ">=4"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-4"
+      inventory.diamond_boots: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: "diamond_boots"
+
+  # === その他のアイテム ===
   # はさみ（鉄インゴットが必要、作業台必要）
   - name: craft_shears
     preconditions:

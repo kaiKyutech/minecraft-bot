@@ -29,20 +29,7 @@ actions:
       count: 1
 
   # === 石の採掘 ===
-  # 素手で石を掘る（非効率）
-  - name: gather_basic_stone_barehand
-    preconditions:
-      inventory_space: true
-      nearby_basic_stone: true
-    effects:
-      has_cobblestone: "+1"
-    cost: 20
-    skill: gather
-    params:
-      itemName: basic_stone
-      count: 1
-
-  # ピッケルで石を掘る（効率的）
+  # 石の採掘には木のピッケル以上が必須
   - name: gather_basic_stone_with_pickaxe
     preconditions:
       inventory_space: true
@@ -54,4 +41,49 @@ actions:
     skill: gather
     params:
       itemName: basic_stone
+      count: 1
+
+  # === 鉄鉱石の採掘 ===
+  # 鉄鉱石は石以上のピッケルが必要（1.17以降はraw_ironがドロップ）
+  - name: gather_iron_ore_with_stone_pickaxe
+    preconditions:
+      inventory_space: true
+      nearby_iron_ore: true
+      has_stone_or_better_pickaxe: true
+    effects:
+      inventory.raw_iron: "+1"
+    cost: 8
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 1
+
+  # === 石炭鉱石の採掘 ===
+  # 石炭は木のピッケル以上で採掘可能
+  - name: gather_coal_ore_with_pickaxe
+    preconditions:
+      inventory_space: true
+      nearby_coal_ore: true
+      has_any_pickaxe: true
+    effects:
+      inventory.coal: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: coal_ore
+      count: 1
+
+  # === ダイヤモンド鉱石の採掘 ===
+  # ダイヤモンドは鉄以上のピッケルが必要
+  - name: gather_diamond_ore_with_iron_pickaxe
+    preconditions:
+      inventory_space: true
+      nearby_diamond_ore: true
+      has_iron_or_better_pickaxe: true
+    effects:
+      inventory.diamond: "+1"
+    cost: 15
+    skill: gather
+    params:
+      itemName: diamond_ore
       count: 1

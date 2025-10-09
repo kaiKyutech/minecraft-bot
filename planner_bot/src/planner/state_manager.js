@@ -104,6 +104,13 @@ class StateManager {
         booleanStates.push(`${key}:${value ? 1 : 0}`)
       } else if (typeof value === 'number') {
         numericStates.push(`${key}:${value}`)
+      } else if (typeof value === 'object' && value !== null && key === 'inventory') {
+        // inventoryオブジェクトの中身を展開して表示
+        for (const [itemName, count] of Object.entries(value)) {
+          if (typeof count === 'number' && count > 0) {
+            numericStates.push(`inventory.${itemName}:${count}`)
+          }
+        }
       }
     }
 
