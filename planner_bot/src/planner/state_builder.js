@@ -56,7 +56,6 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   // カテゴリベースでインベントリを集計
   let logCount = 0
   let plankCount = 0
-  let basicStoneCount = 0
 
   // カテゴリ定義から動的に集計
   if (categories?.categories) {
@@ -70,9 +69,7 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
         plankCount += count
       }
       // basic_stone カテゴリ
-      if (categories.categories.basic_stone?.blocks.includes(itemName)) {
-        basicStoneCount += count
-      }
+      // 丸石カテゴリは inventory.cobblestone を直接参照する運用に変更
     }
   }
 
@@ -80,7 +77,6 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   // カテゴリ集計結果を設定
   facts.has_log = logCount
   facts.has_plank = plankCount
-  facts.has_cobblestone = basicStoneCount // basic_stone → cobblestone として扱う
 
   // 複合状態を計算
   calculateCompositeStates(facts)

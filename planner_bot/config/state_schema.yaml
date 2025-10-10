@@ -27,11 +27,6 @@ inventory_states:
     default: 0
     description: "所持している板の合計数（oak_planks, birch_planks等の合計）"
 
-  has_cobblestone:
-    type: number
-    default: 0
-    description: "所持している丸石の数"
-
   # === 個別アイテムは inventory.xxx で参照 ===
   # inventory.crafting_table - 所持しているクラフト台の数
   # inventory.furnace - 所持しているかまどの数

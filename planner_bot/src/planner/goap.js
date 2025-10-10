@@ -11,7 +11,7 @@ const ACTION_FILES = [
   'movement_actions.yaml',
   'furnace_actions.yaml'
 ]
-const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 600
+const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 500
 
 let domain
 
@@ -182,7 +182,7 @@ function plan(goalInput, worldState) {
         'has_log': 32,
         'has_plank': 64,
         'inventory.stick': 64,
-        'has_cobblestone': 64
+        'inventory.cobblestone': 64
       }
 
       // 上限を超えるリソース収集は行わない
@@ -455,7 +455,7 @@ function calculateHeuristic(state, context = {}) {
     console.log('[HEURISTIC] Current state summary:', {
       has_log: state.has_log,
       has_plank: state.has_plank,
-      has_cobblestone: state.has_cobblestone,
+      'inventory.cobblestone': getStateValue(state, 'inventory.cobblestone'),
       inventory_charcoal: state.inventory?.charcoal,
       inventory_iron_ingot: state.inventory?.iron_ingot
     })

@@ -74,11 +74,11 @@ actions:
   # === 石のツール ===
   - name: craft_stone_pickaxe
     preconditions:
-      has_cobblestone: ">=3"
+      inventory.cobblestone: ">=3"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-3"
+      inventory.cobblestone: "-3"
       inventory.stick: "-2"
       inventory.stone_pickaxe: "+1"
     cost: 8
@@ -88,11 +88,11 @@ actions:
 
   - name: craft_stone_axe
     preconditions:
-      has_cobblestone: ">=3"
+      inventory.cobblestone: ">=3"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-3"
+      inventory.cobblestone: "-3"
       inventory.stick: "-2"
       inventory.stone_axe: "+1"
     cost: 8
@@ -102,11 +102,11 @@ actions:
 
   - name: craft_stone_sword
     preconditions:
-      has_cobblestone: ">=2"
+      inventory.cobblestone: ">=2"
       inventory.stick: ">=1"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-2"
+      inventory.cobblestone: "-2"
       inventory.stick: "-1"
       inventory.stone_sword: "+1"
     cost: 7
@@ -116,11 +116,11 @@ actions:
 
   - name: craft_stone_shovel
     preconditions:
-      has_cobblestone: ">=1"
+      inventory.cobblestone: ">=1"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-1"
+      inventory.cobblestone: "-1"
       inventory.stick: "-2"
       inventory.stone_shovel: "+1"
     cost: 6
@@ -130,11 +130,11 @@ actions:
 
   - name: craft_stone_hoe
     preconditions:
-      has_cobblestone: ">=2"
+      inventory.cobblestone: ">=2"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-2"
+      inventory.cobblestone: "-2"
       inventory.stick: "-2"
       inventory.stone_hoe: "+1"
     cost: 7
@@ -146,10 +146,10 @@ actions:
   # かまど（作業台が必要）
   - name: craft_furnace
     preconditions:
-      has_cobblestone: ">=8"
+      inventory.cobblestone: ">=8"
       nearby_workbench: true
     effects:
-      has_cobblestone: "-8"
+      inventory.cobblestone: "-8"
       inventory.furnace: "+1"
     cost: 8
     skill: workbench_craft

@@ -36,7 +36,7 @@ actions:
       nearby_basic_stone: true
       has_any_pickaxe: true
     effects:
-      has_cobblestone: "+1"
+      inventory.cobblestone: "+1"
     cost: 1
     skill: gather
     params:
