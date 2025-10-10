@@ -108,12 +108,6 @@ async function findBestTool(bot, block) {
 
   const blockData = mcData.blocks[block.type]
   console.log(`[TOOL] ${block.name}に最適ツール選択中...`)
-  // console.log(`[TOOL] ブロック詳細:`, {
-  //   name: block.name,
-  //   displayName: blockData?.displayName,
-  //   material: blockData?.material,
-  //   harvestTools: blockData?.harvestTools
-  // })
 
   if (availableTools.length === 0) return null
 
@@ -137,11 +131,12 @@ async function findBestTool(bot, block) {
         continue
       }
 
-      const digTime = bot.digTime(block)
-      console.log(`[TOOL] ${toolName}: ${digTime.toFixed(2)}秒`)
+      const digTimeMs = bot.digTime(block)  // ミリ秒
+      const digTimeSec = digTimeMs / 1000   // 秒に変換
+      console.log(`[TOOL] ${toolName}: ${digTimeSec.toFixed(2)}秒`)
 
-      if (digTime > 0 && digTime < bestTime) {
-        bestTime = digTime
+      if (digTimeSec > 0 && digTimeSec < bestTime) {
+        bestTime = digTimeSec
         bestTool = tool
       }
     } catch (error) {
@@ -159,13 +154,14 @@ async function findBestTool(bot, block) {
       console.log(`[TOOL] 素手: 装備解除失敗をスキップ`)
       // handDigTimeを定義しないのでスキップされる
     } else {
-      const handDigTime = bot.digTime(block)
-      console.log(`[TOOL] 素手: ${handDigTime.toFixed(2)}秒`)
+      const handDigTimeMs = bot.digTime(block)  // ミリ秒
+      const handDigTimeSec = handDigTimeMs / 1000  // 秒に変換
+      console.log(`[TOOL] 素手: ${handDigTimeSec.toFixed(2)}秒`)
 
-      if (handDigTime > 0 && (!bestTool || handDigTime < bestTime)) {
+      if (handDigTimeSec > 0 && (!bestTool || handDigTimeSec < bestTime)) {
         console.log(`[TOOL] 素手が最適`)
         bestTool = null
-        bestTime = handDigTime
+        bestTime = handDigTimeSec
       }
     }
   } catch (error) {

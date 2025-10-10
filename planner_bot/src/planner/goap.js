@@ -119,9 +119,11 @@ function plan(goalInput, worldState) {
 
   // 初期状態のヒューリスティック推定値を計算し、複雑度チェック
   const initialH = calculateHeuristic(initialState, heuristicContext)
-  const COMPLEXITY_THRESHOLD = 50
+  const COMPLEXITY_THRESHOLD = process.env.GOAP_COMPLEXITY_THRESHOLD
+    ? Number(process.env.GOAP_COMPLEXITY_THRESHOLD)
+    : null  // デフォルトは無効（nullで閾値チェックをスキップ）
 
-  if (initialH > COMPLEXITY_THRESHOLD) {
+  if (COMPLEXITY_THRESHOLD !== null && initialH > COMPLEXITY_THRESHOLD) {
     console.warn(`\n[GOAP] ❌ 目標が複雑すぎます`)
     console.warn(`  目標: ${goalInput}`)
     console.warn(`  ヒューリスティック推定値: h=${initialH} (閾値: ${COMPLEXITY_THRESHOLD})`)
@@ -130,7 +132,11 @@ function plan(goalInput, worldState) {
     return null
   }
 
-  console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度: OK)`)
+  if (COMPLEXITY_THRESHOLD !== null) {
+    console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度: OK, 閾値: ${COMPLEXITY_THRESHOLD})`)
+  } else {
+    console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度チェック: 無効)`)
+  }
 
   // ヒューリスティック値をキャッシュ
   const hCache = new Map()
@@ -566,7 +572,8 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
           preconditionCost = HEURISTIC_MAX
           break
         }
-        preconditionCost = Math.max(preconditionCost, subCost)
+        // Math.max → 合計に変更（全ての前提条件を満たす必要があるため）
+        preconditionCost += subCost
         if (shouldDebugRequirement(key)) {
           console.log(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
         }
