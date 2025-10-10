@@ -17,7 +17,7 @@ actions:
       output: "charcoal"
       fuel_count: 1
 
-  # 板を燃料として使う（より効率的、原木1個から板4個作れる）
+  # 板を燃料として使う（より効率的、原木1個から板4個作れる、推奨）
   - name: smelt_charcoal_with_planks
     preconditions:
       has_log: ">=1"
@@ -27,7 +27,7 @@ actions:
       has_log: "-1"
       has_plank: "-1"
       inventory.charcoal: "+1"
-    cost: 12
+    cost: 10
     skill: furnace_smelt
     params:
       input: "log"
@@ -36,6 +36,9 @@ actions:
       fuel_count: 1
 
   # === 鉄インゴットの精錬 ===
+  # 全ての燃料オプションで精錬時間は同じ（コスト=20）
+  # GOAPが前提条件の入手コストを自動計算して最適なルートを選ぶ
+
   - name: smelt_iron_ingot_with_charcoal
     preconditions:
       inventory.raw_iron: ">=1"
@@ -53,7 +56,6 @@ actions:
       output: "iron_ingot"
       fuel_count: 1
 
-  # 石炭を燃料として使用
   - name: smelt_iron_ingot_with_coal
     preconditions:
       inventory.raw_iron: ">=1"
@@ -71,7 +73,6 @@ actions:
       output: "iron_ingot"
       fuel_count: 1
 
-  # 原木を燃料として使用（非効率だが木炭不要）
   - name: smelt_iron_ingot_with_log
     preconditions:
       inventory.raw_iron: ">=1"
@@ -81,7 +82,7 @@ actions:
       inventory.raw_iron: "-1"
       has_log: "-1"
       inventory.iron_ingot: "+1"
-    cost: 25
+    cost: 20
     skill: furnace_smelt
     params:
       input: "raw_iron"
@@ -89,7 +90,6 @@ actions:
       output: "iron_ingot"
       fuel_count: 1
 
-  # 板を燃料として使用（原木より効率的）
   - name: smelt_iron_ingot_with_planks
     preconditions:
       inventory.raw_iron: ">=1"
@@ -99,7 +99,7 @@ actions:
       inventory.raw_iron: "-1"
       has_plank: "-1"
       inventory.iron_ingot: "+1"
-    cost: 22
+    cost: 20
     skill: furnace_smelt
     params:
       input: "raw_iron"

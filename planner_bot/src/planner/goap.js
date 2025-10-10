@@ -52,7 +52,7 @@ function plan(goalInput, worldState) {
   const parsedGoal = parseGoalInput(goalInput)
   if (!parsedGoal) {
     console.warn(`無効な目標形式です: ${goalInput}`)
-    return null
+    return { plan: null, diagnosis: { error: `無効な目標形式です: ${goalInput}` } }
   }
 
   let goalAction = null
@@ -60,7 +60,7 @@ function plan(goalInput, worldState) {
     goalAction = actions.find(a => a.name === parsedGoal.actionName) || null
     if (!goalAction) {
       console.warn(`未知の目標です: ${goalInput}`)
-      return null
+      return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
     }
   }
 
@@ -68,7 +68,7 @@ function plan(goalInput, worldState) {
   const goalState = getGoalStateFromParsed(parsedGoal, actions, goalAction)
   if (!goalState) {
     console.warn(`未知の目標です: ${goalInput}`)
-    return null
+    return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
   }
 
   const initialState = buildState(worldState)
@@ -166,7 +166,7 @@ function plan(goalInput, worldState) {
     if (isGoalSatisfied(adjustedGoal, current.state)) {
       console.log(`\n[GOAP] ✓ プラン発見`)
       console.log(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
-      return current.actions
+      return { plan: current.actions, diagnosis: null }
     }
 
     for (const action of filteredActions) {
@@ -230,10 +230,123 @@ function plan(goalInput, worldState) {
     console.warn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
     console.warn(`  原因: 実行可能なアクションがありません`)
   }
-  return null
+
+  // 診断情報を追加
+  const diagnosis = diagnoseGoalFailure(adjustedGoal, initialState, filteredActions, heuristicContext)
+  return { plan: null, diagnosis }
+
 }
 
 // buildState関数は state_builder.js に移動
+
+/**
+ * ゴール失敗の診断を行う
+ * @param {Object} goal - 目標状態
+ * @param {Object} currentState - 現在状態
+ * @param {Array} actions - 利用可能なアクション
+ * @param {Object} heuristicContext - ヒューリスティック計算のコンテキスト
+ * @returns {Object} 診断結果
+ */
+function diagnoseGoalFailure(goal, currentState, actions, heuristicContext) {
+  const missingRequirements = []
+  const suggestions = []
+
+  for (const [key, targetValue] of Object.entries(goal)) {
+    const requirement = buildRequirementFromGoalTarget(targetValue)
+    const deficit = computeRequirementDeficit(key, requirement, currentState)
+
+    if (deficit > 0) {
+      // この要求が満たされていない
+      const currentValue = getStateValue(currentState, key)
+      const displayCurrent = currentValue !== undefined ? currentValue : 'なし'
+      const displayTarget = typeof targetValue === 'number'
+        ? `${targetValue}個`
+        : targetValue === true ? 'true' : String(targetValue)
+
+      missingRequirements.push({
+        key,
+        current: displayCurrent,
+        target: displayTarget,
+        deficit
+      })
+
+      // 複合状態の依存関係をチェック
+      const compositeStateDeps = loadCompositeStateDependencies()
+      const isComputedState = compositeStateDeps[key] && compositeStateDeps[key].length > 0
+
+      if (isComputedState) {
+        // 複合状態の場合、依存しているインベントリアイテムを提案
+        const dependencies = compositeStateDeps[key]
+        suggestions.push({
+          target: key,
+          action: null,
+          isComputedState: true,
+          dependencies: dependencies,
+          message: `${key} は複合状態です。以下のいずれかを入手してください: ${dependencies.join(', ')}`
+        })
+        continue
+      }
+
+      // この要求を満たすためのアクションを探す
+      const candidateActions = findActionsForRequirement(key, requirement, actions)
+
+      if (candidateActions.length > 0) {
+        // コスト順にソート（低コスト優先）
+        const sortedActions = candidateActions.sort((a, b) => {
+          const costA = Number.isFinite(a.cost) ? a.cost : 1
+          const costB = Number.isFinite(b.cost) ? b.cost : 1
+          return costA - costB
+        })
+
+        // 全てのアクションを調べて、前提条件の充足状況を記録
+        for (const action of sortedActions) {
+          if (action.preconditions) {
+            const preconditionStatus = []
+            let allSatisfied = true
+
+            for (const [preKey, preCondition] of Object.entries(action.preconditions)) {
+              const preValue = getStateValue(currentState, preKey)
+              const isSatisfied = evaluateCondition(preValue, preCondition)
+              const displayPreValue = preValue !== undefined ? preValue : 'なし'
+
+              preconditionStatus.push({
+                key: preKey,
+                current: displayPreValue,
+                required: preCondition,
+                satisfied: isSatisfied
+              })
+
+              if (!isSatisfied) {
+                allSatisfied = false
+              }
+            }
+
+            // 全ての選択肢を記録（満たされているかどうかに関わらず）
+            suggestions.push({
+              target: key,
+              action: action.name,
+              cost: action.cost,
+              allSatisfied: allSatisfied,
+              preconditions: preconditionStatus
+            })
+          }
+        }
+      } else {
+        // アクションが見つからない場合
+        suggestions.push({
+          target: key,
+          action: null,
+          message: `${key}を達成するアクションが見つかりません`
+        })
+      }
+    }
+  }
+
+  return {
+    missingRequirements,
+    suggestions
+  }
+}
 
 /**
  * 目標入力をパース
