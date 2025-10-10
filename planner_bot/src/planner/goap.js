@@ -243,7 +243,7 @@ function plan(goalInput, worldState) {
 function parseGoalInput(input) {
   const trimmed = input.trim()
 
-  // パターン1: ドット記法の状態指定（例: "inventory.furnace:1", "inventory.iron_ingot:5"）
+  // パターン1: ドット記法の状態指定（数値）
   if (/^[a-z_]+\.[a-z_]+:\d+$/.test(trimmed)) {
     const [key, value] = trimmed.split(':')
     return {
@@ -252,7 +252,25 @@ function parseGoalInput(input) {
     }
   }
 
-  // パターン2: 従来の状態指定（例: "has_log:8", "has_wooden_pickaxe:2"）
+  // パターン2: ドット記法のBoolean状態指定（例: "inventory.foo:true"）
+  if (/^[a-z_]+\.[a-z_]+:(true|false)$/.test(trimmed)) {
+    const [key, value] = trimmed.split(':')
+    return {
+      type: 'state',
+      state: { [key]: value === 'true' }
+    }
+  }
+
+  // パターン3: Boolean状態指定（例: "nearby_workbench:true"）
+  if (/^[a-z_]+:(true|false)$/.test(trimmed)) {
+    const [key, value] = trimmed.split(':')
+    return {
+      type: 'state',
+      state: { [key]: value === 'true' }
+    }
+  }
+
+  // パターン4: has_ 系の数値指定
   if (/^has_[a-z_]+:\d+$/.test(trimmed)) {
     const [key, value] = trimmed.split(':')
     return {
@@ -261,7 +279,7 @@ function parseGoalInput(input) {
     }
   }
 
-  // パターン3: アクション名（例: "craft_wooden_pickaxe", "gather_logs"）
+  // パターン5: アクション名（例: "craft_wooden_pickaxe", "gather_logs"）
   if (/^[a-z_]+$/.test(trimmed)) {
     return {
       type: 'action',

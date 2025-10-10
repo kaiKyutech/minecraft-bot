@@ -1,6 +1,6 @@
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
-const { checkStepPreconditions } = require('./precondition_checker')
+const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
 
 /**
  * GOAPプランを実行（リプランニング対応）
@@ -22,20 +22,27 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       continue
     }
 
-    const preconditionsSatisfied = await checkStepPreconditions(bot, step, stateManager)
+    const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
 
-    if (!preconditionsSatisfied) {
-      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。リプランニングを実行...`)
+    if (!preconditionStatus.satisfied) {
+      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。補助サブゴールを探索します...`)
+
+      const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus)
+
+      if (resolved) {
+        // サブゴールで前提条件を満たしたので、同じステップを再評価
+        continue
+      }
+
+      console.log(`[REACTIVE_GOAP] サブゴールでの解決に失敗。リプランニングを実行...`)
       console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
 
-      // 状態を更新してからリプランニング
       await stateManager.refresh(bot)
       const newPlan = await replan(bot, goalName, stateManager)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
       logReplanDetails(newPlan)
-
 
       currentPlan = newPlan
       stepIndex = 0
@@ -118,6 +125,113 @@ function logReplanDetails(plan) {
   plan.forEach((step, index) => {
     console.log(`  ${index + 1}. ${step.action} (skill: ${step.skill || 'なし'})`)
   })
+}
+
+function formatCondition(condition) {
+  if (typeof condition === 'boolean' || typeof condition === 'number') {
+    return String(condition)
+  }
+  return condition
+}
+
+function deriveSubGoalInput(missing, goapState) {
+  const { key, condition } = missing
+  const current = Number(getStateValue(goapState, key)) || 0
+
+  const clamp = (value) => Math.max(1, Math.min(64, Math.round(value)))
+
+  if (typeof condition === 'number') {
+    const requiredDelta = condition - current
+    if (requiredDelta <= 0) return null
+    const deficit = clamp(requiredDelta)
+    return `${key}:${deficit}`
+  }
+
+  if (typeof condition === 'string') {
+    const trimmed = condition.trim()
+    const comparison = trimmed.match(/^(>=|<=|==|!=|>|<)\s*(-?\d+)$/)
+    if (comparison) {
+      const [, operator, raw] = comparison
+      const target = Number(raw)
+      let required
+      switch (operator) {
+        case '>':
+          required = target + 1
+          break
+        case '>=':
+          required = target
+          break
+        case '==':
+          required = target
+          break
+        default:
+          return null
+      }
+      const deficitRaw = required - current
+      if (deficitRaw <= 0) return null
+      const deficit = clamp(deficitRaw)
+      return `${key}:${deficit}`
+    }
+
+    if (/^-?\d+$/.test(trimmed)) {
+      const target = Number(trimmed)
+      const deficitRaw = target - current
+      if (deficitRaw <= 0) return null
+      const deficit = clamp(deficitRaw)
+      return `${key}:${deficit}`
+    }
+  }
+
+  if (typeof condition === 'boolean') {
+    return condition === true ? `${key}:true` : `${key}:false`
+  }
+
+  return null
+}
+
+async function executeSimplePlan(bot, plan, stateManager) {
+  for (const step of plan) {
+    if (!step.skill) continue
+
+    const status = await analyseStepPreconditions(bot, step, stateManager)
+    if (!status.satisfied) {
+      throw new Error(`サブプランのステップ ${step.action} の前提条件を満たせません`)
+    }
+    await executeStep(bot, step, stateManager)
+  }
+}
+
+async function tryResolveMissingPreconditions(bot, step, stateManager, status) {
+  for (const missing of status.missing) {
+    const subGoalInput = deriveSubGoalInput(missing, status.goapState)
+    if (!subGoalInput) {
+      continue
+    }
+
+    console.log(`[REACTIVE_GOAP]   → 補助ゴール検討: ${missing.key} ${formatCondition(missing.condition)} / 現在値 ${missing.currentValue ?? 0}`)
+    console.log(`[REACTIVE_GOAP]     サブゴール候補: ${subGoalInput}`)
+
+    const subPlan = goapPlanner.plan(subGoalInput, status.worldState)
+
+    if (!subPlan || subPlan.length === 0) {
+      console.log(`[REACTIVE_GOAP]     サブプラン生成に失敗 (${subGoalInput})`)
+      continue
+    }
+
+    console.log(`[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
+
+    try {
+      await executeSimplePlan(bot, subPlan, stateManager)
+      await stateManager.refresh(bot)
+      console.log(`[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
+      return true
+    } catch (error) {
+      console.log(`[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
+      await stateManager.refresh(bot)
+    }
+  }
+
+  return false
 }
 
 module.exports = {
