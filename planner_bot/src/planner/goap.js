@@ -11,7 +11,7 @@ const ACTION_FILES = [
   'movement_actions.yaml',
   'furnace_actions.yaml'
 ]
-const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 2000
+const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 600
 
 let domain
 
@@ -117,26 +117,9 @@ function plan(goalInput, worldState) {
 
   const heuristicContext = buildHeuristicContext(adjustedGoal, goalAction, filteredActions)
 
-  // 初期状態のヒューリスティック推定値を計算し、複雑度チェック
+  // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
-  const COMPLEXITY_THRESHOLD = process.env.GOAP_COMPLEXITY_THRESHOLD
-    ? Number(process.env.GOAP_COMPLEXITY_THRESHOLD)
-    : null  // デフォルトは無効（nullで閾値チェックをスキップ）
-
-  if (COMPLEXITY_THRESHOLD !== null && initialH > COMPLEXITY_THRESHOLD) {
-    console.warn(`\n[GOAP] ❌ 目標が複雑すぎます`)
-    console.warn(`  目標: ${goalInput}`)
-    console.warn(`  ヒューリスティック推定値: h=${initialH} (閾値: ${COMPLEXITY_THRESHOLD})`)
-    console.warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
-    console.warn(`  段階的に中間目標を実行してください。`)
-    return null
-  }
-
-  if (COMPLEXITY_THRESHOLD !== null) {
-    console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度: OK, 閾値: ${COMPLEXITY_THRESHOLD})`)
-  } else {
-    console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度チェック: 無効)`)
-  }
+  console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
 
   // ヒューリスティック値をキャッシュ
   const hCache = new Map()
@@ -234,25 +217,13 @@ function plan(goalInput, worldState) {
   }
 
   if (iterations >= MAX_ITERATIONS) {
-    console.warn(`\n[GOAP] ❌ プラン未発見 (タイムアウト)`)
+    console.warn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
     console.warn(`  目標: ${goalInput}`)
-    console.warn(`  イテレーション: ${iterations} (上限: ${MAX_ITERATIONS})`)
+    console.warn(`  初期ヒューリスティック: h=${initialH}`)
+    console.warn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
     console.warn(`  残り候補: ${open.length}, 訪問済み: ${visited.size}`)
-
-    const frontierSample = summarizeFrontier(open, heuristicContext)
-    if (frontierSample.length > 0) {
-      console.warn(`\n  未展開候補トップ${frontierSample.length}件:`)
-      frontierSample.forEach((entry, index) => {
-        console.warn(`    ${index + 1}. f=${entry.f} (g=${entry.g}+h=${entry.h}) steps=${entry.depth}`)
-        if (entry.depth <= 10) {
-          // 短いプランは全アクション表示
-          console.warn(`       ${entry.allActions.join(' → ')}`)
-        } else {
-          // 長いプランは最後の5アクションのみ表示
-          console.warn(`       ...${entry.sampleActions.join(' → ')}`)
-        }
-      })
-    }
+    console.warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
+    console.warn(`  段階的に中間目標を実行してください。`)
   } else {
     console.warn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
     console.warn(`  目標: ${goalInput}`)
