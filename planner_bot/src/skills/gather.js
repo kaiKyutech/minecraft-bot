@@ -103,38 +103,51 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         }
       }
 
-      //掘削
+      // 掘削
+      const beforeCount = collectName ? getInventoryItemCount(bot, collectName) : null
       console.log(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
       await primitives.digBlock(bot, { position: blockInfo.position })
       console.log(`[GATHER] ブロック掘削完了`)
+
+      let autoCollected = false
+      if (collectName) {
+        await delay(params.postDigDelayMs ?? 150)
+        const afterCount = getInventoryItemCount(bot, collectName)
+        if (afterCount > beforeCount) {
+          console.log(`[GATHER] 掘削直後に${collectName}を自動回収 (${afterCount - beforeCount})`)
+          autoCollected = true
+        }
+      }
 
       //ドロップを回収
       const collectAttempts = params.collectAttempts ?? 5
       const collectDelayMs = params.collectRetryDelayMs ?? 100
       let dropCount = 0
 
-      console.log(`[GATHER] ドロップ回収開始（最大${collectAttempts}回試行）`)
-      for (let attempt = 0; attempt < collectAttempts; attempt++) {
-        console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
-        dropCount = await primitives.collectDrops(bot, {
-          itemName: collectName,
-          radius: collectRadius,
-          waitMs: params.collectWaitMs
-        })
+      if (!autoCollected && collectName) {
+        console.log(`[GATHER] ドロップ回収開始（最大${collectAttempts}回試行）`)
+        for (let attempt = 0; attempt < collectAttempts; attempt++) {
+          console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
+          dropCount = await primitives.collectDrops(bot, {
+            itemName: collectName,
+            radius: collectRadius,
+            waitMs: params.collectWaitMs
+          })
 
-        console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
-        if (dropCount > 0) break
-        await delay(collectDelayMs)
-      }
+          console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
+          if (dropCount > 0) break
+          await delay(collectDelayMs)
+        }
 
-      if (dropCount === 0) {
-        console.log(`[GATHER] ドロップが見つからないため、ブロック位置へ接近`)
-        await primitives.moveTo(bot, {
-          position: blockInfo.position,
-          range: 0.6
-        })
-        console.log(`[GATHER] 接近完了、待機中`)
-        await delay(collectDelayMs)
+        if (dropCount === 0) {
+          console.log(`[GATHER] ドロップが見つからないため、ブロック位置へ接近`)
+          await primitives.moveTo(bot, {
+            position: blockInfo.position,
+            range: 0.6
+          })
+          console.log(`[GATHER] 接近完了、待機中`)
+          await delay(collectDelayMs)
+        }
       }
     } catch (error) {
       throw new Error(`資源の収集に失敗しました: ${error.message}`)
@@ -254,4 +267,13 @@ function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function getInventoryItemCount(bot, itemName) {
+  return bot.inventory.items().reduce((sum, item) => {
+    if (item && item.name === itemName) {
+      return sum + item.count
+    }
+    return sum
+  }, 0)
 }

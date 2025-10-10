@@ -388,6 +388,11 @@ function ensurePathfinder(bot) {
   movements.canDig = true
   movements.allowSprinting = true
 
+  const dirtBlock = mcData.blocksByName.dirt
+  if (dirtBlock && typeof dirtBlock.id === 'number') {
+    movements.scaffoldingBlocks = new Set([dirtBlock.id])
+  }
+
   bot.pathfinder.setMovements(movements)
   movementCache.set(bot, movements)
   return movements

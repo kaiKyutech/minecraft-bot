@@ -2,7 +2,7 @@
 actions:
   # === 木の伐採 ===
   # 素手で木を伐る（非効率）
-  - name: gather_logs_barehand
+  - name: gather_logs_barehand_x1
     preconditions:
       inventory_space: true
       nearby_log: true
@@ -14,8 +14,32 @@ actions:
       itemName: log
       count: 1
 
+  - name: gather_logs_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+    effects:
+      has_log: "+3"
+    cost: 30
+    skill: gather
+    params:
+      itemName: log
+      count: 3
+
+  - name: gather_logs_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+    effects:
+      has_log: "+8"
+    cost: 80
+    skill: gather
+    params:
+      itemName: log
+      count: 8
+
   # 斧で木を伐る（効率的）
-  - name: gather_logs_with_axe
+  - name: gather_logs_with_axe_x1
     preconditions:
       inventory_space: true
       nearby_log: true
@@ -28,9 +52,35 @@ actions:
       itemName: log
       count: 1
 
+  - name: gather_logs_with_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+      has_any_axe: true
+    effects:
+      has_log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: log
+      count: 3
+
+  - name: gather_logs_with_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby_log: true
+      has_any_axe: true
+    effects:
+      has_log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: log
+      count: 8
+
   # === 石の採掘 ===
   # 石の採掘には木のピッケル以上が必須
-  - name: gather_basic_stone_with_pickaxe
+  - name: gather_basic_stone_with_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby_basic_stone: true
@@ -43,9 +93,35 @@ actions:
       itemName: basic_stone
       count: 1
 
+  - name: gather_basic_stone_with_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true
+      has_any_pickaxe: true
+    effects:
+      inventory.cobblestone: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: basic_stone
+      count: 3
+
+  - name: gather_basic_stone_with_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby_basic_stone: true
+      has_any_pickaxe: true
+    effects:
+      inventory.cobblestone: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: basic_stone
+      count: 8
+
   # === 鉄鉱石の採掘 ===
   # 鉄鉱石は石以上のピッケルが必要（1.17以降はraw_ironがドロップ）
-  - name: gather_iron_ore_with_stone_pickaxe
+  - name: gather_iron_ore_with_stone_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby_iron_ore: true
@@ -57,6 +133,32 @@ actions:
     params:
       itemName: iron_ore
       count: 1
+
+  - name: gather_iron_ore_with_stone_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby_iron_ore: true
+      has_stone_or_better_pickaxe: true
+    effects:
+      inventory.raw_iron: "+3"
+    cost: 24
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 3
+
+  - name: gather_iron_ore_with_stone_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby_iron_ore: true
+      has_stone_or_better_pickaxe: true
+    effects:
+      inventory.raw_iron: "+8"
+    cost: 64
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 8
 
   # === 石炭鉱石の採掘 ===
   # 石炭は木のピッケル以上で採掘可能
