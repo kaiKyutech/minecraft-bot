@@ -117,6 +117,21 @@ function plan(goalInput, worldState) {
 
   const heuristicContext = buildHeuristicContext(adjustedGoal, goalAction, filteredActions)
 
+  // 初期状態のヒューリスティック推定値を計算し、複雑度チェック
+  const initialH = calculateHeuristic(initialState, heuristicContext)
+  const COMPLEXITY_THRESHOLD = 50
+
+  if (initialH > COMPLEXITY_THRESHOLD) {
+    console.warn(`\n[GOAP] ❌ 目標が複雑すぎます`)
+    console.warn(`  目標: ${goalInput}`)
+    console.warn(`  ヒューリスティック推定値: h=${initialH} (閾値: ${COMPLEXITY_THRESHOLD})`)
+    console.warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
+    console.warn(`  段階的に中間目標を実行してください。`)
+    return null
+  }
+
+  console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (複雑度: OK)`)
+
   // ヒューリスティック値をキャッシュ
   const hCache = new Map()
   const getF = (node) => {

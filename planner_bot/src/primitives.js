@@ -328,6 +328,8 @@ async function craftItem(bot, params = {}) {
 
   try {
     await bot.craft(recipes[0], count, tableBlock)
+    // クラフト完了後、インベントリ同期を待つ
+    await delay(150)
   } catch (error) {
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
