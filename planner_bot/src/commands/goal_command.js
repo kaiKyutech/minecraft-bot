@@ -26,7 +26,7 @@ async function handleGoalCommand(bot, goalName, stateManager) {
   }
 
   if (!plan || !Array.isArray(plan)) {
-    await bot.chatWithDelay('Goal cannot be executed')
+    await bot.chatWithDelay('目標を実行できません')
 
     // 診断情報をチャットに表示
     if (diagnosis) {
@@ -48,7 +48,7 @@ async function handleGoalCommand(bot, goalName, stateManager) {
  */
 async function sendDiagnosisToChat(bot, diagnosis) {
   if (diagnosis.error) {
-    await bot.chatWithDelay(`Error: ${diagnosis.error}`)
+    await bot.chatWithDelay(`エラー: ${diagnosis.error}`)
     return
   }
 
@@ -56,18 +56,17 @@ async function sendDiagnosisToChat(bot, diagnosis) {
     return
   }
 
-  await bot.chatWithDelay('=== MISSING ===')
+  await bot.chatWithDelay('=== 不足している要件 ===')
 
   // 不足している要件を簡潔に表示
   for (const req of diagnosis.missingRequirements) {
     const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
     const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
-    await bot.chatWithDelay(`${req.key}: now=${current}, need=${target}`)
+    await bot.chatWithDelay(`${req.key}: 現在=${current}, 必要=${target}`)
   }
 
   await bot.chatWithDelay('---')
-  await bot.chatWithDelay('GOAP cannot execute. Materials not nearby or tools missing.')
-  await bot.chatWithDelay('Consider: !creative nav, !status, or prepare materials first')
+  await bot.chatWithDelay('GOAP実行不可: 素材が近くにないか道具が不足しています')
 }
 
 /**

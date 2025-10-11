@@ -3,10 +3,17 @@ const { pathfinder } = require('mineflayer-pathfinder')
 
 const createStateManager = require('./src/planner/state_manager')
 const { handleChatCommand } = require('./src/commands')
+const { handleUserMessage } = require('./src/llm/llm_handler')
 
 debugLog('initialising planner bot')
 
 const stateManager = createStateManager()
+
+// LLM用のコンテキスト（会話履歴、前回のコマンド結果など）
+const llmContext = {
+  chatHistory: [], // 直近50件の会話履歴
+  lastCommandResult: null // 前回のコマンド結果
+}
 
 const bot = mineflayer.createBot({
   host: process.env.MC_HOST || 'localhost',
@@ -46,10 +53,27 @@ bot.on('chat', async (username, message) => {
   console.log(`[CHAT RECEIVED] ${username}: ${message}`)
   debugLog(`chat from ${username}: ${message}`)
 
+  // 会話履歴に追加（タイムスタンプ付き）
+  const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  const chatLine = `[${timestamp}] <${username}> ${message}`;
+  llmContext.chatHistory.push(chatLine);
+
+  // 直近50件に制限
+  if (llmContext.chatHistory.length > 50) {
+    llmContext.chatHistory.shift();
+  }
+
   try {
     // コマンド実行前に状態を更新
     await stateManager.refresh(bot)
-    await handleChatCommand(bot, username, message, stateManager)
+
+    // メッセージが "!" で始まる場合は従来のコマンドハンドラ
+    if (message.startsWith('!')) {
+      await handleChatCommand(bot, username, message, stateManager)
+    } else {
+      // それ以外はLLMハンドラ（今回はプロンプト表示のみ）
+      await handleUserMessage(bot, username, message, stateManager, llmContext)
+    }
   } catch (error) {
     console.error('command execution error', error)
     await bot.chatWithDelay(`Error: ${error.message}`)
