@@ -26,14 +26,13 @@ async function handleGoalCommand(bot, goalName, stateManager) {
   }
 
   if (!plan || !Array.isArray(plan)) {
-    bot.chat('実行可能なプランが見つかりませんでした')
+    bot.chat('Goal cannot be executed')
 
-    // 診断情報を表示
+    // 診断情報をチャットに表示
     if (diagnosis) {
+      await sendDiagnosisToChat(bot, diagnosis)
+      // コンソールには詳細ログ
       logDiagnosisDetails(diagnosis)
-
-      // ユーザーにヒントを提供（最低限のメッセージ）
-      // 詳細はコンソールのlogDiagnosisDetails()で確認できる
     }
     return
   }
@@ -43,7 +42,43 @@ async function handleGoalCommand(bot, goalName, stateManager) {
 }
 
 /**
- * 診断情報をコンソールに出力
+ * 診断情報をチャットに送信（LLM向け）
+ * @param {Object} bot - Mineflayerボット
+ * @param {Object} diagnosis - 診断結果
+ */
+async function sendDiagnosisToChat(bot, diagnosis) {
+  if (diagnosis.error) {
+    bot.chat(`Error: ${diagnosis.error}`)
+    return
+  }
+
+  if (!diagnosis.missingRequirements || diagnosis.missingRequirements.length === 0) {
+    return
+  }
+
+  bot.chat('=== MISSING ===')
+
+  // 不足している要件を簡潔に表示
+  for (const req of diagnosis.missingRequirements) {
+    const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
+    const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
+    bot.chat(`${req.key}: now=${current}, need=${target}`)
+    await delay(100)
+  }
+
+  bot.chat('---')
+  bot.chat('GOAP cannot execute. Materials not nearby or tools missing.')
+  bot.chat('Consider: !creative nav, !status, or prepare materials first')
+
+  await delay(100)
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * 診断情報をコンソールに出力（開発者向け詳細ログ）
  * @param {Object} diagnosis - 診断結果
  */
 function logDiagnosisDetails(diagnosis) {

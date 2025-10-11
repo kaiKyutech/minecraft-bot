@@ -6,6 +6,7 @@ const { loadStateSchema, loadBlockCategories } = require('./state_builder')
 class StateManager {
   constructor() {
     this.cache = null
+    this.namedLocations = {}  // 登録された場所の座標マップ {name: {x, y, z}}
   }
 
   async getState(bot) {
@@ -120,6 +121,37 @@ class StateManager {
 
   clear() {
     this.cache = null
+  }
+
+  /**
+   * 場所を名前付きで登録
+   * @param {string} name - 場所名
+   * @param {Object} position - 座標 {x, y, z}
+   */
+  registerLocation(name, position) {
+    this.namedLocations[name] = {
+      x: Math.floor(position.x),
+      y: Math.floor(position.y),
+      z: Math.floor(position.z)
+    }
+    console.log(`[STATE_MANAGER] 場所「${name}」を登録: (${this.namedLocations[name].x}, ${this.namedLocations[name].y}, ${this.namedLocations[name].z})`)
+  }
+
+  /**
+   * 登録済み場所の取得
+   * @param {string} name - 場所名
+   * @returns {Object|null} - 座標 {x, y, z} または null
+   */
+  getLocation(name) {
+    return this.namedLocations[name] || null
+  }
+
+  /**
+   * 登録済み場所の一覧取得
+   * @returns {Object} - {name: {x, y, z}, ...}
+   */
+  getLocations() {
+    return { ...this.namedLocations }
   }
 }
 
