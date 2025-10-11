@@ -12,9 +12,11 @@
   "type": "commonjs",
   "dependencies": {
     "@google/genai": "^1.24.0",
+    "canvas": "^3.2.0",
     "dotenv": "^17.2.3",
     "mineflayer": "^4.33.0",
     "mineflayer-pathfinder": "github:Hatadi-v/mineflayer-pathfinder#patch-1",
+    "prismarine-viewer": "^1.33.0",
     "yaml": "^2.8.1"
   }
 }

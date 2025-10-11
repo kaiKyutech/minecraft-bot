@@ -1,5 +1,7 @@
 require('dotenv').config()
 
+const { mineflayer: mineflayerViewer } = require('prismarine-viewer')
+
 const mineflayer = require('mineflayer')
 const { pathfinder } = require('mineflayer-pathfinder')
 
@@ -63,6 +65,7 @@ bot.chatWithDelay = async (message) => {
 bot.once('spawn', () => {
   console.log('[BOT] Spawned successfully, ready to receive commands')
   debugLog('bot spawned, ready to receive goals')
+  mineflayerViewer(bot, { port: 3007, firstPerson: true })
 })
 
 bot.on('chat', async (username, message) => {
