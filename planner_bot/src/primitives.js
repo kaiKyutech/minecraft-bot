@@ -339,10 +339,24 @@ async function craftItem(bot, params = {}) {
     throw new Error('利用可能なレシピが見つかりません')
   }
 
+  // クラフト前のアイテム数を記録
+  const itemsBefore = bot.inventory.items().filter(item => item.type === recipeItem.id)
+  const countBefore = itemsBefore.reduce((sum, item) => sum + item.count, 0)
+
   try {
     await bot.craft(recipes[0], count, tableBlock)
-    // クラフト完了後、インベントリ同期を待つ（1.20.xでは短縮可能）
-    await delay(50)
+    // クラフト完了後、インベントリ同期を待つ（ネットワーク遅延を考慮して長めに）
+    await delay(300)
+
+    // クラフト後のアイテム数を確認
+    const itemsAfter = bot.inventory.items().filter(item => item.type === recipeItem.id)
+    const countAfter = itemsAfter.reduce((sum, item) => sum + item.count, 0)
+
+    if (countAfter <= countBefore) {
+      throw new Error(`クラフトに失敗しました: ${params.itemName}がインベントリに追加されませんでした（前:${countBefore}, 後:${countAfter}）`)
+    }
+
+    console.log(`[CRAFT] ${params.itemName} クラフト成功: ${countBefore} → ${countAfter} (+${countAfter - countBefore})`)
   } catch (error) {
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')

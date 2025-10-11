@@ -73,8 +73,6 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
   console.log(`[EXECUTION] 全${currentPlan.length}ステップ完了`)
   console.log(`[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
-
-  bot.chat('目標を完了しました')
 }
 
 /**
@@ -164,6 +162,9 @@ async function executeStep(bot, step, stateManager) {
   await stateManager.refresh(bot)
 
   console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
+
+  // 各アクション完了をチャットに表示（一時的にコメントアウト）
+  // await bot.chatWithDelay(`${step.action} を完了しました`)
 }
 
 /**

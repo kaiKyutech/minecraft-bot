@@ -1,9 +1,10 @@
 /**
  * LLMハンドラー
- * ユーザーメッセージを受け取り、LLMに送信（将来実装）
+ * ユーザーメッセージを受け取り、LLMに送信
  */
 
 const { buildFullPrompt } = require('./prompt_builder');
+const geminiClient = require('./gemini_client');
 
 /**
  * !status の出力を取得
@@ -129,7 +130,7 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
     context.chatHistory || []
   );
 
-  // 3. コンソールに表示（デバッグ用）
+  // 3. プロンプト表示（常時表示）
   console.log('\n' + '='.repeat(80));
   console.log('SYSTEM PROMPT:');
   console.log('='.repeat(80));
@@ -140,44 +141,66 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
   console.log(userPrompt);
   console.log('='.repeat(80) + '\n');
 
-  // TODO: 将来的にここでLLM APIを呼び出す
-  // const response = await callLLM(systemPrompt, userPrompt);
-  // const { thought, speech, command } = JSON.parse(response);
-  //
-  // // speechをチャットに送信
-  // await bot.chatWithDelay(speech);
-  //
-  // // commandがあれば実行
-  // if (command) {
-  //   const goalCommand = convertToGoalCommand(command);
-  //   const handleGoalCommand = require('../commands/goal_command');
-  //
-  //   try {
-  //     await handleGoalCommand(bot, goalCommand, stateManager);
-  //     // 成功時は結果をcontextに保存
-  //     context.lastCommandResult = '目標を完了しました';
-  //   } catch (error) {
-  //     // 失敗時はエラーメッセージをcontextに保存
-  //     context.lastCommandResult = error.message;
-  //   }
-  //
-  //   // 会話履歴にも追加
-  //   const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
-  //   context.chatHistory.push(`[${timestamp}] <Bot> ${speech}`);
-  //   context.chatHistory.push(`[${timestamp}] <System> ${context.lastCommandResult}`);
-  //
-  //   // 直近50件に制限
-  //   if (context.chatHistory.length > 50) {
-  //     context.chatHistory = context.chatHistory.slice(-50);
-  //   }
-  // } else {
-  //   // コマンドなしの場合は会話のみ
-  //   const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
-  //   context.chatHistory.push(`[${timestamp}] <Bot> ${speech}`);
-  //   context.lastCommandResult = null; // リセット
-  // }
+  // 4. LLM APIを呼び出す
+  try {
+    const { thought, speech, command } = await geminiClient.generateResponse(systemPrompt, userPrompt);
 
-  console.log('[LLM_HANDLER] Prompt generation completed. (API call not implemented yet)');
+    // speechをチャットに送信（改行で分割して複数メッセージとして送信）
+    const speechLines = speech.split('\n').filter(line => line.trim() !== '');
+    for (const line of speechLines) {
+      await bot.chatWithDelay(line);
+    }
+
+    // 会話履歴にBotの発話を追加
+    const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+    context.chatHistory.push(`[${timestamp}] <Bot> ${speech}`);
+
+    // commandがあれば実行
+    if (command && command !== 'null') {
+      const goalCommand = convertToGoalCommand(command);
+      const handleGoalCommand = require('../commands/goal_command');
+
+      console.log(`[LLM_HANDLER] Executing command: !goal ${goalCommand}`);
+
+      try {
+        await handleGoalCommand(bot, goalCommand, stateManager);
+        // 成功時は結果をcontextに保存（具体的なゴール名を含める）
+        context.lastCommandResult = `${command} の作成を完了しました`;
+        console.log('[LLM_HANDLER] Command succeeded');
+
+        // チャットに表示
+        await bot.chatWithDelay(context.lastCommandResult);
+      } catch (error) {
+        // 失敗時はエラーメッセージをcontextに保存
+        context.lastCommandResult = `${command} の作成に失敗しました: ${error.message || String(error)}`;
+        console.error('[LLM_HANDLER] Command failed:', context.lastCommandResult);
+
+        // チャットに表示
+        await bot.chatWithDelay(context.lastCommandResult);
+      }
+
+      // システムメッセージを会話履歴に追加
+      context.chatHistory.push(`[${timestamp}] <System> ${context.lastCommandResult}`);
+
+      // コマンド実行後、自動的に次のアクションをLLMに決めさせる
+      console.log('[LLM_HANDLER] Command completed, asking LLM for next action...');
+      await handleUserMessage(bot, 'System', '', stateManager, context);
+    } else {
+      // コマンドなしの場合は会話のみ
+      context.lastCommandResult = null; // リセット
+    }
+
+    // 直近50件に制限
+    if (context.chatHistory.length > 50) {
+      context.chatHistory = context.chatHistory.slice(-50);
+    }
+
+    console.log('[LLM_HANDLER] Processing completed successfully');
+
+  } catch (error) {
+    console.error('[LLM_HANDLER] Error:', error.message);
+    await bot.chatWithDelay(`エラーが発生しました: ${error.message}`);
+  }
 }
 
 /**

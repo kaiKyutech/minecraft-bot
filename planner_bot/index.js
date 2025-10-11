@@ -1,9 +1,12 @@
+require('dotenv').config()
+
 const mineflayer = require('mineflayer')
 const { pathfinder } = require('mineflayer-pathfinder')
 
 const createStateManager = require('./src/planner/state_manager')
 const { handleChatCommand } = require('./src/commands')
 const { handleUserMessage } = require('./src/llm/llm_handler')
+const geminiClient = require('./src/llm/gemini_client')
 
 debugLog('initialising planner bot')
 
@@ -23,6 +26,21 @@ const bot = mineflayer.createBot({
 })
 
 bot.loadPlugin(pathfinder)
+
+// Gemini API初期化
+if (process.env.GEMINI_API_KEY) {
+  try {
+    geminiClient.initialize(
+      process.env.GEMINI_API_KEY,
+      process.env.LLM_MODEL || 'gemini-2.0-flash-exp'
+    )
+    console.log('[LLM] Gemini client initialized successfully')
+  } catch (error) {
+    console.error('[LLM] Failed to initialize Gemini client:', error.message)
+  }
+} else {
+  console.warn('[LLM] GEMINI_API_KEY not found in environment variables. LLM features will be disabled.')
+}
 
 // チャットスパム対策: 最終送信時刻を記録
 bot.lastChatTime = 0

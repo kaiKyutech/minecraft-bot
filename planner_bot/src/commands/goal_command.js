@@ -28,13 +28,42 @@ async function handleGoalCommand(bot, goalName, stateManager) {
   if (!plan || !Array.isArray(plan)) {
     await bot.chatWithDelay('目標を実行できません')
 
+    // 詳細なエラーメッセージを構築
+    let errorMessage = '目標を実行できません。'
+
     // 診断情報をチャットに表示
     if (diagnosis) {
       await sendDiagnosisToChat(bot, diagnosis)
       // コンソールには詳細ログ
       logDiagnosisDetails(diagnosis)
+
+      // アクションが見つからない場合（作成できないアイテム）
+      if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
+        const firstSuggestion = diagnosis.suggestions[0]
+
+        // アクションが存在しない場合
+        if (firstSuggestion.message && firstSuggestion.message.includes('アクションが見つかりません')) {
+          errorMessage += ` このアイテムは作成できません。使用可能なアイテム一覧を確認してください。`
+        }
+        // 材料不足の場合
+        else if (firstSuggestion.preconditions && firstSuggestion.preconditions.length > 0) {
+          const unsatisfied = firstSuggestion.preconditions.filter(p => !p.satisfied)
+          if (unsatisfied.length > 0) {
+            const missing = unsatisfied
+              .map(p => {
+                const current = p.current || 'なし'
+                const required = p.required
+                return `${p.key}(現在:${current}, 必要:${required})`
+              })
+              .join(', ')
+            errorMessage += ` 材料不足: ${missing}`
+          }
+        }
+      }
     }
-    return
+
+    // 例外を投げて失敗を通知
+    throw new Error(errorMessage)
   }
 
   logPlanDetails(goalName, plan)
