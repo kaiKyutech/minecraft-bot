@@ -96,18 +96,13 @@ async function handleStatusCommand(bot, stateManager) {
   messages.push('GOAP: auto-execute when materials nearby')
   messages.push('Creative: navigation, exploration, building')
 
-  // チャットに送信（複数行を分割して送信）
+  // チャットに送信（スパム対策で自動的に間隔を空ける）
   for (const msg of messages) {
-    bot.chat(msg)
-    await delay(100) // チャット送信の間隔を空ける
+    await bot.chatWithDelay(msg)
   }
 
   // コンソールには簡潔なログ
   console.log('[STATUS] Status sent to chat')
-}
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 module.exports = handleStatusCommand

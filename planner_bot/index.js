@@ -17,33 +17,33 @@ const bot = mineflayer.createBot({
 
 bot.loadPlugin(pathfinder)
 
-bot.once('spawn', () => {
-  debugLog('bot spawned, ready to receive goals')
+// チャットスパム対策: 最終送信時刻を記録
+bot.lastChatTime = 0
+bot.chatWithDelay = async (message) => {
+  const MIN_CHAT_INTERVAL = 550 // 0.55秒（余裕を持たせる）
+  const now = Date.now()
+  const timeSinceLastChat = now - bot.lastChatTime
 
-  // remmychatプラグイン対策: 複数のチャンネル加入を試行
-  setTimeout(() => {
-    tryJoinGlobalChannel()
-  }, 2000)
-})
-
-// remmychat対応: ローカルチャンネル参加
-async function tryJoinGlobalChannel() {
-  try {
-    bot.chat('/remchat channel local')
-    await delay(1500)
-  } catch (error) {
-    console.log('[CHANNEL] Failed to join local channel')
+  if (timeSinceLastChat < MIN_CHAT_INTERVAL) {
+    const waitTime = MIN_CHAT_INTERVAL - timeSinceLastChat
+    console.log(`[CHAT] Waiting ${waitTime}ms before sending: "${message}"`)
+    await new Promise(resolve => setTimeout(resolve, waitTime))
   }
+
+  console.log(`[CHAT] Sending: "${message}"`)
+  bot.chat(message)
+  bot.lastChatTime = Date.now()
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
+bot.once('spawn', () => {
+  console.log('[BOT] Spawned successfully, ready to receive commands')
+  debugLog('bot spawned, ready to receive goals')
+})
 
 bot.on('chat', async (username, message) => {
   if (username === bot.username) return
 
+  console.log(`[CHAT RECEIVED] ${username}: ${message}`)
   debugLog(`chat from ${username}: ${message}`)
 
   try {
@@ -52,7 +52,7 @@ bot.on('chat', async (username, message) => {
     await handleChatCommand(bot, username, message, stateManager)
   } catch (error) {
     console.error('command execution error', error)
-    bot.chat(`コマンドの実行中に失敗しました: ${error.message}`)
+    await bot.chatWithDelay(`Error: ${error.message}`)
   }
 })
 

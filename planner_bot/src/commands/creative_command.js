@@ -57,7 +57,7 @@ async function handleCreativeCommand(bot, commandStr, stateManager) {
 
   // 成功メッセージをチャットに送信
   if (result.success) {
-    bot.chat(result.message)
+    await bot.chatWithDelay(result.message)
   }
 
   return result
