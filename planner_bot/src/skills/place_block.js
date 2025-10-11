@@ -23,7 +23,7 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
 
     // ブロックを手に装備
     await bot.equip(blockItem, 'hand')
-    await delay(100) // 装備待ち
+    await delay(50) // 装備待ち（1.20.xでは短縮可能）
 
     // ボットの位置を取得
     const botPos = bot.entity.position.floored()

@@ -79,7 +79,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       if (selectedTool) {
         try {
           await bot.equip(selectedTool, 'hand')
-          await delay(100) // 装備完了を待つ
+          await delay(50) // 装備完了を待つ（1.20.xでは短縮可能）
 
           // 装備確認
           const mcData = require('minecraft-data')(bot.version)
@@ -96,7 +96,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         // 素手が最適な場合
         try {
           await bot.unequip('hand')
-          await delay(100) // 装備解除完了を待つ
+          await delay(50) // 装備解除完了を待つ（1.20.xでは短縮可能）
           console.log(`[GATHER] 素手で掘削 (実際: ${bot.heldItem?.name || '素手'})`)
         } catch (error) {
           // 素手にできない場合は無視
@@ -111,7 +111,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
       let autoCollected = false
       if (collectName) {
-        await delay(params.postDigDelayMs ?? 150)
+        await delay(params.postDigDelayMs ?? 50) // 掘削後の待機（1.20.xでは短縮可能）
         const afterCount = getInventoryItemCount(bot, collectName)
         if (afterCount > beforeCount) {
           console.log(`[GATHER] 掘削直後に${collectName}を自動回収 (${afterCount - beforeCount})`)
@@ -121,7 +121,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
       //ドロップを回収
       const collectAttempts = params.collectAttempts ?? 5
-      const collectDelayMs = params.collectRetryDelayMs ?? 100
+      const collectDelayMs = params.collectRetryDelayMs ?? 50 // リトライ待機（1.20.xでは短縮可能）
       let dropCount = 0
 
       if (!autoCollected && collectName) {

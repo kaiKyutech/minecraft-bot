@@ -56,9 +56,8 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
 
     console.log(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
-    // クラフト完了後、さらに待機してからインベントリ確認
-    // （サーバーとの同期を確実にする）
-    await new Promise(resolve => setTimeout(resolve, 200))
+    // クラフト完了後、さらに待機してからインベントリ確認（1.20.xでは短縮可能）
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     // 状態を更新（GOAPが次の判断に使用）
     await stateManager.refresh(bot)

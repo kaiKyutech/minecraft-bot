@@ -60,7 +60,24 @@ async function digBlock(bot, params = {}) {
     throw new Error(`このブロックは掘れません: ${block.name}`)
   }
 
-  await bot.dig(block)
+  const digTime = bot.digTime(block)
+  const startTime = Date.now()
+  console.log(`[DIG] ${block.name} 採掘開始、予想時間: ${(digTime / 1000).toFixed(2)}秒、ツール: ${bot.heldItem?.name || '素手'}`)
+
+  // 採掘中断を検知
+  const digAbortHandler = () => {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`[DIG] ⚠️  採掘が中断されました！経過時間: ${elapsed}秒 / 予想時間: ${(digTime / 1000).toFixed(2)}秒`)
+  }
+  bot.once('diggingAborted', digAbortHandler)
+
+  try {
+    await bot.dig(block)
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`[DIG] ${block.name} 採掘完了、実際の時間: ${elapsed}秒`)
+  } finally {
+    bot.removeListener('diggingAborted', digAbortHandler)
+  }
 }
 
 // 指定ブロックに最適なツールを装備する
@@ -123,7 +140,7 @@ async function findBestTool(bot, block) {
       const toolName = mcData.items[tool.type].name
       // ツールを装備
       await bot.equip(tool, 'hand')
-      await delay(75) // 装備完了を待つ
+      await delay(30) // 装備完了を待つ（1.20.xでは30msで十分）
 
       // 装備確認してから採掘時間を測定
       if (!bot.heldItem || bot.heldItem.type !== tool.type) {
@@ -147,7 +164,7 @@ async function findBestTool(bot, block) {
   // 素手での採掘時間を測定（手に何も持たない状態）
   try {
     await bot.unequip('hand')
-    await delay(75) // 装備解除完了を待つ
+    await delay(30) // 装備解除完了を待つ（1.20.xでは30msで十分）
 
     // 素手確認してから測定
     if (bot.heldItem) {
@@ -266,7 +283,7 @@ async function collectDrops(bot, params = {}) {
       await moveTo(bot, { position: drop.position, range: 1.2, timeout: 3000 })
 
       // 少し待ってから再度エンティティの存在確認
-      await delay(params.waitMs ?? 150)
+      await delay(params.waitMs ?? 50) // ドロップ接近後の待機（1.20.xでは短縮可能）
 
       // エンティティがまだ存在するか確認（既に自動ピックアップされた可能性）
       const stillExists = bot.entities[drop.id]
@@ -277,7 +294,7 @@ async function collectDrops(bot, params = {}) {
 
       // より近づいて確実にピックアップを誘発（タイムアウト2秒）
       await moveTo(bot, { position: drop.position, range: 0.8, timeout: 2000 })
-      await delay(100)
+      await delay(50) // ピックアップ待機（1.20.xでは短縮可能）
 
       // もう一度存在確認
       if (!bot.entities[drop.id]) {
@@ -324,8 +341,8 @@ async function craftItem(bot, params = {}) {
 
   try {
     await bot.craft(recipes[0], count, tableBlock)
-    // クラフト完了後、インベントリ同期を待つ
-    await delay(150)
+    // クラフト完了後、インベントリ同期を待つ（1.20.xでは短縮可能）
+    await delay(50)
   } catch (error) {
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
