@@ -9,24 +9,24 @@ async function handleStatusCommand(bot, stateManager) {
 
   const messages = []
 
-  messages.push('=== STATUS ===')
+  messages.push('=== 現在の状況 ===')
 
   // 1. 位置情報
   if (worldState.position) {
     const pos = worldState.position
-    messages.push(`Pos: (${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)})`)
-    messages.push(`Y-Level: ${Math.floor(pos.y)} (Surface:~64, Diamond:-64~16)`)
+    messages.push(`位置: (${Math.floor(pos.x)}, ${Math.floor(pos.y)}, ${Math.floor(pos.z)})`)
+    messages.push(`Y座標: ${Math.floor(pos.y)} (地表:~64, ダイヤ:-64~16)`)
   }
 
   // 2. 時間
-  messages.push(`Time: ${worldState.isDay ? 'Day' : 'Night'}`)
+  messages.push(`時間: ${worldState.isDay ? '昼' : '夜'}`)
 
   // 3. インベントリ
   const inventory = worldState.inventory?.counts || {}
   const inventoryItems = Object.keys(inventory)
 
   if (inventoryItems.length === 0) {
-    messages.push('Inventory: Empty')
+    messages.push('インベントリ: 空')
   } else {
     // ツール類を優先表示
     const tools = inventoryItems.filter(name =>
@@ -37,12 +37,12 @@ async function handleStatusCommand(bot, stateManager) {
 
     if (tools.length > 0) {
       const toolList = tools.map(t => `${t}x${inventory[t]}`).join(', ')
-      messages.push(`Tools: ${toolList}`)
+      messages.push(`道具: ${toolList}`)
     }
 
     if (materials.length > 0) {
       const materialList = materials.map(m => `${m}x${inventory[m]}`).join(', ')
-      messages.push(`Materials: ${materialList}`)
+      messages.push(`素材: ${materialList}`)
     }
   }
 
@@ -67,13 +67,13 @@ async function handleStatusCommand(bot, stateManager) {
   }
 
   if (nearbyResources.length > 0) {
-    messages.push(`Nearby: ${nearbyResources.join(', ')}`)
+    messages.push(`近くのリソース: ${nearbyResources.join(', ')}`)
   }
   if (nearbyStructures.length > 0) {
-    messages.push(`Structures: ${nearbyStructures.join(', ')}`)
+    messages.push(`構造物: ${nearbyStructures.join(', ')}`)
   }
   if (nearbyResources.length === 0 && nearbyStructures.length === 0) {
-    messages.push('Nearby: None detected')
+    messages.push('近くのリソース: 検出なし')
   }
 
   // 5. 登録済みの場所
@@ -85,16 +85,16 @@ async function handleStatusCommand(bot, stateManager) {
       const loc = locations[name]
       return `${name}(${loc.x},${loc.y},${loc.z})`
     }).join(', ')
-    messages.push(`Locations: ${locList}`)
+    messages.push(`登録済みの場所: ${locList}`)
   } else {
-    messages.push('Locations: None registered')
+    messages.push('登録済みの場所: なし')
   }
 
   // 6. 利用可能なシステム
   messages.push('---')
-  messages.push('Systems: !goal (GOAP), !creative (nav/explore/build), !skill')
-  messages.push('GOAP: auto-execute when materials nearby')
-  messages.push('Creative: navigation, exploration, building')
+  messages.push('システム: !goal (GOAP), !creative (nav/explore/build), !skill')
+  messages.push('GOAP: 素材が近くにあるときに自動実行')
+  messages.push('Creative: ナビゲーション、探索、建築')
 
   // チャットに送信（スパム対策で自動的に間隔を空ける）
   for (const msg of messages) {
