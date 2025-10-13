@@ -340,21 +340,31 @@ async function craftItem(bot, params = {}) {
   }
 
   // クラフト前のアイテム数を記録
-  const itemsBefore = bot.inventory.items().filter(item => item.type === recipeItem.id)
-  const countBefore = itemsBefore.reduce((sum, item) => sum + item.count, 0)
+  const countBefore = getInventoryItemCountById(bot, recipeItem.id)
+  const expectedCount = countBefore + count
+
+  // 作業台が必要な場合は、作業台ウィンドウを開く
+  let craftingTableWindow = null
+  if (tableBlock && recipes[0].requiresTable) {
+    console.log(`[CRAFT] 作業台ウィンドウを開きます...`)
+    try {
+      craftingTableWindow = await bot.openBlock(tableBlock)
+      console.log(`[CRAFT] 作業台ウィンドウを開きました (type: ${craftingTableWindow.type})`)
+      // ウィンドウが完全に開き、サーバーと同期するまで待機
+      await delay(800)
+    } catch (openErr) {
+      console.log(`[CRAFT] 作業台ウィンドウを開けませんでした: ${openErr.message}`)
+      throw new Error(`作業台ウィンドウを開けませんでした: ${openErr.message}`)
+    }
+  }
 
   try {
+    console.log(`[CRAFT] bot.craft() 実行開始...`)
     await bot.craft(recipes[0], count, tableBlock)
-    // クラフト完了後、インベントリ同期を待つ（ネットワーク遅延を考慮して長めに）
-    await delay(300)
+    console.log(`[CRAFT] bot.craft() 実行完了`)
 
-    // クラフト後のアイテム数を確認
-    const itemsAfter = bot.inventory.items().filter(item => item.type === recipeItem.id)
-    const countAfter = itemsAfter.reduce((sum, item) => sum + item.count, 0)
-
-    if (countAfter <= countBefore) {
-      throw new Error(`クラフトに失敗しました: ${params.itemName}がインベントリに追加されませんでした（前:${countBefore}, 後:${countAfter}）`)
-    }
+    const waitTimeoutMs = params.waitTimeoutMs ?? 1500
+    const countAfter = await waitForItemIncrease(bot, recipeItem.id, expectedCount, waitTimeoutMs)
 
     console.log(`[CRAFT] ${params.itemName} クラフト成功: ${countBefore} → ${countAfter} (+${countAfter - countBefore})`)
   } catch (error) {
@@ -362,7 +372,96 @@ async function craftItem(bot, params = {}) {
       throw new Error('必要な素材が不足しています')
     }
     throw error
+  } finally {
+    // 作業台ウィンドウを閉じる
+    if (craftingTableWindow) {
+      console.log(`[CRAFT] 作業台ウィンドウを閉じます...`)
+      try {
+        await bot.closeWindow(craftingTableWindow)
+        console.log(`[CRAFT] 作業台ウィンドウを閉じました`)
+      } catch (closeErr) {
+        console.log(`[CRAFT] ウィンドウを閉じるのに失敗: ${closeErr.message}`)
+      }
+    }
   }
+}
+
+function getInventoryItemCountById(bot, itemId) {
+  return bot.inventory.items().reduce((sum, item) => {
+    if (item && item.type === itemId) {
+      return sum + item.count
+    }
+    return sum
+  }, 0)
+}
+
+function waitForItemIncrease(bot, itemId, targetCount, timeoutMs = 1500, confirmMs = 200) {
+  const currentCount = getInventoryItemCountById(bot, itemId)
+  if (currentCount >= targetCount) {
+    return Promise.resolve(currentCount)
+  }
+
+  return new Promise((resolve, reject) => {
+    let finished = false
+    let confirmationTimer = null
+
+    const cleanup = () => {
+      if (finished) return
+      finished = true
+      clearTimeout(timeoutHandle)
+      clearTimeout(confirmationTimer)
+      bot.inventory.removeListener('updateSlot', handleInventoryUpdate)
+      bot.removeListener('playerCollect', handlePlayerCollect)
+    }
+
+    const scheduleConfirmation = () => {
+      if (confirmationTimer) return
+      confirmationTimer = setTimeout(() => {
+        confirmationTimer = null
+        const finalCount = getInventoryItemCountById(bot, itemId)
+        if (finalCount >= targetCount) {
+          cleanup()
+          resolve(finalCount)
+        }
+      }, confirmMs)
+    }
+
+    const cancelConfirmation = () => {
+      if (!confirmationTimer) return
+      clearTimeout(confirmationTimer)
+      confirmationTimer = null
+    }
+
+    const evaluate = () => {
+      const updatedCount = getInventoryItemCountById(bot, itemId)
+      if (updatedCount >= targetCount) {
+        scheduleConfirmation()
+      } else {
+        cancelConfirmation()
+      }
+    }
+
+    const handleInventoryUpdate = () => {
+      evaluate()
+    }
+
+    const handlePlayerCollect = (collector) => {
+      if (collector === bot.entity) {
+        setTimeout(evaluate, 0)
+      }
+    }
+
+    const timeoutHandle = setTimeout(() => {
+      cleanup()
+      reject(new Error(`インベントリ更新がタイムアウトしました (${timeoutMs}ms)`))
+    }, timeoutMs)
+
+    bot.inventory.on('updateSlot', handleInventoryUpdate)
+    bot.on('playerCollect', handlePlayerCollect)
+
+    // 念のため即時チェック
+    evaluate()
+  })
 }
 
 async function placeBlock(bot, params = {}) {

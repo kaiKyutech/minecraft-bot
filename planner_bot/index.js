@@ -20,6 +20,9 @@ const llmContext = {
   lastCommandResult: null // 前回のコマンド結果
 }
 
+// GOAP実行制御用のAbortController
+let currentAbortController = null
+
 const bot = mineflayer.createBot({
   host: process.env.MC_HOST || 'localhost',
   port: Number(process.env.MC_PORT || 25565),
@@ -95,10 +98,40 @@ bot.on('chat', async (username, message) => {
 
     // メッセージが "!" で始まる場合は従来のコマンドハンドラ
     if (trimmedMessage.startsWith('!')) {
+      // 従来のコマンドの場合も、現在実行中のGOAPをキャンセル
+      if (currentAbortController) {
+        console.log('[CANCEL] 新しいコマンド受信、現在のタスクをキャンセルします')
+        currentAbortController.abort()
+        currentAbortController = null
+      }
       await handleChatCommand(bot, username, trimmedMessage, stateManager)
     } else {
-      // それ以外はLLMハンドラ（今回はプロンプト表示のみ）
-      await handleUserMessage(bot, username, message, stateManager, llmContext)
+      // 現在実行中のGOAPをキャンセル
+      if (currentAbortController) {
+        console.log('[CANCEL] 新しいメッセージ受信、現在のタスクをキャンセルします')
+        currentAbortController.abort()
+      }
+
+      // 新しいAbortControllerを作成
+      currentAbortController = new AbortController()
+      const signal = currentAbortController.signal
+
+      try {
+        // LLMハンドラにsignalを渡す
+        await handleUserMessage(bot, username, message, stateManager, llmContext, signal)
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          console.log('[CANCEL] タスクがキャンセルされました')
+          await bot.chatWithDelay('タスクをキャンセルして、新しいリクエストを処理します')
+        } else {
+          throw error
+        }
+      } finally {
+        // 正常終了またはエラー終了時、AbortControllerをクリア
+        if (currentAbortController && currentAbortController.signal === signal) {
+          currentAbortController = null
+        }
+      }
     }
   } catch (error) {
     console.error('command execution error', error)

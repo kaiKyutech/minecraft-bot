@@ -114,8 +114,9 @@ async function getStatusInfo(bot, stateManager) {
  * @param {string} message - ユーザーメッセージ
  * @param {Object} stateManager - 状態マネージャー
  * @param {Object} context - コンテキスト（履歴、前回結果など）
+ * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
-async function handleUserMessage(bot, username, message, stateManager, context) {
+async function handleUserMessage(bot, username, message, stateManager, context, signal = null) {
   console.log(`\n[LLM_HANDLER] Received message from ${username}: "${message}"`);
 
   // 1. !status を自動実行（出力はしない）
@@ -163,7 +164,8 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
       console.log(`[LLM_HANDLER] Executing command: !goal ${goalCommand}`);
 
       try {
-        await handleGoalCommand(bot, goalCommand, stateManager);
+        // signalを goal_command に渡す
+        await handleGoalCommand(bot, goalCommand, stateManager, signal);
         // 成功時は結果をcontextに保存（具体的なゴール名を含める）
         context.lastCommandResult = `${command} の作成を完了しました`;
         console.log('[LLM_HANDLER] Command succeeded');
@@ -171,6 +173,10 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
         // チャットに表示
         await bot.chatWithDelay(context.lastCommandResult);
       } catch (error) {
+        // キャンセルエラーの場合は再スロー
+        if (error.name === 'AbortError') {
+          throw error;
+        }
         // 失敗時はエラーメッセージをcontextに保存
         context.lastCommandResult = `${command} の作成に失敗しました: ${error.message || String(error)}`;
         console.error('[LLM_HANDLER] Command failed:', context.lastCommandResult);
@@ -184,7 +190,8 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
 
       // コマンド実行後、自動的に次のアクションをLLMに決めさせる
       console.log('[LLM_HANDLER] Command completed, asking LLM for next action...');
-      await handleUserMessage(bot, 'System', '', stateManager, context);
+      // signalを再帰呼び出しにも渡す
+      await handleUserMessage(bot, 'System', '', stateManager, context, signal);
     } else {
       // コマンドなしの場合は会話のみ
       context.lastCommandResult = null; // リセット

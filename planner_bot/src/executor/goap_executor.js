@@ -8,12 +8,20 @@ const { analyseStepPreconditions, getStateValue } = require('./precondition_chec
  * @param {string} goalName - 目標名
  * @param {Array} initialPlan - 初期プラン
  * @param {Object} stateManager - 状態マネージャー
+ * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
-async function executePlanWithReplanning(bot, goalName, initialPlan, stateManager) {
+async function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null) {
   let currentPlan = [...initialPlan]
   let stepIndex = 0
 
   while (stepIndex < currentPlan.length) {
+    // キャンセルチェック
+    if (signal && signal.aborted) {
+      const error = new Error('GOAP execution was cancelled')
+      error.name = 'AbortError'
+      throw error
+    }
+
     const step = currentPlan[stepIndex]
 
     if (!step.skill) {
@@ -27,7 +35,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     if (!preconditionStatus.satisfied) {
       console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。補助サブゴールを探索します...`)
 
-      const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus)
+      const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus, signal)
 
       if (resolved) {
         // サブゴールで前提条件を満たしたので、同じステップを再評価
@@ -38,7 +46,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
 
       await stateManager.refresh(bot)
-      const newPlan = await replan(bot, goalName, stateManager)
+      const newPlan = await replan(bot, goalName, stateManager, signal)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -51,15 +59,19 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
     // ステップ実行（実行時エラーもリプランニングで対応）
     try {
-      await executeStep(bot, step, stateManager)
+      await executeStep(bot, step, stateManager, signal)
       stepIndex++
     } catch (error) {
+      // キャンセルエラーは再スロー
+      if (error.name === 'AbortError') {
+        throw error
+      }
       console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の実行中にエラーが発生: ${error.message}`)
       console.log(`[REACTIVE_GOAP] 現在の状態から再度プランニングします...`)
 
       // 状態を更新してリプランニング
       await stateManager.refresh(bot)
-      const newPlan = await replan(bot, goalName, stateManager)
+      const newPlan = await replan(bot, goalName, stateManager, signal)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -80,9 +92,17 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
  * @param {Object} bot - Mineflayerボット
  * @param {string} goalName - 目標名
  * @param {Object} stateManager - 状態マネージャー
+ * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  * @returns {Promise<Array>} 新しいプラン
  */
-async function replan(bot, goalName, stateManager) {
+async function replan(bot, goalName, stateManager, signal = null) {
+  // キャンセルチェック
+  if (signal && signal.aborted) {
+    const error = new Error('Replanning was cancelled')
+    error.name = 'AbortError'
+    throw error
+  }
+
   const currentState = await stateManager.getState(bot)
   const result = await goapPlanner.plan(goalName, currentState)
 
@@ -148,8 +168,16 @@ async function replan(bot, goalName, stateManager) {
  * @param {Object} bot - Mineflayerボット
  * @param {Object} step - プランステップ
  * @param {Object} stateManager - 状態マネージャー
+ * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
-async function executeStep(bot, step, stateManager) {
+async function executeStep(bot, step, stateManager, signal = null) {
+  // キャンセルチェック
+  if (signal && signal.aborted) {
+    const error = new Error('Step execution was cancelled')
+    error.name = 'AbortError'
+    throw error
+  }
+
   const skill = skills[step.skill]
 
   if (typeof skill !== 'function') {
@@ -158,13 +186,39 @@ async function executeStep(bot, step, stateManager) {
 
   console.log(`[EXECUTION] ステップ: ${step.action}`)
 
-  await skill(bot, step.params || {}, stateManager)
-  await stateManager.refresh(bot)
+  // signalがabortされたら、bot操作を中断するリスナーを設定
+  let abortHandler = null
+  if (signal) {
+    abortHandler = () => {
+      console.log('[EXECUTION] キャンセルシグナル受信、ボット操作を中断します')
+      // 移動を停止
+      if (bot.pathfinder) {
+        bot.pathfinder.setGoal(null)
+      }
+      // 掘削を停止
+      try {
+        bot.stopDigging()
+      } catch (e) {
+        // 掘削中でない場合はエラーを無視
+      }
+    }
+    signal.addEventListener('abort', abortHandler)
+  }
 
-  console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
+  try {
+    await skill(bot, step.params || {}, stateManager)
+    await stateManager.refresh(bot)
 
-  // 各アクション完了をチャットに表示（一時的にコメントアウト）
-  // await bot.chatWithDelay(`${step.action} を完了しました`)
+    console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
+
+    // 各アクション完了をチャットに表示（一時的にコメントアウト）
+    // await bot.chatWithDelay(`${step.action} を完了しました`)
+  } finally {
+    // リスナーをクリーンアップ
+    if (signal && abortHandler) {
+      signal.removeEventListener('abort', abortHandler)
+    }
+  }
 }
 
 /**
@@ -240,19 +294,26 @@ function deriveSubGoalInput(missing, goapState) {
   return null
 }
 
-async function executeSimplePlan(bot, plan, stateManager) {
+async function executeSimplePlan(bot, plan, stateManager, signal = null) {
   for (const step of plan) {
+    // キャンセルチェック
+    if (signal && signal.aborted) {
+      const error = new Error('Simple plan execution was cancelled')
+      error.name = 'AbortError'
+      throw error
+    }
+
     if (!step.skill) continue
 
     const status = await analyseStepPreconditions(bot, step, stateManager)
     if (!status.satisfied) {
       throw new Error(`サブプランのステップ ${step.action} の前提条件を満たせません`)
     }
-    await executeStep(bot, step, stateManager)
+    await executeStep(bot, step, stateManager, signal)
   }
 }
 
-async function tryResolveMissingPreconditions(bot, step, stateManager, status) {
+async function tryResolveMissingPreconditions(bot, step, stateManager, status, signal = null) {
   for (const missing of status.missing) {
     const subGoalInput = deriveSubGoalInput(missing, status.goapState)
     if (!subGoalInput) {
@@ -293,11 +354,15 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status) {
     console.log(`[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
 
     try {
-      await executeSimplePlan(bot, subPlan, stateManager)
+      await executeSimplePlan(bot, subPlan, stateManager, signal)
       await stateManager.refresh(bot)
       console.log(`[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
       return true
     } catch (error) {
+      // キャンセルエラーは再スロー
+      if (error.name === 'AbortError') {
+        throw error
+      }
       console.log(`[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
       await stateManager.refresh(bot)
     }

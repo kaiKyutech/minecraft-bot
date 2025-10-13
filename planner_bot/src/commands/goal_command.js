@@ -6,8 +6,9 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
  * @param {Object} bot - Mineflayerボット
  * @param {string} goalName - 目標名
  * @param {Object} stateManager - 状態マネージャー
+ * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
-async function handleGoalCommand(bot, goalName, stateManager) {
+async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
   const worldState = await stateManager.getState(bot)
   const result = await goapPlanner.plan(goalName, worldState)
 
@@ -67,7 +68,8 @@ async function handleGoalCommand(bot, goalName, stateManager) {
   }
 
   logPlanDetails(goalName, plan)
-  await executePlanWithReplanning(bot, goalName, plan, stateManager)
+  // signalをexecutorに渡す
+  await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
 }
 
 /**
