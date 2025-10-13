@@ -33,8 +33,10 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
 
     if (!preconditionStatus.satisfied) {
-      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。補助サブゴールを探索します...`)
+      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
 
+      // サブゴール探索
+      console.log(`[REACTIVE_GOAP] 補助サブゴールを探索します...`)
       const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus, signal)
 
       if (resolved) {

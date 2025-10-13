@@ -21,7 +21,8 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   const maxDistance = params.maxDistance ?? 100
   const approachRange = params.approachRange ?? 2
-  const collectRadius = params.collectRadius ?? 12
+  const collectRadius = params.collectRadius ?? 30
+  const collectDelayMs = params.collectDelayMs ?? 200
   const maxAttempts = params.maxAttempts ?? 20
 
   // whileループ開始前に1回だけ最適ツールを決定
@@ -52,7 +53,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const avoidedPositionKeys = new Set()
   const avoidedPositionOrder = []
   const maxAvoidListSize = params.maxAvoidListSize ?? 32
-  const searchSampleSize = params.searchSampleSize ?? 24
+  const searchSampleSize = params.searchSampleSize ?? 12  // 24から12に削減して探索負荷を軽減
 
   const rememberFailedTarget = (position) => {
     if (!position) return
@@ -84,13 +85,15 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       throw new Error('近くに対象ブロックが見つかりません')
     }
 
-    candidates.sort((a, b) => {
-      const distA = bot.entity.position.distanceTo(a.position)
-      const distB = bot.entity.position.distanceTo(b.position)
-      return distA - distB
-    })
+    // Pre-calculate distances to avoid redundant calculations during sort
+    const candidatesWithDistance = candidates.map(c => ({
+      candidate: c,
+      distance: bot.entity.position.distanceTo(c.position)
+    }))
+    candidatesWithDistance.sort((a, b) => a.distance - b.distance)
+    const sortedCandidates = candidatesWithDistance.map(c => c.candidate)
 
-    for (const candidate of candidates) {
+    for (const candidate of sortedCandidates) {
       const key = serializePosition(candidate.position)
       if (avoidedPositionKeys.has(key)) continue
 
@@ -133,16 +136,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       if (selectedTool) {
         try {
           await bot.equip(selectedTool, 'hand')
-          await delay(50) // 装備完了を待つ（1.20.xでは短縮可能）
-
-          // 装備確認
-          const mcData = require('minecraft-data')(bot.version)
-          const toolName = mcData.items[selectedTool.type].name
-          if (bot.heldItem && bot.heldItem.type === selectedTool.type) {
-            console.log(`[GATHER] ${toolName}を装備確認済み`)
-          } else {
-            console.log(`[GATHER] 警告: ${toolName}装備に失敗、実際の装備: ${bot.heldItem?.name || '素手'}`)
-          }
+          await delay(50) // 装備完了を待つ
         } catch (error) {
           console.log(`[GATHER] ツール再装備に失敗: ${error.message}`)
         }
@@ -150,59 +144,16 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         // 素手が最適な場合
         try {
           await bot.unequip('hand')
-          await delay(50) // 装備解除完了を待つ（1.20.xでは短縮可能）
-          console.log(`[GATHER] 素手で掘削 (実際: ${bot.heldItem?.name || '素手'})`)
+          await delay(50) // 装備解除完了を待つ
         } catch (error) {
           // 素手にできない場合は無視
         }
       }
 
       // 掘削
-      const beforeCount = collectName ? getInventoryItemCount(bot, collectName) : null
       console.log(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
       await primitives.digBlock(bot, { position: blockInfo.position })
       console.log(`[GATHER] ブロック掘削完了`)
-
-      let autoCollected = false
-      if (collectName) {
-        await delay(params.postDigDelayMs ?? 50) // 掘削後の待機（1.20.xでは短縮可能）
-        const afterCount = getInventoryItemCount(bot, collectName)
-        if (afterCount > beforeCount) {
-          console.log(`[GATHER] 掘削直後に${collectName}を自動回収 (${afterCount - beforeCount})`)
-          autoCollected = true
-        }
-      }
-
-      //ドロップを回収
-      const collectAttempts = params.collectAttempts ?? 5
-      const collectDelayMs = params.collectRetryDelayMs ?? 50 // リトライ待機（1.20.xでは短縮可能）
-      let dropCount = 0
-
-      if (!autoCollected && collectName) {
-        console.log(`[GATHER] ドロップ回収開始（最大${collectAttempts}回試行）`)
-        for (let attempt = 0; attempt < collectAttempts; attempt++) {
-          console.log(`[GATHER] 回収試行 ${attempt + 1}/${collectAttempts}`)
-          dropCount = await primitives.collectDrops(bot, {
-            itemName: collectName,
-            radius: collectRadius,
-            waitMs: params.collectWaitMs
-          })
-
-          console.log(`[GATHER] 回収できたドロップ数: ${dropCount}`)
-          if (dropCount > 0) break
-          await delay(collectDelayMs)
-        }
-
-        if (dropCount === 0) {
-          console.log(`[GATHER] ドロップが見つからないため、ブロック位置へ接近`)
-          await primitives.moveTo(bot, {
-            position: blockInfo.position,
-            range: 0.6
-          })
-          console.log(`[GATHER] 接近完了、待機中`)
-          await delay(collectDelayMs)
-        }
-      }
 
       completed += 1
     } catch (error) {
@@ -215,6 +166,23 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
 
       throw new Error(`資源の収集に失敗しました: ${error.message}`)
+    }
+  }
+
+  // 全ブロック掘削完了後、最後に1回だけドロップ回収
+  if (collectName) {
+    await delay(collectDelayMs) // allow freshly spawned drops to register
+    console.log(`[GATHER] 全${completed}個の掘削完了、ドロップ回収を開始`)
+    try {
+      const collectDropsSkill = require('./collect_drops')
+      await collectDropsSkill(bot, {
+        radius: collectRadius,
+        maxAttempts: 3
+      }, stateManager)
+      console.log(`[GATHER] ドロップ回収完了`)
+    } catch (error) {
+      console.log(`[GATHER] ドロップ回収でエラー: ${error.message}`)
+      // ドロップ回収失敗は致命的ではないので続行
     }
   }
 }

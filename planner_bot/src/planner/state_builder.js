@@ -95,6 +95,19 @@ function buildEnvironmentStates(facts, worldState, environmentSchema) {
       facts[stateName] = config.default
     }
   }
+
+  // 周辺のドロップエンティティをチェック
+  const nearbyDrops = Object.values(worldState?.entities || {})
+    .filter(e => e && e.name === 'item')
+    .some(e => {
+      if (!e.position || !worldState.position) return false
+      const dx = e.position.x - worldState.position.x
+      const dz = e.position.z - worldState.position.z
+      const distance = Math.sqrt(dx * dx + dz * dz)
+      return distance <= 16
+    })
+
+  facts.nearby_drops = nearbyDrops
 }
 
 function buildWorldStates(facts, worldState, worldSchema) {

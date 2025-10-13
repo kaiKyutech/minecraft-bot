@@ -4,6 +4,7 @@ const workbenchCraft = require('./workbench_craft')
 const moveTo = require('./move_to')
 const placeBlock = require('./place_block')
 const furnaceSmelt = require('./furnace_smelt')
+const collectDrops = require('./collect_drops')
 
 module.exports = {
   gather,
@@ -11,5 +12,6 @@ module.exports = {
   workbench_craft: workbenchCraft,
   move_to: moveTo,
   place_block: placeBlock,
-  furnace_smelt: furnaceSmelt
+  furnace_smelt: furnaceSmelt,
+  collect_drops: collectDrops
 }
