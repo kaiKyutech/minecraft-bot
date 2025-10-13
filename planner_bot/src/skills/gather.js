@@ -51,6 +51,66 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   let completed = 0
   let attempts = 0
+  const avoidedPositionKeys = new Set()
+  const avoidedPositionOrder = []
+  const maxAvoidListSize = params.maxAvoidListSize ?? 32
+  const searchSampleSize = params.searchSampleSize ?? 24
+
+  const rememberFailedTarget = (position) => {
+    if (!position) return
+    const key = serializePosition(position)
+    if (avoidedPositionKeys.has(key)) return
+    avoidedPositionKeys.add(key)
+    avoidedPositionOrder.push(key)
+    while (avoidedPositionOrder.length > maxAvoidListSize) {
+      const oldest = avoidedPositionOrder.shift()
+      if (oldest) avoidedPositionKeys.delete(oldest)
+    }
+    console.log(`[GATHER] 失敗したターゲットを回避リストに追加: ${key}`)
+  }
+
+  const acquireTarget = async () => {
+    let candidates
+    try {
+      candidates = await primitives.findBlocks(bot, {
+        match: matchCondition,
+        maxDistance,
+        count: searchSampleSize,
+        useCube: params.useCube ?? true
+      })
+    } catch (error) {
+      throw new Error('近くに対象ブロックが見つかりません')
+    }
+
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      throw new Error('近くに対象ブロックが見つかりません')
+    }
+
+    candidates.sort((a, b) => {
+      const distA = bot.entity.position.distanceTo(a.position)
+      const distB = bot.entity.position.distanceTo(b.position)
+      return distA - distB
+    })
+
+    for (const candidate of candidates) {
+      const key = serializePosition(candidate.position)
+      if (avoidedPositionKeys.has(key)) continue
+
+      const block = bot.blockAt(candidate.position)
+      if (!block) {
+        rememberFailedTarget(candidate.position)
+        continue
+      }
+
+      return {
+        position: candidate.position.clone(),
+        name: candidate.name,
+        block
+      }
+    }
+
+    throw new Error('利用可能なブロック候補が見つかりません')
+  }
 
   while (completed < loopCount) {
     if (attempts++ > maxAttempts) {
@@ -59,13 +119,9 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
     let blockInfo
     try {
-      // 指定条件に合うブロックを近傍から 1 つ探索
-      blockInfo = await primitives.findBlock(bot, {
-        match: matchCondition,
-        maxDistance
-      })
+      blockInfo = await acquireTarget()
     } catch (error) {
-      throw new Error('近くに対象ブロックが見つかりません')
+      throw new Error(error.message || '近くに対象ブロックが見つかりません')
     }
 
     try {
@@ -149,12 +205,20 @@ module.exports = async function gather(bot, params = {}, stateManager) {
           await delay(collectDelayMs)
         }
       }
+
+      completed += 1
+      await stateManager.refresh(bot)
     } catch (error) {
+      rememberFailedTarget(blockInfo?.position)
+
+      if (isRecoverableGatherError(error)) {
+        console.log(`[GATHER] ブロック収集でエラー: ${error.message} → 別候補で再試行`)
+        await delay(params.retryDelayMs ?? 100)
+        continue
+      }
+
       throw new Error(`資源の収集に失敗しました: ${error.message}`)
     }
-
-    completed += 1
-    await stateManager.refresh(bot)
   }
 }
 
@@ -177,7 +241,7 @@ function resolveItemName(params, bot) {
   // カテゴリ名の場合は近くで最適なブロックを選択
   const categories = loadBlockCategories()
   if (categories?.categories?.[itemName]) {
-    return selectBestBlockFromCategory(bot, itemName, categories, mcData)
+    return selectBestBlockFromCategory(bot, itemName, categories, mcData, params)
   }
 
   // 個別ブロック名として存在するかチェック
@@ -199,9 +263,10 @@ function resolveItemName(params, bot) {
 // カテゴリ選択のキャッシュ（botごと、カテゴリごと）
 const blockSelectionCache = new Map()
 
-function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
+function selectBestBlockFromCategory(bot, categoryName, categories, mcData, params = {}) {
   const categoryBlocks = categories.categories[categoryName].blocks
-  const cacheKey = `${bot.username}_${categoryName}`
+  const maxDistance = typeof params.maxDistance === 'number' ? params.maxDistance : 100
+  const cacheKey = `${bot.username}_${categoryName}_${Math.round(maxDistance)}`
 
   // キャッシュがあれば、まずそれを試す
   const cachedBlock = blockSelectionCache.get(cacheKey)
@@ -209,7 +274,7 @@ function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
     try {
       const block = bot.findBlock({
         matching: (block) => block && block.name === cachedBlock,
-        maxDistance: 100,
+        maxDistance,
         count: 1
       })
 
@@ -237,7 +302,7 @@ function selectBestBlockFromCategory(bot, categoryName, categories, mcData) {
     try {
       const block = bot.findBlock({
         matching: (block) => block && block.name === blockName,
-        maxDistance: 100,
+        maxDistance,
         count: 1
       })
 
@@ -276,4 +341,22 @@ function getInventoryItemCount(bot, itemName) {
     }
     return sum
   }, 0)
+}
+
+function serializePosition(position) {
+  if (!position) return 'unknown'
+  return `${position.x}|${position.y}|${position.z}`
+}
+
+function isRecoverableGatherError(error) {
+  if (!error || !error.message) return false
+  const message = error.message
+
+  return (
+    message.includes('Path was stopped') ||
+    message.includes('moveTo timeout') ||
+    message.includes('Digging aborted') ||
+    message.includes('このブロックは掘れません') ||
+    message.includes('指定位置にブロックが存在しません')
+  )
 }
