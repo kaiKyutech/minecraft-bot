@@ -91,9 +91,11 @@ bot.on('chat', async (username, message) => {
     // コマンド実行前に状態を更新
     await stateManager.refresh(bot)
 
+    const trimmedMessage = message.trim()
+
     // メッセージが "!" で始まる場合は従来のコマンドハンドラ
-    if (message.startsWith('!')) {
-      await handleChatCommand(bot, username, message, stateManager)
+    if (trimmedMessage.startsWith('!')) {
+      await handleChatCommand(bot, username, trimmedMessage, stateManager)
     } else {
       // それ以外はLLMハンドラ（今回はプロンプト表示のみ）
       await handleUserMessage(bot, username, message, stateManager, llmContext)

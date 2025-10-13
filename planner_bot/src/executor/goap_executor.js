@@ -84,7 +84,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
  */
 async function replan(bot, goalName, stateManager) {
   const currentState = await stateManager.getState(bot)
-  const result = goapPlanner.plan(goalName, currentState)
+  const result = await goapPlanner.plan(goalName, currentState)
 
   // 新しい戻り値形式に対応
   let newPlan = null
@@ -262,7 +262,7 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status) {
     console.log(`[REACTIVE_GOAP]   → 補助ゴール検討: ${missing.key} ${formatCondition(missing.condition)} / 現在値 ${missing.currentValue ?? 0}`)
     console.log(`[REACTIVE_GOAP]     サブゴール候補: ${subGoalInput}`)
 
-    const subResult = goapPlanner.plan(subGoalInput, status.worldState)
+    const subResult = await goapPlanner.plan(subGoalInput, status.worldState)
 
     // 新しい戻り値形式に対応
     let subPlan = null

@@ -12,8 +12,13 @@ const ACTION_FILES = [
   'furnace_actions.yaml'
 ]
 const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 500
+const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50
 
 let domain
+
+function yieldToEventLoop() {
+  return new Promise((resolve) => setImmediate(resolve))
+}
 
 function loadDomain() {
   if (domain) return domain
@@ -44,7 +49,7 @@ function loadDomain() {
   return domain
 }
 
-function plan(goalInput, worldState) {
+async function plan(goalInput, worldState) {
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
 
@@ -131,7 +136,13 @@ function plan(goalInput, worldState) {
     return node.cost + hCache.get(sig)
   }
 
-  while (open.length > 0 && iterations++ < MAX_ITERATIONS) {
+  while (open.length > 0 && iterations < MAX_ITERATIONS) {
+    iterations++
+
+    if (YIELD_INTERVAL > 0 && iterations % YIELD_INTERVAL === 0) {
+      await yieldToEventLoop()
+    }
+
     // A*アルゴリズム: f(n) = g(n) + h(n)
     // g(n) = これまでの実コスト (a.cost)
     // h(n) = ゴールまでの推定コスト (heuristic)
@@ -216,7 +227,7 @@ function plan(goalInput, worldState) {
     }
   }
 
-  if (iterations >= MAX_ITERATIONS) {
+  if (iterations >= MAX_ITERATIONS && open.length > 0) {
     console.warn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
     console.warn(`  目標: ${goalInput}`)
     console.warn(`  初期ヒューリスティック: h=${initialH}`)

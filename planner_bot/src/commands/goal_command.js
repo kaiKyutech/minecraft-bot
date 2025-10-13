@@ -9,7 +9,7 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
  */
 async function handleGoalCommand(bot, goalName, stateManager) {
   const worldState = await stateManager.getState(bot)
-  const result = goapPlanner.plan(goalName, worldState)
+  const result = await goapPlanner.plan(goalName, worldState)
 
   // 新しい戻り値形式に対応
   // resultがオブジェクトでplanプロパティを持つ場合は新形式、配列の場合は旧形式（後方互換）
