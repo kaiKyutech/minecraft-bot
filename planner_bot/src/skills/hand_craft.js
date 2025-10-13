@@ -48,15 +48,24 @@ function resolveDynamicRecipe(bot, recipeType) {
   const inventory = bot.inventory.items()
 
   switch (recipeType) {
-    case 'log_to_planks':
-      // インベントリから原木を探してそれに対応する板を返す
-      const logItem = inventory.find(item => item.name.endsWith('_log'))
-      if (logItem) {
-        const planksName = logItem.name.replace('_log', '_planks')
-        console.log(`[HAND_CRAFT] 動的解決: ${logItem.name} → ${planksName}`)
-        return planksName
+    case 'log_to_planks': {
+      // インベントリから原木・幹を探し、対応する板アイテム名を算出する
+      const logItem = inventory.find(item => /(_log|_stem)$/.test(item.name))
+      if (!logItem) {
+        throw new Error('原木がインベントリにありません')
       }
-      throw new Error('原木がインベントリにありません')
+
+      const logMatch = logItem.name.match(/^(stripped_)?(.+?)(_log|_stem)$/)
+      if (!logMatch) {
+        throw new Error(`原木の名前を板に変換できません: ${logItem.name}`)
+      }
+
+      const [, , species] = logMatch
+      const planksName = `${species}_planks`
+      console.log(`[HAND_CRAFT] 動的解決: ${logItem.name} → ${planksName}`)
+
+      return planksName
+    }
 
     case 'planks_to_sticks':
       // 棒は常に同じなので固定
