@@ -94,8 +94,6 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     furnace.close()
   }
 
-  // 状態を更新
-  await stateManager.refresh(bot)
   console.log(`[FURNACE_SMELT] 完了`)
 }
 

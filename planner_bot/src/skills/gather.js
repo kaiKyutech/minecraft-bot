@@ -24,8 +24,6 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const collectRadius = params.collectRadius ?? 12
   const maxAttempts = params.maxAttempts ?? 20
 
-  await stateManager.refresh(bot)
-
   // whileループ開始前に1回だけ最適ツールを決定
   let selectedTool = null
   try {
@@ -207,7 +205,6 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
 
       completed += 1
-      await stateManager.refresh(bot)
     } catch (error) {
       rememberFailedTarget(blockInfo?.position)
 

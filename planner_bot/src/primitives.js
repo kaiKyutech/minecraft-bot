@@ -339,10 +339,6 @@ async function craftItem(bot, params = {}) {
     throw new Error('利用可能なレシピが見つかりません')
   }
 
-  // クラフト前のアイテム数を記録
-  const countBefore = getInventoryItemCountById(bot, recipeItem.id)
-  const expectedCount = countBefore + count
-
   // 作業台が必要な場合は、作業台ウィンドウを開く
   let craftingTableWindow = null
   if (tableBlock && recipes[0].requiresTable) {
@@ -359,15 +355,17 @@ async function craftItem(bot, params = {}) {
   }
 
   try {
-    console.log(`[CRAFT] bot.craft() 実行開始...`)
+    console.log(`[CRAFT] bot.craft() 実行開始: ${params.itemName} x${count}`)
     await bot.craft(recipes[0], count, tableBlock)
     console.log(`[CRAFT] bot.craft() 実行完了`)
 
-    const waitTimeoutMs = params.waitTimeoutMs ?? 1500
-    const countAfter = await waitForItemIncrease(bot, recipeItem.id, expectedCount, waitTimeoutMs)
+    // サーバーの処理完了を待つための最小限の待機
+    // 成功/失敗の判断はGOAPのリプランニングに任せる
+    await delay(500)
 
-    console.log(`[CRAFT] ${params.itemName} クラフト成功: ${countBefore} → ${countAfter} (+${countAfter - countBefore})`)
+    console.log(`[CRAFT] ${params.itemName} のクラフト処理完了（結果検証はGOAP層で実施）`)
   } catch (error) {
+    console.log(`[CRAFT] bot.craft() がエラーを返しました: ${error.message}`)
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
     }
@@ -384,84 +382,6 @@ async function craftItem(bot, params = {}) {
       }
     }
   }
-}
-
-function getInventoryItemCountById(bot, itemId) {
-  return bot.inventory.items().reduce((sum, item) => {
-    if (item && item.type === itemId) {
-      return sum + item.count
-    }
-    return sum
-  }, 0)
-}
-
-function waitForItemIncrease(bot, itemId, targetCount, timeoutMs = 1500, confirmMs = 200) {
-  const currentCount = getInventoryItemCountById(bot, itemId)
-  if (currentCount >= targetCount) {
-    return Promise.resolve(currentCount)
-  }
-
-  return new Promise((resolve, reject) => {
-    let finished = false
-    let confirmationTimer = null
-
-    const cleanup = () => {
-      if (finished) return
-      finished = true
-      clearTimeout(timeoutHandle)
-      clearTimeout(confirmationTimer)
-      bot.inventory.removeListener('updateSlot', handleInventoryUpdate)
-      bot.removeListener('playerCollect', handlePlayerCollect)
-    }
-
-    const scheduleConfirmation = () => {
-      if (confirmationTimer) return
-      confirmationTimer = setTimeout(() => {
-        confirmationTimer = null
-        const finalCount = getInventoryItemCountById(bot, itemId)
-        if (finalCount >= targetCount) {
-          cleanup()
-          resolve(finalCount)
-        }
-      }, confirmMs)
-    }
-
-    const cancelConfirmation = () => {
-      if (!confirmationTimer) return
-      clearTimeout(confirmationTimer)
-      confirmationTimer = null
-    }
-
-    const evaluate = () => {
-      const updatedCount = getInventoryItemCountById(bot, itemId)
-      if (updatedCount >= targetCount) {
-        scheduleConfirmation()
-      } else {
-        cancelConfirmation()
-      }
-    }
-
-    const handleInventoryUpdate = () => {
-      evaluate()
-    }
-
-    const handlePlayerCollect = (collector) => {
-      if (collector === bot.entity) {
-        setTimeout(evaluate, 0)
-      }
-    }
-
-    const timeoutHandle = setTimeout(() => {
-      cleanup()
-      reject(new Error(`インベントリ更新がタイムアウトしました (${timeoutMs}ms)`))
-    }, timeoutMs)
-
-    bot.inventory.on('updateSlot', handleInventoryUpdate)
-    bot.on('playerCollect', handlePlayerCollect)
-
-    // 念のため即時チェック
-    evaluate()
-  })
 }
 
 async function placeBlock(bot, params = {}) {

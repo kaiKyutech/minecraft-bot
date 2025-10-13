@@ -46,9 +46,6 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
 
     console.log(`[MOVE_TO] 目標位置に到着`)
 
-    // 状態を更新
-    await stateManager.refresh(bot)
-
   } catch (error) {
     throw new Error(`移動に失敗しました: ${error.message}`)
   }

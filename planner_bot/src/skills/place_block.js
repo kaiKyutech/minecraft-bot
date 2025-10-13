@@ -73,9 +73,6 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
       throw new Error('適切な設置位置が見つかりませんでした')
     }
 
-    // 状態を更新
-    await stateManager.refresh(bot)
-
   } catch (error) {
     throw new Error(`ブロック設置に失敗しました: ${error.message}`)
   }

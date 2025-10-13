@@ -184,7 +184,12 @@ async function executeStep(bot, step, stateManager, signal = null) {
     throw new Error(`スキル ${step.skill} が見つかりません`)
   }
 
+  console.log('\n' + '='.repeat(80))
   console.log(`[EXECUTION] ステップ: ${step.action}`)
+  console.log('='.repeat(80))
+
+  // アクション実行前に状態を更新（サーバーと同期）
+  await stateManager.refresh(bot)
 
   // signalがabortされたら、bot操作を中断するリスナーを設定
   let abortHandler = null
@@ -207,9 +212,12 @@ async function executeStep(bot, step, stateManager, signal = null) {
 
   try {
     await skill(bot, step.params || {}, stateManager)
+
+    // アクション実行後に状態を更新（サーバーと同期）
     await stateManager.refresh(bot)
 
     console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
+    console.log('='.repeat(80) + '\n')
 
     // 各アクション完了をチャットに表示（一時的にコメントアウト）
     // await bot.chatWithDelay(`${step.action} を完了しました`)

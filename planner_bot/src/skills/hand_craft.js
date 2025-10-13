@@ -32,9 +32,6 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
 
     console.log(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
-    // 状態を更新（GOAPが次の判断に使用）
-    await stateManager.refresh(bot)
-
   } catch (error) {
     throw new Error(`手クラフトに失敗しました: ${error.message}`)
   }
