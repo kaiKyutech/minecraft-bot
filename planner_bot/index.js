@@ -8,7 +8,7 @@ const { pathfinder } = require('mineflayer-pathfinder')
 const createStateManager = require('./src/planner/state_manager')
 const { handleChatCommand } = require('./src/commands')
 const { handleUserMessage } = require('./src/llm/llm_handler')
-const geminiClient = require('./src/llm/gemini_client')
+const llmClient = require('./src/llm/client')
 
 debugLog('initialising planner bot')
 
@@ -29,19 +29,22 @@ const bot = mineflayer.createBot({
 
 bot.loadPlugin(pathfinder)
 
-// Gemini API初期化
-if (process.env.GEMINI_API_KEY) {
-  try {
-    geminiClient.initialize(
-      process.env.GEMINI_API_KEY,
-      process.env.LLM_MODEL || 'gemini-2.0-flash-exp'
-    )
-    console.log('[LLM] Gemini client initialized successfully')
-  } catch (error) {
-    console.error('[LLM] Failed to initialize Gemini client:', error.message)
-  }
+// LLM API初期化
+const llmProvider = process.env.LLM_PROVIDER || 'gemini'
+const llmApiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.CLAUDE_API_KEY
+const llmModel = process.env.LLM_MODEL || 'gemini-2.5-flash'
+
+if (llmApiKey) {
+  llmClient.initialize(llmProvider, llmApiKey, llmModel)
+    .then(() => {
+      console.log(`[LLM] ${llmProvider} client initialized successfully`)
+    })
+    .catch((error) => {
+      console.error(`[LLM] Failed to initialize ${llmProvider} client:`, error.message)
+    })
 } else {
-  console.warn('[LLM] GEMINI_API_KEY not found in environment variables. LLM features will be disabled.')
+  console.warn('[LLM] No API key found in environment variables. LLM features will be disabled.')
+  console.warn('[LLM] Set GEMINI_API_KEY, OPENAI_API_KEY, or CLAUDE_API_KEY in .env file.')
 }
 
 // チャットスパム対策: 最終送信時刻を記録

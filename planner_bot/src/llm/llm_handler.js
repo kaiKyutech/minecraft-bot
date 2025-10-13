@@ -4,7 +4,7 @@
  */
 
 const { buildFullPrompt } = require('./prompt_builder');
-const geminiClient = require('./gemini_client');
+const llmClient = require('./client');
 
 /**
  * !status の出力を取得
@@ -143,7 +143,7 @@ async function handleUserMessage(bot, username, message, stateManager, context) 
 
   // 4. LLM APIを呼び出す
   try {
-    const { thought, speech, command } = await geminiClient.generateResponse(systemPrompt, userPrompt);
+    const { thought, speech, command } = await llmClient.generateResponse(systemPrompt, userPrompt);
 
     // speechをチャットに送信（改行で分割して複数メッセージとして送信）
     const speechLines = speech.split('\n').filter(line => line.trim() !== '');
