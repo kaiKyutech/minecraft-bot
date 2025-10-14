@@ -25,7 +25,7 @@ let currentAbortController = null
 
 const bot = mineflayer.createBot({
   host: process.env.MC_HOST || 'localhost',
-  port: Number(process.env.MC_PORT || 25565),
+  port: Number(process.env.MC_PORT || 25566),
   username: process.env.MC_USERNAME || 'PlannerBot',
   version: process.env.MC_VERSION || false
 })

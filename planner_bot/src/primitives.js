@@ -328,59 +328,30 @@ async function craftItem(bot, params = {}) {
 
   const count = params.count ?? 1
 
-  let tableBlock = null
-  if (params.table) {
-    const tablePos = resolvePosition({ position: params.table })
-    tableBlock = bot.blockAt(tablePos)
+  // params.tableは既にBlockインスタンス、またはnull
+  const tableBlock = params.table || null
+  if (tableBlock) {
+    console.log(`[CRAFT] 作業台Block: ${tableBlock.name}, 座標: ${JSON.stringify(tableBlock.position)}`)
   }
 
   const recipes = bot.recipesFor(recipeItem.id, params.metadata ?? null, count, tableBlock)
+  console.log(`[CRAFT] レシピ数: ${recipes ? recipes.length : 0}, 最初のレシピrequiresTable: ${recipes && recipes[0] ? recipes[0].requiresTable : 'N/A'}`)
   if (!recipes || recipes.length === 0) {
     throw new Error('利用可能なレシピが見つかりません')
   }
 
-  // 作業台が必要な場合は、作業台ウィンドウを開く
-  let craftingTableWindow = null
-  if (tableBlock && recipes[0].requiresTable) {
-    console.log(`[CRAFT] 作業台ウィンドウを開きます...`)
-    try {
-      craftingTableWindow = await bot.openBlock(tableBlock)
-      console.log(`[CRAFT] 作業台ウィンドウを開きました (type: ${craftingTableWindow.type})`)
-      // ウィンドウが完全に開き、サーバーと同期するまで待機
-      await delay(800)
-    } catch (openErr) {
-      console.log(`[CRAFT] 作業台ウィンドウを開けませんでした: ${openErr.message}`)
-      throw new Error(`作業台ウィンドウを開けませんでした: ${openErr.message}`)
-    }
-  }
+  console.log(`[CRAFT] bot.craft() 実行開始: ${params.itemName} x${count}`)
 
   try {
-    console.log(`[CRAFT] bot.craft() 実行開始: ${params.itemName} x${count}`)
+    // bot.craft()が自動的にウィンドウを開いてクラフトする
     await bot.craft(recipes[0], count, tableBlock)
     console.log(`[CRAFT] bot.craft() 実行完了`)
-
-    // サーバーの処理完了を待つための最小限の待機
-    // 成功/失敗の判断はGOAPのリプランニングに任せる
-    await delay(500)
-
-    console.log(`[CRAFT] ${params.itemName} のクラフト処理完了（結果検証はGOAP層で実施）`)
   } catch (error) {
     console.log(`[CRAFT] bot.craft() がエラーを返しました: ${error.message}`)
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
     }
     throw error
-  } finally {
-    // 作業台ウィンドウを閉じる
-    if (craftingTableWindow) {
-      console.log(`[CRAFT] 作業台ウィンドウを閉じます...`)
-      try {
-        await bot.closeWindow(craftingTableWindow)
-        console.log(`[CRAFT] 作業台ウィンドウを閉じました`)
-      } catch (closeErr) {
-        console.log(`[CRAFT] ウィンドウを閉じるのに失敗: ${closeErr.message}`)
-      }
-    }
   }
 }
 

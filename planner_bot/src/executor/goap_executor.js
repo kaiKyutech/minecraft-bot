@@ -2,6 +2,106 @@ const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function requiresInventorySync(skillName) {
+  return skillName === 'workbench_craft' || skillName === 'hand_craft'
+}
+
+function cloneInventoryCounts(cache) {
+  const counts = cache?.inventory?.counts
+  if (!counts) return null
+  return { ...counts }
+}
+
+function inventoryChanged(beforeCounts = {}, afterCounts = {}) {
+  const keys = new Set([...Object.keys(beforeCounts), ...Object.keys(afterCounts)])
+  for (const key of keys) {
+    if ((beforeCounts[key] || 0) !== (afterCounts[key] || 0)) {
+      return true
+    }
+  }
+  return false
+}
+
+async function refreshInventoryWithRetry(bot, stateManager, beforeCounts, options = {}) {
+  const maxAttempts = options.maxAttempts ?? 6
+  const initialDelay = options.initialDelay ?? 600
+  const retryDelay = options.retryDelay ?? 300
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const waitMs = attempt === 0 ? initialDelay : retryDelay
+    if (waitMs > 0) {
+      await delay(waitMs)
+    }
+
+    await stateManager.refresh(bot)
+    const latestCounts = stateManager.cache?.inventory?.counts || {}
+
+    if (!beforeCounts || inventoryChanged(beforeCounts, latestCounts)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function waitForInventoryUpdate(bot, stateManager, beforeCounts, options = {}) {
+  const timeout = options.timeout ?? 4000
+  const settleDelay = options.settleDelay ?? 150
+
+  return new Promise((resolve) => {
+    let resolved = false
+    let pending = false
+    let timeoutId = null
+
+    const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      bot.inventory.off('updateSlot', onInventoryUpdate)
+    }
+
+    const finish = (result) => {
+      if (resolved) return
+      resolved = true
+      cleanup()
+      resolve(result)
+    }
+
+    const checkForChange = async () => {
+      if (resolved || pending) return
+      pending = true
+      try {
+        if (settleDelay > 0) {
+          await delay(settleDelay)
+        }
+        await stateManager.refresh(bot)
+        const latestCounts = stateManager.cache?.inventory?.counts || {}
+        if (!beforeCounts || inventoryChanged(beforeCounts, latestCounts)) {
+          finish(true)
+        }
+      } catch (error) {
+        console.log(`[EXECUTION] インベントリ更新待機中にエラー: ${error.message}`)
+      } finally {
+        pending = false
+      }
+    }
+
+    const onInventoryUpdate = () => {
+      checkForChange().catch(() => {})
+    }
+
+    bot.inventory.on('updateSlot', onInventoryUpdate)
+
+    timeoutId = setTimeout(async () => {
+      await checkForChange()
+      finish(false)
+    }, timeout)
+  })
+}
+
 /**
  * GOAPプランを実行（リプランニング対応）
  * @param {Object} bot - Mineflayerボット
@@ -193,6 +293,12 @@ async function executeStep(bot, step, stateManager, signal = null) {
   // アクション実行前に状態を更新（サーバーと同期）
   await stateManager.refresh(bot)
 
+  const needsInventorySync = requiresInventorySync(step.skill)
+  const beforeInventoryCounts = needsInventorySync ? cloneInventoryCounts(stateManager.cache) : null
+  const inventorySyncPromise = needsInventorySync
+    ? waitForInventoryUpdate(bot, stateManager, beforeInventoryCounts)
+    : Promise.resolve(true)
+
   // signalがabortされたら、bot操作を中断するリスナーを設定
   let abortHandler = null
   if (signal) {
@@ -215,8 +321,24 @@ async function executeStep(bot, step, stateManager, signal = null) {
   try {
     await skill(bot, step.params || {}, stateManager)
 
-    // アクション実行後に状態を更新（サーバーと同期）
-    await stateManager.refresh(bot)
+    if (needsInventorySync) {
+      console.log(`[EXECUTION] インベントリ同期待機中... (before counts: ${JSON.stringify(beforeInventoryCounts)})`)
+      let synced = await inventorySyncPromise
+
+      if (!synced) {
+        console.log(`[EXECUTION] イベント待機失敗、リトライrefreshを実行`)
+        synced = await refreshInventoryWithRetry(bot, stateManager, beforeInventoryCounts)
+      }
+
+      const afterCounts = stateManager.cache?.inventory?.counts || {}
+      console.log(`[EXECUTION] インベントリ同期結果: synced=${synced}, after counts: ${JSON.stringify(afterCounts)}`)
+
+      if (!synced) {
+        console.log(`[EXECUTION] ⚠️ インベントリの更新を検出できませんでした: ${step.action}`)
+      }
+    } else {
+      await stateManager.refresh(bot)
+    }
 
     console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
     console.log('='.repeat(80) + '\n')

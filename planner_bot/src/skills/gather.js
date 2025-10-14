@@ -315,12 +315,13 @@ function serializePosition(position) {
 
 function isRecoverableGatherError(error) {
   if (!error || !error.message) return false
-  const message = error.message
+  const message = error.message.toLowerCase()
 
   return (
-    message.includes('Path was stopped') ||
-    message.includes('moveTo timeout') ||
-    message.includes('Digging aborted') ||
+    message.includes('path was stopped') ||
+    message.includes('goal was changed before it could be completed') ||
+    message.includes('moveto timeout') ||
+    message.includes('digging aborted') ||
     message.includes('このブロックは掘れません') ||
     message.includes('指定位置にブロックが存在しません')
   )

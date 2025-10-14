@@ -34,6 +34,15 @@ class StateManager {
   extractInventory(bot) {
     const slots = bot.inventory?.items() || []
     const counts = {}
+
+    // デバッグ: 全スロットの詳細をログ出力
+    if (process.env.DEBUG_INVENTORY === '1') {
+      console.log('[STATE] インベントリスロット詳細:')
+      for (const item of slots) {
+        console.log(`  - ${item.name} x${item.count} (slot: ${item.slot}, type: ${item.type})`)
+      }
+    }
+
     for (const item of slots) {
       counts[item.name] = (counts[item.name] || 0) + item.count
     }

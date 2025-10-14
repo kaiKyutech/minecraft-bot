@@ -3,6 +3,9 @@
  * 現在の状況をLLMが理解しやすい形式でチャット欄に出力
  */
 async function handleStatusCommand(bot, stateManager) {
+  // インベントリの更新を確実にするため、少し待機してからrefresh
+  await delay(200)
+  await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
   const { buildState } = require('../planner/state_builder')
   const goapState = buildState(worldState)
@@ -103,6 +106,10 @@ async function handleStatusCommand(bot, stateManager) {
 
   // コンソールには簡潔なログ
   console.log('[STATUS] Status sent to chat')
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 module.exports = handleStatusCommand
