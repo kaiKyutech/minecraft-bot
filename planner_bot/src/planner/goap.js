@@ -11,10 +11,75 @@ const ACTION_FILES = [
   'movement_actions.yaml',
   'furnace_actions.yaml'
 ]
-const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 500
+const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 2000
 const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50
 
 let domain
+
+/**
+ * 最小ヒープ（優先度キュー）
+ * A*アルゴリズムの開リストを効率的に管理（O(log n)でpush/pop）
+ */
+class MinHeap {
+  constructor(scoreFn) {
+    this.a = []  // 配列として管理
+    this.score = scoreFn  // ノードのスコア（f値）を取得する関数
+  }
+
+  push(node) {
+    this.a.push(node)
+    this._up(this.a.length - 1)
+  }
+
+  pop() {
+    if (this.a.length === 0) return undefined
+    const result = this.a[0]
+    const last = this.a.pop()
+    if (this.a.length > 0) {
+      this.a[0] = last
+      this._down(0)
+    }
+    return result
+  }
+
+  get size() {
+    return this.a.length
+  }
+
+  _up(i) {
+    const node = this.a[i]
+    const nodeScore = this.score(node)
+    while (i > 0) {
+      const pi = ((i - 1) >> 1)  // 親インデックス
+      const parent = this.a[pi]
+      if (this.score(parent) <= nodeScore) break
+      this.a[i] = parent
+      i = pi
+    }
+    this.a[i] = node
+  }
+
+  _down(i) {
+    const node = this.a[i]
+    const nodeScore = this.score(node)
+    const len = this.a.length
+    const half = len >> 1
+    while (i < half) {
+      let ci = (i << 1) + 1  // 左子インデックス
+      let child = this.a[ci]
+      const ri = ci + 1
+      // 右子が存在し、右子の方がスコアが小さければ右子を選択
+      if (ri < len && this.score(this.a[ri]) < this.score(child)) {
+        ci = ri
+        child = this.a[ri]
+      }
+      if (nodeScore <= this.score(child)) break
+      this.a[i] = child
+      i = ci
+    }
+    this.a[i] = node
+  }
+}
 
 function yieldToEventLoop() {
   return new Promise((resolve) => setImmediate(resolve))
@@ -109,17 +174,6 @@ async function plan(goalInput, worldState) {
   }
 
 
-  const open = [{
-    state: initialState,
-    cost: 0,
-    actions: []
-  }]
-
-  const visited = new Map()
-  visited.set(serializeState(initialState), 0)
-
-  let iterations = 0
-
   const heuristicContext = buildHeuristicContext(adjustedGoal, goalAction, filteredActions)
 
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
@@ -136,7 +190,20 @@ async function plan(goalInput, worldState) {
     return node.cost + hCache.get(sig)
   }
 
-  while (open.length > 0 && iterations < MAX_ITERATIONS) {
+  // MinHeapで開リストを管理（O(log n)で最小f値ノードを取得）
+  const open = new MinHeap(getF)
+  open.push({
+    state: initialState,
+    cost: 0,
+    actions: []
+  })
+
+  const visited = new Map()
+  visited.set(serializeState(initialState), 0)
+
+  let iterations = 0
+
+  while (open.size > 0 && iterations < MAX_ITERATIONS) {
     iterations++
 
     if (YIELD_INTERVAL > 0 && iterations % YIELD_INTERVAL === 0) {
@@ -146,8 +213,8 @@ async function plan(goalInput, worldState) {
     // A*アルゴリズム: f(n) = g(n) + h(n)
     // g(n) = これまでの実コスト (a.cost)
     // h(n) = ゴールまでの推定コスト (heuristic)
-    open.sort((a, b) => getF(a) - getF(b))
-    const current = open.shift()
+    // MinHeapが自動的に最小f値のノードを返す
+    const current = open.pop()
 
     // デバッグ出力（環境変数で制御）
     const debugInterval = process.env.GOAP_DEBUG_INTERVAL ? Number(process.env.GOAP_DEBUG_INTERVAL) : 100
@@ -161,7 +228,7 @@ async function plan(goalInput, worldState) {
         ? `...${current.actions.slice(-3).map(a => a.action).join(' → ')}`
         : current.actions.map(a => a.action).join(' → ')
 
-      console.log(`[GOAP Iter ${iterations}] queue:${open.length} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
+      console.log(`[GOAP Iter ${iterations}] queue:${open.size} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
       console.log(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
     }
 
@@ -219,6 +286,7 @@ async function plan(goalInput, worldState) {
       }
 
       visited.set(signature, totalCost)
+      // MinHeapに新しいノードを追加（自動的にf値でソートされる）
       open.push({
         state: nextState,
         cost: totalCost,
@@ -227,12 +295,12 @@ async function plan(goalInput, worldState) {
     }
   }
 
-  if (iterations >= MAX_ITERATIONS && open.length > 0) {
+  if (iterations >= MAX_ITERATIONS && open.size > 0) {
     console.warn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
     console.warn(`  目標: ${goalInput}`)
     console.warn(`  初期ヒューリスティック: h=${initialH}`)
     console.warn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
-    console.warn(`  残り候補: ${open.length}, 訪問済み: ${visited.size}`)
+    console.warn(`  残り候補: ${open.size}, 訪問済み: ${visited.size}`)
     console.warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
     console.warn(`  段階的に中間目標を実行してください。`)
   } else {
@@ -1088,42 +1156,51 @@ function applyEffects(effects = {}, state) {
 }
 
 function evaluateCondition(value, condition) {
+  // undefined/nullは条件を満たさないと判定（false positive を防ぐ）
+  const isUndef = (value === undefined || value === null)
+
   if (typeof condition === 'boolean') {
-    return Boolean(value) === condition
+    // booleanの場合: undefinedはfalseとして扱う
+    return !isUndef && Boolean(value) === condition
   }
 
   if (typeof condition === 'number') {
-    return Number(value) === condition
+    // 数値比較の場合: undefinedは条件を満たさない
+    return !isUndef && Number(value) === condition
   }
 
   if (typeof condition === 'string') {
     const trimmed = condition.trim()
 
     if (trimmed === 'true' || trimmed === 'false') {
-      return Boolean(value) === (trimmed === 'true')
+      return !isUndef && Boolean(value) === (trimmed === 'true')
     }
 
     const comparison = trimmed.match(/^(>=|<=|==|!=|>|<)\s*(-?\d+)$/)
     if (comparison) {
       const [, operator, rawNumber] = comparison
       const target = Number(rawNumber)
-      const actual = Number(value) || 0
+      // undefinedは負の無限大として扱う（全ての >= や > 条件で不合格）
+      const actual = isUndef ? Number.NEGATIVE_INFINITY : Number(value)
+
       switch (operator) {
         case '>': return actual > target
         case '>=': return actual >= target
         case '<': return actual < target
         case '<=': return actual <= target
-        case '==': return actual === target
-        case '!=': return actual !== target
+        case '==': return !isUndef && actual === target
+        case '!=': return !isUndef && actual !== target
         default: return false
       }
     }
 
     if (/^-?\d+$/.test(trimmed)) {
-      return Number(value) === Number(trimmed)
+      return !isUndef && Number(value) === Number(trimmed)
     }
   }
 
+  // その他の比較: undefined/nullは条件を満たさない
+  if (isUndef) return false
   return value === condition
 }
 
@@ -1137,9 +1214,34 @@ function normaliseNumericState(state) {
   return next
 }
 
+/**
+ * 再帰的に安定したシリアライズを行う（ネストされたオブジェクトのキー順序も保証）
+ * @param {*} obj - シリアライズする値
+ * @returns {string} 決定的な文字列表現
+ */
+function stableStringify(obj) {
+  if (obj === null || obj === undefined) {
+    return JSON.stringify(obj)
+  }
+  if (typeof obj !== 'object') {
+    return JSON.stringify(obj)
+  }
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(stableStringify).join(',') + ']'
+  }
+  // オブジェクトの場合: キーをソートして再帰的にシリアライズ
+  const keys = Object.keys(obj).sort()
+  const body = keys.map(k => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',')
+  return '{' + body + '}'
+}
+
+/**
+ * 状態をシリアライズして一意な文字列に変換（訪問済み判定用）
+ * @param {Object} state - 状態オブジェクト
+ * @returns {string} シリアライズされた文字列
+ */
 function serializeState(state) {
-  const sorted = Object.keys(state).sort().map((key) => `${key}:${JSON.stringify(state[key])}`)
-  return sorted.join('|')
+  return stableStringify(state)
 }
 
 function toPlanStep(action) {
