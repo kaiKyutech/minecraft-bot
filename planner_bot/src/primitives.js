@@ -327,27 +327,16 @@ async function craftItem(bot, params = {}) {
   }
 
   const count = params.count ?? 1
-
-  // params.tableは既にBlockインスタンス、またはnull
   const tableBlock = params.table || null
-  if (tableBlock) {
-    console.log(`[CRAFT] 作業台Block: ${tableBlock.name}, 座標: ${JSON.stringify(tableBlock.position)}`)
-  }
 
   const recipes = bot.recipesFor(recipeItem.id, params.metadata ?? null, count, tableBlock)
-  console.log(`[CRAFT] レシピ数: ${recipes ? recipes.length : 0}, 最初のレシピrequiresTable: ${recipes && recipes[0] ? recipes[0].requiresTable : 'N/A'}`)
   if (!recipes || recipes.length === 0) {
     throw new Error('利用可能なレシピが見つかりません')
   }
 
-  console.log(`[CRAFT] bot.craft() 実行開始: ${params.itemName} x${count}`)
-
   try {
-    // bot.craft()が自動的にウィンドウを開いてクラフトする
     await bot.craft(recipes[0], count, tableBlock)
-    console.log(`[CRAFT] bot.craft() 実行完了`)
   } catch (error) {
-    console.log(`[CRAFT] bot.craft() がエラーを返しました: ${error.message}`)
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
     }
