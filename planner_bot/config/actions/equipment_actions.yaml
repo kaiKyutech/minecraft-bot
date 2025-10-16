@@ -1,0 +1,288 @@
+# 装備アクション定義
+# equipment.{item_name}: boolean 形式
+# スキルがスロット排他制御を自動で行う
+
+actions:
+  # === ダイヤモンド防具 ===
+  - name: equip_diamond_helmet
+    description: "ダイヤのヘルメットを装備する"
+    preconditions:
+      inventory.diamond_helmet: ">= 1"
+    effects:
+      equipment.diamond_helmet: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "helmet"
+      item: "diamond_helmet"
+
+  - name: equip_diamond_chestplate
+    description: "ダイヤのチェストプレートを装備する"
+    preconditions:
+      inventory.diamond_chestplate: ">= 1"
+    effects:
+      equipment.diamond_chestplate: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "chestplate"
+      item: "diamond_chestplate"
+
+  - name: equip_diamond_leggings
+    description: "ダイヤのレギンスを装備する"
+    preconditions:
+      inventory.diamond_leggings: ">= 1"
+    effects:
+      equipment.diamond_leggings: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "leggings"
+      item: "diamond_leggings"
+
+  - name: equip_diamond_boots
+    description: "ダイヤのブーツを装備する"
+    preconditions:
+      inventory.diamond_boots: ">= 1"
+    effects:
+      equipment.diamond_boots: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "boots"
+      item: "diamond_boots"
+
+  # === 鉄防具 ===
+  - name: equip_iron_helmet
+    description: "鉄のヘルメットを装備する"
+    preconditions:
+      inventory.iron_helmet: ">= 1"
+    effects:
+      equipment.iron_helmet: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "helmet"
+      item: "iron_helmet"
+
+  - name: equip_iron_chestplate
+    description: "鉄のチェストプレートを装備する"
+    preconditions:
+      inventory.iron_chestplate: ">= 1"
+    effects:
+      equipment.iron_chestplate: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "chestplate"
+      item: "iron_chestplate"
+
+  - name: equip_iron_leggings
+    description: "鉄のレギンスを装備する"
+    preconditions:
+      inventory.iron_leggings: ">= 1"
+    effects:
+      equipment.iron_leggings: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "leggings"
+      item: "iron_leggings"
+
+  - name: equip_iron_boots
+    description: "鉄のブーツを装備する"
+    preconditions:
+      inventory.iron_boots: ">= 1"
+    effects:
+      equipment.iron_boots: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "boots"
+      item: "iron_boots"
+
+  # === 金防具 ===
+  - name: equip_golden_helmet
+    description: "金のヘルメットを装備する"
+    preconditions:
+      inventory.golden_helmet: ">= 1"
+    effects:
+      equipment.golden_helmet: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "helmet"
+      item: "golden_helmet"
+
+  - name: equip_golden_chestplate
+    description: "金のチェストプレートを装備する"
+    preconditions:
+      inventory.golden_chestplate: ">= 1"
+    effects:
+      equipment.golden_chestplate: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "chestplate"
+      item: "golden_chestplate"
+
+  - name: equip_golden_leggings
+    description: "金のレギンスを装備する"
+    preconditions:
+      inventory.golden_leggings: ">= 1"
+    effects:
+      equipment.golden_leggings: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "leggings"
+      item: "golden_leggings"
+
+  - name: equip_golden_boots
+    description: "金のブーツを装備する"
+    preconditions:
+      inventory.golden_boots: ">= 1"
+    effects:
+      equipment.golden_boots: true
+    cost: 1
+    skill: equip_armor
+    params:
+      slot: "boots"
+      item: "golden_boots"
+
+  # === 武器・ツール（メインハンド） ===
+  # ダイヤモンド
+  - name: equip_diamond_sword
+    description: "ダイヤの剣を手に持つ"
+    preconditions:
+      inventory.diamond_sword: ">= 1"
+    effects:
+      equipment.diamond_sword: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "diamond_sword"
+
+  - name: equip_diamond_pickaxe
+    description: "ダイヤのピッケルを手に持つ"
+    preconditions:
+      inventory.diamond_pickaxe: ">= 1"
+    effects:
+      equipment.diamond_pickaxe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "diamond_pickaxe"
+
+  - name: equip_diamond_axe
+    description: "ダイヤの斧を手に持つ"
+    preconditions:
+      inventory.diamond_axe: ">= 1"
+    effects:
+      equipment.diamond_axe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "diamond_axe"
+
+  # 鉄
+  - name: equip_iron_sword
+    description: "鉄の剣を手に持つ"
+    preconditions:
+      inventory.iron_sword: ">= 1"
+    effects:
+      equipment.iron_sword: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "iron_sword"
+
+  - name: equip_iron_pickaxe
+    description: "鉄のピッケルを手に持つ"
+    preconditions:
+      inventory.iron_pickaxe: ">= 1"
+    effects:
+      equipment.iron_pickaxe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "iron_pickaxe"
+
+  - name: equip_iron_axe
+    description: "鉄の斧を手に持つ"
+    preconditions:
+      inventory.iron_axe: ">= 1"
+    effects:
+      equipment.iron_axe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "iron_axe"
+
+  # 石
+  - name: equip_stone_sword
+    description: "石の剣を手に持つ"
+    preconditions:
+      inventory.stone_sword: ">= 1"
+    effects:
+      equipment.stone_sword: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "stone_sword"
+
+  - name: equip_stone_pickaxe
+    description: "石のピッケルを手に持つ"
+    preconditions:
+      inventory.stone_pickaxe: ">= 1"
+    effects:
+      equipment.stone_pickaxe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "stone_pickaxe"
+
+  - name: equip_stone_axe
+    description: "石の斧を手に持つ"
+    preconditions:
+      inventory.stone_axe: ">= 1"
+    effects:
+      equipment.stone_axe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "stone_axe"
+
+  # 木
+  - name: equip_wooden_sword
+    description: "木の剣を手に持つ"
+    preconditions:
+      inventory.wooden_sword: ">= 1"
+    effects:
+      equipment.wooden_sword: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "wooden_sword"
+
+  - name: equip_wooden_pickaxe
+    description: "木のピッケルを手に持つ"
+    preconditions:
+      inventory.wooden_pickaxe: ">= 1"
+    effects:
+      equipment.wooden_pickaxe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "wooden_pickaxe"
+
+  - name: equip_wooden_axe
+    description: "木の斧を手に持つ"
+    preconditions:
+      inventory.wooden_axe: ">= 1"
+    effects:
+      equipment.wooden_axe: true
+    cost: 1
+    skill: equip_mainhand
+    params:
+      item: "wooden_axe"

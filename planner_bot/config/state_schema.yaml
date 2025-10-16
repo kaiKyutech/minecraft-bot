@@ -160,6 +160,22 @@ environment_states:
     category: "coal_ore"
     max_distance: 100
 
+# === 装備関連 ===
+equipment_states:
+  # === 動的装備（全アイテムを自動追跡） ===
+  equipment:
+    type: object
+    default: {}
+    description: "装備中のアイテムを自動追跡（例: {diamond_helmet: true, iron_sword: true}）"
+    dynamic: true
+    source: "bot.inventory.slots[5-8] + bot.heldItem"
+
+  # === 個別装備は equipment.xxx で参照 ===
+  # equipment.diamond_helmet - ダイヤのヘルメットを装備している
+  # equipment.iron_chestplate - 鉄のチェストプレートを装備している
+  # equipment.diamond_sword - ダイヤの剣を手に持っている
+  # 等々...
+
 # === 時間・環境条件 ===
 world_states:
   is_day:

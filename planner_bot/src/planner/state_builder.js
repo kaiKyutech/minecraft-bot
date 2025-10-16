@@ -38,6 +38,9 @@ function buildState(worldState) {
   // 世界状態の構築
   buildWorldStates(facts, worldState, schema.world_states)
 
+  // 装備状態の構築
+  buildEquipmentStates(facts, worldState, schema.equipment_states)
+
   return facts
 }
 
@@ -120,6 +123,41 @@ function buildWorldStates(facts, worldState, worldSchema) {
         facts[stateName] = config.default
     }
   }
+}
+
+/**
+ * 装備状態を構築
+ * worldState.equipment から装備情報を読み取り、equipment.{item_name}: true 形式で自動追跡
+ * inventory と同じパターンで動的に生成
+ */
+function buildEquipmentStates(facts, worldState, equipmentSchema) {
+  const equipmentRaw = worldState?.equipment || {}
+
+  // 動的装備オブジェクトを構築（inventoryと同じパターン）
+  const equipmentMap = {}
+
+  // 実際に装備しているアイテムをtrueにする
+  if (equipmentRaw.helmet && equipmentRaw.helmet !== 'none') {
+    equipmentMap[equipmentRaw.helmet] = true
+  }
+  if (equipmentRaw.chestplate && equipmentRaw.chestplate !== 'none') {
+    equipmentMap[equipmentRaw.chestplate] = true
+  }
+  if (equipmentRaw.leggings && equipmentRaw.leggings !== 'none') {
+    equipmentMap[equipmentRaw.leggings] = true
+  }
+  if (equipmentRaw.boots && equipmentRaw.boots !== 'none') {
+    equipmentMap[equipmentRaw.boots] = true
+  }
+  if (equipmentRaw.mainhand && equipmentRaw.mainhand !== 'none') {
+    equipmentMap[equipmentRaw.mainhand] = true
+  }
+  if (equipmentRaw.offhand && equipmentRaw.offhand !== 'none') {
+    equipmentMap[equipmentRaw.offhand] = true
+  }
+
+  // inventory と同じパターンで equipment オブジェクトを設定
+  facts.equipment = equipmentMap
 }
 
 /**

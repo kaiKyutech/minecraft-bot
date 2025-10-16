@@ -5,6 +5,8 @@ const moveTo = require('./move_to')
 const placeBlock = require('./place_block')
 const furnaceSmelt = require('./furnace_smelt')
 const collectDrops = require('./collect_drops')
+const equipArmor = require('./equip_armor')
+const equipMainhand = require('./equip_mainhand')
 
 module.exports = {
   gather,
@@ -13,5 +15,7 @@ module.exports = {
   move_to: moveTo,
   place_block: placeBlock,
   furnace_smelt: furnaceSmelt,
-  collect_drops: collectDrops
+  collect_drops: collectDrops,
+  equip_armor: equipArmor,
+  equip_mainhand: equipMainhand
 }

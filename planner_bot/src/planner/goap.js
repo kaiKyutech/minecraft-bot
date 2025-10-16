@@ -9,7 +9,8 @@ const ACTION_FILES = [
   'hand_craft_actions.yaml',
   'workbench_craft_actions.yaml',
   'movement_actions.yaml',
-  'furnace_actions.yaml'
+  'furnace_actions.yaml',
+  'equipment_actions.yaml'
 ]
 const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 2000
 const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50

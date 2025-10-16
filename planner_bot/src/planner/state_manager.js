@@ -20,6 +20,7 @@ class StateManager {
     this.cache = {
       timestamp: Date.now(),
       inventory: this.extractInventory(bot), // インベントリ生データ
+      equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
       nearby_blocks: this.extractNearbyBlocks(bot) // 周辺ブロック検索
@@ -51,6 +52,44 @@ class StateManager {
       counts
     }
     // 結果例: { oak_log: 5, birch_log: 2, stone_pickaxe: 1 }
+  }
+
+  /**
+   * 装備情報を抽出
+   * @param {Object} bot - Mineflayerボット
+   * @returns {Object} - { helmet: 'diamond_helmet', chestplate: 'iron_chestplate', ... }
+   */
+  extractEquipment(bot) {
+    const equipment = {
+      helmet: 'none',
+      chestplate: 'none',
+      leggings: 'none',
+      boots: 'none',
+      mainhand: 'none',
+      offhand: 'none'
+    }
+
+    // Mineflayerの装備スロット:
+    // slots[5] = helmet
+    // slots[6] = chestplate
+    // slots[7] = leggings
+    // slots[8] = boots
+    // slots[45] = offhand
+
+    const slots = bot.inventory?.slots || []
+    if (slots[5]) equipment.helmet = slots[5].name
+    if (slots[6]) equipment.chestplate = slots[6].name
+    if (slots[7]) equipment.leggings = slots[7].name
+    if (slots[8]) equipment.boots = slots[8].name
+    if (slots[45]) equipment.offhand = slots[45].name
+
+    // メインハンド: bot.heldItem または bot.inventory.slots[bot.quickBarSlot + 36]
+    const heldItem = bot.heldItem
+    if (heldItem) {
+      equipment.mainhand = heldItem.name
+    }
+
+    return equipment
   }
 
   extractNearbyBlocks(bot) {
@@ -105,20 +144,30 @@ class StateManager {
     const { buildState } = require('./state_builder')
     const goapState = buildState(this.cache)
 
-    // Boolean値のみを1/0で表示
+    // Boolean値、Numeric値、装備状態を分類して表示
     const booleanStates = []
     const numericStates = []
+    const equipmentStates = []
 
     for (const [key, value] of Object.entries(goapState)) {
       if (typeof value === 'boolean') {
         booleanStates.push(`${key}:${value ? 1 : 0}`)
       } else if (typeof value === 'number') {
         numericStates.push(`${key}:${value}`)
-      } else if (typeof value === 'object' && value !== null && key === 'inventory') {
-        // inventoryオブジェクトの中身を展開して表示
-        for (const [itemName, count] of Object.entries(value)) {
-          if (typeof count === 'number' && count > 0) {
-            numericStates.push(`inventory.${itemName}:${count}`)
+      } else if (typeof value === 'object' && value !== null) {
+        if (key === 'inventory') {
+          // inventoryオブジェクトの中身を展開して表示
+          for (const [itemName, count] of Object.entries(value)) {
+            if (typeof count === 'number' && count > 0) {
+              numericStates.push(`inventory.${itemName}:${count}`)
+            }
+          }
+        } else if (key === 'equipment') {
+          // equipmentオブジェクトの中身を展開して表示
+          for (const [itemName, equipped] of Object.entries(value)) {
+            if (equipped === true) {
+              equipmentStates.push(`equipment.${itemName}:1`)
+            }
           }
         }
       }
@@ -126,6 +175,9 @@ class StateManager {
 
     console.log(`[STATE] Boolean: ${booleanStates.join(' ')}`)
     console.log(`[STATE] Numeric: ${numericStates.join(' ')}`)
+    if (equipmentStates.length > 0) {
+      console.log(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
+    }
   }
 
   clear() {
