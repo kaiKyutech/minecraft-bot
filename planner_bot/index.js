@@ -122,7 +122,8 @@ bot.on('chat', async (username, message) => {
       } catch (error) {
         if (error.name === 'AbortError') {
           console.log('[CANCEL] タスクがキャンセルされました')
-          await bot.chatWithDelay('タスクをキャンセルして、新しいリクエストを処理します')
+          // デモ用: チャットメッセージは表示しない（ユーザーが割り込んだだけなので正常）
+          // await bot.chatWithDelay('タスクをキャンセルして、新しいリクエストを処理します')
         } else {
           throw error
         }

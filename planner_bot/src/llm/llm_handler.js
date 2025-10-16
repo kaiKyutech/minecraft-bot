@@ -99,10 +99,10 @@ async function getStatusInfo(bot, stateManager) {
   //   lines.push('登録済みの場所: なし');
   // }
 
-  lines.push('---');
-  lines.push('システム: !goal (GOAP)');
-  lines.push('GOAP: 素材が近くにあるときに自動実行');
-  // lines.push('Creative: ナビゲーション（場所の登録・移動）'); // v0.1では未使用
+  // デモ用: システム情報は非表示
+  // lines.push('---');
+  // lines.push('システム: !goal (GOAP)');
+  // lines.push('GOAP: 素材が近くにあるときに自動実行');
 
   return lines.map(line => `    ${line}`).join('\n');
 }
@@ -170,8 +170,8 @@ async function handleUserMessage(bot, username, message, stateManager, context, 
         context.lastCommandResult = `${command} の作成を完了しました`;
         console.log('[LLM_HANDLER] Command succeeded');
 
-        // チャットに表示
-        await bot.chatWithDelay(context.lastCommandResult);
+        // デモ用: チャットには表示しない（LLMが自分で報告する）
+        // await bot.chatWithDelay(context.lastCommandResult);
       } catch (error) {
         // キャンセルエラーの場合は再スロー
         if (error.name === 'AbortError') {
@@ -205,6 +205,11 @@ async function handleUserMessage(bot, username, message, stateManager, context, 
     console.log('[LLM_HANDLER] Processing completed successfully');
 
   } catch (error) {
+    // キャンセルエラーの場合は再スロー（上位で処理）
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+
     console.error('[LLM_HANDLER] Error:', error.message);
     await bot.chatWithDelay(`エラーが発生しました: ${error.message}`);
   }

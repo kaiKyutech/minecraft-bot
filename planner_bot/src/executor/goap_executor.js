@@ -17,7 +17,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
   while (stepIndex < currentPlan.length) {
     // キャンセルチェック
     if (signal && signal.aborted) {
-      const error = new Error('GOAP execution was cancelled')
+      const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
       error.name = 'AbortError'
       throw error
     }
@@ -100,7 +100,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 async function replan(bot, goalName, stateManager, signal = null) {
   // キャンセルチェック
   if (signal && signal.aborted) {
-    const error = new Error('Replanning was cancelled')
+    const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
     error.name = 'AbortError'
     throw error
   }
@@ -175,7 +175,7 @@ async function replan(bot, goalName, stateManager, signal = null) {
 async function executeStep(bot, step, stateManager, signal = null) {
   // キャンセルチェック
   if (signal && signal.aborted) {
-    const error = new Error('Step execution was cancelled')
+    const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
     error.name = 'AbortError'
     throw error
   }
@@ -306,7 +306,7 @@ async function executeSimplePlan(bot, plan, stateManager, signal = null) {
   for (const step of plan) {
     // キャンセルチェック
     if (signal && signal.aborted) {
-      const error = new Error('Simple plan execution was cancelled')
+      const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
       error.name = 'AbortError'
       throw error
     }

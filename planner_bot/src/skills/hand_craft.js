@@ -23,14 +23,18 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
   }
 
   try {
+    const count = params.count || 1
     // GOAPが前提条件を保証済みのため、直接クラフト実行
     await primitives.craftItem(bot, {
       itemName: itemName,
-      count: params.count || 1,
+      count: count,
       table: null  // 手クラフト（2x2グリッド）
     })
 
     console.log(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
+
+    // クラフト完了をチャットに通知（デモ用）
+    await bot.chatWithDelay(`${itemName} を作成しました`)
 
   } catch (error) {
     throw new Error(`手クラフトに失敗しました: ${error.message}`)
