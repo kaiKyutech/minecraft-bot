@@ -16,7 +16,7 @@
     "dotenv": "^17.2.3",
     "mineflayer": "^4.33.0",
     "mineflayer-pathfinder": "github:Hatadi-v/mineflayer-pathfinder#patch-1",
-    "prismarine-viewer": "^1.33.0",
+    "prismarine-viewer": "github:kaiKyutech/prismarine-viewer",
     "yaml": "^2.8.1"
   }
 }
