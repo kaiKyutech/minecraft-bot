@@ -232,10 +232,10 @@ bot.on('chat', async (username, message) => {
 
 | Phase | 状態 | 完了日 | 備考 |
 |-------|------|--------|------|
-| Phase 1: 削除 | ⏳ 未着手 | - | - |
-| Phase 2: index.js修正 | ⏳ 未着手 | - | - |
-| Phase 3: ドキュメント更新 | ⏳ 未着手 | - | - |
-| Phase 4: クリーンアップ | ⏳ 未着手 | - | - |
+| Phase 1: 削除 | ✅ 完了 | 2025-10-17 | planner_bot/src/llm/ 削除完了 |
+| Phase 2: index.js修正 | ✅ 完了 | 2025-10-17 | コマンド専用モードに変更 |
+| Phase 3: ドキュメント更新 | ✅ 完了 | 2025-10-17 | CLAUDE.md 更新完了 |
+| Phase 4: package.json更新 | ✅ 完了 | 2025-10-17 | @google/genai 削除完了 |
 
 ---
 

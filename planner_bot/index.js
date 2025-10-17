@@ -7,21 +7,10 @@ const { pathfinder } = require('mineflayer-pathfinder')
 
 const createStateManager = require('./src/planner/state_manager')
 const { handleChatCommand } = require('./src/commands')
-const { handleUserMessage } = require('./src/llm/llm_handler')
-const llmClient = require('./src/llm/client')
 
 debugLog('initialising planner bot')
 
 const stateManager = createStateManager()
-
-// LLM用のコンテキスト（会話履歴、前回のコマンド結果など）
-const llmContext = {
-  chatHistory: [], // 直近50件の会話履歴
-  lastCommandResult: null // 前回のコマンド結果
-}
-
-// GOAP実行制御用のAbortController
-let currentAbortController = null
 
 const bot = mineflayer.createBot({
   host: process.env.MC_HOST || 'localhost',
@@ -31,24 +20,6 @@ const bot = mineflayer.createBot({
 })
 
 bot.loadPlugin(pathfinder)
-
-// LLM API初期化
-const llmProvider = process.env.LLM_PROVIDER || 'gemini'
-const llmApiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || process.env.CLAUDE_API_KEY
-const llmModel = process.env.LLM_MODEL || 'gemini-2.5-flash'
-
-if (llmApiKey) {
-  llmClient.initialize(llmProvider, llmApiKey, llmModel)
-    .then(() => {
-      console.log(`[LLM] ${llmProvider} client initialized successfully`)
-    })
-    .catch((error) => {
-      console.error(`[LLM] Failed to initialize ${llmProvider} client:`, error.message)
-    })
-} else {
-  console.warn('[LLM] No API key found in environment variables. LLM features will be disabled.')
-  console.warn('[LLM] Set GEMINI_API_KEY, OPENAI_API_KEY, or CLAUDE_API_KEY in .env file.')
-}
 
 // チャットスパム対策: 最終送信時刻を記録
 bot.lastChatTime = 0
@@ -80,60 +51,16 @@ bot.on('chat', async (username, message) => {
   console.log(`[CHAT RECEIVED] ${username}: ${message}`)
   debugLog(`chat from ${username}: ${message}`)
 
-  // 会話履歴に追加（タイムスタンプ付き）
-  const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
-  const chatLine = `[${timestamp}] <${username}> ${message}`;
-  llmContext.chatHistory.push(chatLine);
-
-  // 直近50件に制限
-  if (llmContext.chatHistory.length > 50) {
-    llmContext.chatHistory.shift();
+  // コマンド以外は無視
+  if (!message.startsWith('!')) {
+    console.log(`[CHAT] Ignoring non-command message: "${message}"`)
+    return
   }
 
   try {
     // コマンド実行前に状態を更新
     await stateManager.refresh(bot)
-
-    const trimmedMessage = message.trim()
-
-    // メッセージが "!" で始まる場合は従来のコマンドハンドラ
-    if (trimmedMessage.startsWith('!')) {
-      // 従来のコマンドの場合も、現在実行中のGOAPをキャンセル
-      if (currentAbortController) {
-        console.log('[CANCEL] 新しいコマンド受信、現在のタスクをキャンセルします')
-        currentAbortController.abort()
-        currentAbortController = null
-      }
-      await handleChatCommand(bot, username, trimmedMessage, stateManager)
-    } else {
-      // 現在実行中のGOAPをキャンセル
-      if (currentAbortController) {
-        console.log('[CANCEL] 新しいメッセージ受信、現在のタスクをキャンセルします')
-        currentAbortController.abort()
-      }
-
-      // 新しいAbortControllerを作成
-      currentAbortController = new AbortController()
-      const signal = currentAbortController.signal
-
-      try {
-        // LLMハンドラにsignalを渡す
-        await handleUserMessage(bot, username, message, stateManager, llmContext, signal)
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          console.log('[CANCEL] タスクがキャンセルされました')
-          // デモ用: チャットメッセージは表示しない（ユーザーが割り込んだだけなので正常）
-          // await bot.chatWithDelay('タスクをキャンセルして、新しいリクエストを処理します')
-        } else {
-          throw error
-        }
-      } finally {
-        // 正常終了またはエラー終了時、AbortControllerをクリア
-        if (currentAbortController && currentAbortController.signal === signal) {
-          currentAbortController = null
-        }
-      }
-    }
+    await handleChatCommand(bot, username, message, stateManager)
   } catch (error) {
     console.error('command execution error', error)
     await bot.chatWithDelay(`Error: ${error.message}`)
