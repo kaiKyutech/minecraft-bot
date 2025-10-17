@@ -183,6 +183,13 @@ async function handleUserMessage(bot, username, message, stateManager, context, 
 
         // チャットに表示
         await bot.chatWithDelay(context.lastCommandResult);
+
+        // 診断メッセージがあれば会話履歴に追加
+        if (error.diagnosisMessages && Array.isArray(error.diagnosisMessages)) {
+          for (const diagMsg of error.diagnosisMessages) {
+            context.chatHistory.push(`[${timestamp}] <System> ${diagMsg}`);
+          }
+        }
       }
 
       // システムメッセージを会話履歴に追加
@@ -216,19 +223,36 @@ async function handleUserMessage(bot, username, message, stateManager, context, 
 }
 
 /**
- * コマンドを変換（将来実装）
- * @param {string} command - LLMからのコマンド（例: "iron_ingot:1"）
- * @returns {string} GOAPコマンド（例: "inventory.iron_ingot:1"）
+ * コマンドを変換
+ * @param {string} command - LLMからのコマンド（例: "inventory.iron_ingot:1", "equipment.diamond_helmet:true"）
+ * @returns {string} GOAPコマンド（例: "inventory.iron_ingot:1", "equipment.diamond_helmet:true"）
  */
 function convertToGoalCommand(command) {
-  // 正規表現: アイテム名:個数
-  const match = command.match(/^(\w+):(\d+)$/);
-  if (!match) {
-    throw new Error(`Invalid command format: ${command}`);
+  // 新形式（推奨）: inventory.xxx:数値 または equipment.xxx:true
+  if (command.match(/^inventory\.\w+:\d+$/)) {
+    return command;
+  }
+  if (command.match(/^equipment\.\w+:true$/)) {
+    return command;
   }
 
-  const [, itemName, count] = match;
-  return `inventory.${itemName}:${count}`;
+  // 旧形式（後方互換性のため残す）: アイテム名:個数
+  const itemMatch = command.match(/^(\w+):(\d+)$/);
+  if (itemMatch) {
+    const [, itemName, count] = itemMatch;
+    console.log(`[LLM_HANDLER] Converting legacy format: ${command} → inventory.${itemName}:${count}`);
+    return `inventory.${itemName}:${count}`;
+  }
+
+  // 旧形式（後方互換性のため残す）: equip:アイテム名
+  const equipMatch = command.match(/^equip:(\w+)$/);
+  if (equipMatch) {
+    const [, itemName] = equipMatch;
+    console.log(`[LLM_HANDLER] Converting legacy format: ${command} → equipment.${itemName}:true`);
+    return `equipment.${itemName}:true`;
+  }
+
+  throw new Error(`Invalid command format: ${command}`);
 }
 
 module.exports = {

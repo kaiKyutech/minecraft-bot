@@ -31,10 +31,11 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
 
     // 詳細なエラーメッセージを構築
     let errorMessage = '目標を実行できません。'
+    let diagnosisMessages = []
 
     // 診断情報をチャットに表示
     if (diagnosis) {
-      await sendDiagnosisToChat(bot, diagnosis)
+      diagnosisMessages = await sendDiagnosisToChat(bot, diagnosis)
       // コンソールには詳細ログ
       logDiagnosisDetails(diagnosis)
 
@@ -63,8 +64,10 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
       }
     }
 
-    // 例外を投げて失敗を通知
-    throw new Error(errorMessage)
+    // エラーオブジェクトに診断メッセージを添付
+    const error = new Error(errorMessage)
+    error.diagnosisMessages = diagnosisMessages
+    throw error
   }
 
   logPlanDetails(goalName, plan)
@@ -76,28 +79,92 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
  * 診断情報をチャットに送信（LLM向け）
  * @param {Object} bot - Mineflayerボット
  * @param {Object} diagnosis - 診断結果
+ * @returns {Array<string>} 送信したメッセージのリスト（会話履歴追加用）
  */
 async function sendDiagnosisToChat(bot, diagnosis) {
+  const messages = []
+
   if (diagnosis.error) {
-    await bot.chatWithDelay(`エラー: ${diagnosis.error}`)
-    return
+    const msg = `エラー: ${diagnosis.error}`
+    await bot.chatWithDelay(msg)
+    messages.push(msg)
+    return messages
   }
 
   if (!diagnosis.missingRequirements || diagnosis.missingRequirements.length === 0) {
-    return
+    return messages
   }
 
-  await bot.chatWithDelay('=== 不足している要件 ===')
+  const header = '=== 不足している要件 ==='
+  await bot.chatWithDelay(header)
+  messages.push(header)
 
   // 不足している要件を簡潔に表示
   for (const req of diagnosis.missingRequirements) {
     const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
     const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
-    await bot.chatWithDelay(`${req.key}: 現在=${current}, 必要=${target}`)
+    const msg = `${req.key}: 現在=${current}, 必要=${target}`
+    await bot.chatWithDelay(msg)
+    messages.push(msg)
   }
 
-  await bot.chatWithDelay('---')
-  await bot.chatWithDelay('GOAP実行不可: 素材が近くにないか道具が不足しています')
+  const separator = '---'
+  await bot.chatWithDelay(separator)
+  messages.push(separator)
+
+  // 前提条件の詳細を追加
+  if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
+    const precondHeader = '=== 満たされていない前提条件 ==='
+    await bot.chatWithDelay(precondHeader)
+    messages.push(precondHeader)
+
+    // 目標ごとにグループ化して最も低コストのオプションを表示
+    const groupedByTarget = {}
+    for (const suggestion of diagnosis.suggestions) {
+      if (!groupedByTarget[suggestion.target]) {
+        groupedByTarget[suggestion.target] = []
+      }
+      groupedByTarget[suggestion.target].push(suggestion)
+    }
+
+    for (const [target, suggestions] of Object.entries(groupedByTarget)) {
+      // 最も低コストで前提条件が最も少ないものを選択
+      const bestSuggestion = suggestions
+        .filter(s => s.preconditions && s.preconditions.length > 0)
+        .sort((a, b) => (a.cost || 999) - (b.cost || 999))[0]
+
+      if (bestSuggestion && bestSuggestion.preconditions) {
+        const actionMsg = `${target} を作成するには:`
+        await bot.chatWithDelay(actionMsg)
+        messages.push(actionMsg)
+
+        // 満たされていない前提条件のみ表示
+        const unsatisfied = bestSuggestion.preconditions.filter(p => !p.satisfied)
+        if (unsatisfied.length > 0) {
+          for (const precond of unsatisfied) {
+            const formatValue = (val) => typeof val === 'boolean' ? (val ? 'true' : 'false') : val
+            const msg = `  - ${precond.key}: 現在=${formatValue(precond.current)}, 必要=${precond.required}`
+            await bot.chatWithDelay(msg)
+            messages.push(msg)
+          }
+        } else {
+          const msg = `  (全ての前提条件を満たしていますが、ルートが見つかりませんでした)`
+          await bot.chatWithDelay(msg)
+          messages.push(msg)
+        }
+      }
+    }
+
+    const separator2 = '---'
+    await bot.chatWithDelay(separator2)
+    messages.push(separator2)
+  }
+
+  const summary = 'GOAP実行不可: 上記の材料や道具を先に入手してください'
+  await bot.chatWithDelay(summary)
+  messages.push(summary)
+
+  return messages
 }
 
 /**

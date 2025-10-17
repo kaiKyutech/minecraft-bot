@@ -1,7 +1,128 @@
-# 装備システム設計案
+# 装備システム設計・実装記録
 
-**日付**: 2025-10-16
-**目的**: 装備・武器・アイテム表示機能の設計
+**設計日**: 2025-10-16
+**実装日**: 2025-10-17
+**目的**: 装備・武器・アイテム表示機能の設計と実装
+**ステータス**: ✅ 実装完了
+
+---
+
+## 実装概要
+
+**実装したもの**:
+- 動的装備状態追跡（`equipment` オブジェクト）
+- 個別装備アクション（27種類）
+- 装備スキル（`equip_armor`, `equip_mainhand`）
+- LLMプロンプト対応（`equip:` コマンド）
+
+**実装方針**:
+- ドット記法による動的追跡（`equipment.diamond_helmet`）
+- 個別装備アクション（防具・武器・ツール別）
+- 装備セットは将来実装（現時点では個別のみ）
+
+---
+
+## 実装詳細
+
+### 1. 状態スキーマ（state_schema.yaml）
+
+```yaml
+equipment_states:
+  equipment:
+    type: object
+    default: {}
+    description: "装備中のアイテムを自動追跡（例: {diamond_helmet: true, iron_sword: true}）"
+    dynamic: true
+    source: "bot.inventory.slots[5-8] + bot.heldItem"
+```
+
+**特徴**:
+- `inventory` と同じパターンで動的追跡
+- `equipment.diamond_helmet: true` 形式でアクセス
+- 手動定義不要（全アイテムを自動追跡）
+
+### 2. 状態抽出（state_manager.js）
+
+```javascript
+extractEquipment(bot) {
+  const equipment = {
+    helmet: 'none',
+    chestplate: 'none',
+    leggings: 'none',
+    boots: 'none',
+    mainhand: 'none',
+    offhand: 'none'
+  }
+
+  const slots = bot.inventory?.slots || []
+  if (slots[5]) equipment.helmet = slots[5].name
+  if (slots[6]) equipment.chestplate = slots[6].name
+  if (slots[7]) equipment.leggings = slots[7].name
+  if (slots[8]) equipment.boots = slots[8].name
+  if (slots[45]) equipment.offhand = slots[45].name
+
+  const heldItem = bot.heldItem
+  if (heldItem) {
+    equipment.mainhand = heldItem.name
+  }
+
+  return equipment
+}
+```
+
+### 3. 装備アクション（equipment_actions.yaml）
+
+**27個のアクション**:
+- ダイヤモンド防具: 4種（helmet, chestplate, leggings, boots）
+- 鉄防具: 4種
+- 革防具: 4種
+- ダイヤモンドツール: 5種（sword, pickaxe, axe, shovel, hoe）
+- 鉄ツール: 5種
+- 石ツール: 5種
+
+**アクション例**:
+```yaml
+- name: equip_diamond_helmet
+  description: "ダイヤのヘルメットを装備する"
+  preconditions:
+    inventory.diamond_helmet: ">= 1"
+  effects:
+    equipment.diamond_helmet: true
+  cost: 1
+  skill: equip_armor
+  params:
+    slot: "helmet"
+    item: "diamond_helmet"
+```
+
+### 4. LLMコマンド対応（llm_handler.js）
+
+**変換例**:
+```javascript
+convertToGoalCommand("equip:diamond_helmet")
+// → "equipment.diamond_helmet:true"
+
+convertToGoalCommand("iron_sword:1")
+// → "inventory.iron_sword:1"
+```
+
+### 5. プロンプト（prompt_builder.js）
+
+**LLMに提供される説明**:
+```
+### 装備システム
+
+**フォーマット**: equip:アイテム名
+
+**例**:
+- equip:diamond_helmet → ダイヤのヘルメットを装備
+- equip:iron_chestplate → 鉄の胸当てを装備
+- equip:diamond_sword → ダイヤの剣を手に持つ
+
+**制約**:
+- 装備するアイテムは事前にインベントリに持っている必要があります
+- 例: diamond_helmet:1 → equip:diamond_helmet の順で実行
+```
 
 ---
 
@@ -415,3 +536,142 @@ has_full_iron_armor: true
 - ✅ アクション数を30個程度追加しても大丈夫
 
 **次のステップ**: Phase 1（状態のみ）から始めて、必要に応じてアクションを追加する。
+
+---
+
+## 実装完了記録
+
+### 実装したフェーズ
+
+✅ **Phase 1**: 装備状態の追跡（完了）
+- `equipment` オブジェクトによる動的追跡
+- `state_manager.js` による装備情報抽出
+- `state_builder.js` による GOAP 状態構築
+
+✅ **Phase 2（一部）**: 個別装備アクション（完了）
+- 27個の装備アクション定義
+- `equip_armor.js` スキル（防具装備）
+- `equip_mainhand.js` スキル（武器・ツール装備）
+- GOAP ドメインへの統合
+
+✅ **Phase 3（一部）**: LLMコマンド対応（完了）
+- `equip:` プレフィックスのサポート
+- LLMプロンプトへの説明追加
+- `convertToGoalCommand()` 関数の拡張
+
+### 未実装（将来の拡張）
+
+❌ **装備セットアクション**:
+- `equip_full_diamond_armor` などのセット装備
+- 複合状態 `has_full_diamond_armor` の活用
+- スキル `equip_armor_set` の実装
+
+❌ **アイテム表示機能**:
+- `show_item` スキル
+- `is_showing_item` 状態
+
+### テスト方法
+
+**手動テスト**:
+```bash
+# Minecraftサーバーに接続
+node planner_bot/index.js
+
+# チャットコマンドでテスト
+!goal equipment.diamond_helmet:true
+# または LLMモード:
+ダイヤのヘルメットを装備して
+```
+
+**期待される動作**:
+1. `inventory.diamond_helmet >= 1` を確認
+2. `equip_armor` スキルを実行
+3. Mineflayerの `bot.equip(item, 'head')` を呼び出し
+4. 装備完了
+
+### バグ修正履歴
+
+**2025-10-17**: `equip_armor.js` のバグ修正
+- **問題**: `bot.equip(itemToEquip, 'head' + slot)` が "headhelmet" という不正な destination を生成
+- **修正**: destination mapping を使用して正しい Mineflayer API 呼び出しに修正
+- **影響**: 装備システムが正しく動作するようになった
+
+### 設計判断の記録
+
+**なぜ個別アクションを採用したか**:
+1. 柔軟性: LLMが自由に装備を選択できる
+2. 段階的実装: セットは後から追加可能
+3. フィルタ機能: 無関係なアクションは自動除外される
+
+**なぜドット記法を採用したか**:
+1. `inventory` との一貫性
+2. 手動定義不要（全アイテムを自動追跡）
+3. 拡張性（新しい装備を追加しても変更不要）
+
+**フィルタ機能の信頼性**:
+- 後方連鎖により、goal に寄与しないアクションは自動除外
+- 27個の装備アクションを追加しても探索空間は爆発しない
+- 実測値: `!goal inventory.diamond_pickaxe:1` では装備アクションは全て除外される
+
+---
+
+## 今後の改善案
+
+### 優先度: 高
+
+1. **装備状態の可視化**
+   - `!status` コマンドに装備情報を追加
+   - 現在装備中のアイテムを表示
+
+2. **装備セット機能**
+   - `equip_full_diamond_armor` アクション
+   - 一括装備でターン数削減
+
+### 優先度: 中
+
+3. **耐久値の追跡**
+   - ツールの耐久値を state に追加
+   - 壊れる前に新しいツールを作成
+
+4. **自動装備交換**
+   - より良い装備を入手したら自動で交換
+   - 例: 石の剣 → 鉄の剣 → ダイヤの剣
+
+### 優先度: 低
+
+5. **エンチャント対応**
+   - エンチャント済みアイテムの識別
+   - エンチャントテーブルの利用
+
+---
+
+## 参考情報
+
+### Mineflayer API
+
+**装備スロット**:
+```javascript
+bot.inventory.slots[5]  // helmet
+bot.inventory.slots[6]  // chestplate
+bot.inventory.slots[7]  // leggings
+bot.inventory.slots[8]  // boots
+bot.inventory.slots[45] // offhand
+bot.heldItem            // mainhand
+```
+
+**装備メソッド**:
+```javascript
+bot.equip(item, destination)
+// destination: "head", "torso", "legs", "feet", "hand", "off-hand"
+```
+
+### 関連ファイル
+
+- `planner_bot/config/state_schema.yaml` - 装備状態定義
+- `planner_bot/config/actions/equipment_actions.yaml` - 装備アクション定義
+- `planner_bot/src/planner/state_manager.js` - 装備情報抽出
+- `planner_bot/src/planner/state_builder.js` - 装備状態構築
+- `planner_bot/src/skills/equip_armor.js` - 防具装備スキル
+- `planner_bot/src/skills/equip_mainhand.js` - 武器装備スキル
+- `planner_bot/src/llm/prompt_builder.js` - LLMプロンプト
+- `planner_bot/src/llm/llm_handler.js` - コマンド変換
