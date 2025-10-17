@@ -1,8 +1,8 @@
 /**
  * !status コマンドのハンドラ
- * 現在の状況をLLMが理解しやすい形式でチャット欄に出力
+ * 現在の状況をウィスパーで出力
  */
-async function handleStatusCommand(bot, stateManager) {
+async function handleStatusCommand(bot, username, stateManager) {
   await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
   const { buildState } = require('../planner/state_builder')
@@ -97,13 +97,13 @@ async function handleStatusCommand(bot, stateManager) {
   messages.push('GOAP: 素材が近くにあるときに自動実行')
   messages.push('Creative: ナビゲーション（場所の登録・移動）')
 
-  // チャットに送信（スパム対策で自動的に間隔を空ける）
+  // ウィスパーで送信（ディレイ付き）
   for (const msg of messages) {
-    await bot.chatWithDelay(msg)
+    await bot.chatWithDelay(username, msg)
   }
 
   // コンソールには簡潔なログ
-  console.log('[STATUS] Status sent to chat')
+  console.log(`[STATUS] Status sent to ${username} via whisper`)
 }
 
 module.exports = handleStatusCommand

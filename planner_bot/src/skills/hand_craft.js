@@ -33,9 +33,6 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
 
     console.log(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
-    // クラフト完了をチャットに通知（デモ用）
-    await bot.chatWithDelay(`${itemName} を作成しました`)
-
   } catch (error) {
     throw new Error(`手クラフトに失敗しました: ${error.message}`)
   }

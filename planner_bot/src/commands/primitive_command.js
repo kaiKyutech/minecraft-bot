@@ -3,14 +3,15 @@ const primitives = require('../primitives')
 /**
  * !primitive コマンドのハンドラ
  * @param {Object} bot - Mineflayerボット
+ * @param {string} username - コマンド送信者のユーザー名
  * @param {string} message - チャットメッセージ全体
  * @param {Object} stateManager - 状態マネージャー
  */
-async function handlePrimitiveCommand(bot, message, stateManager) {
+async function handlePrimitiveCommand(bot, username, message, stateManager) {
   const body = message.replace(/^!primitive\s*/, '').trim()
 
   if (!body) {
-    bot.chat('プリミティブ名を指定してください')
+    await bot.chatWithDelay(username, 'プリミティブ名を指定してください')
     return
   }
 
@@ -21,7 +22,7 @@ async function handlePrimitiveCommand(bot, message, stateManager) {
   const primitiveFn = primitives[primitiveName]
 
   if (typeof primitiveFn !== 'function') {
-    bot.chat(`未知のプリミティブです: ${nameToken}`)
+    await bot.chatWithDelay(username, `未知のプリミティブです: ${nameToken}`)
     return
   }
 
@@ -30,14 +31,14 @@ async function handlePrimitiveCommand(bot, message, stateManager) {
     try {
       params = JSON.parse(paramString)
     } catch (error) {
-      bot.chat('パラメータはJSON形式で指定してください')
+      await bot.chatWithDelay(username, 'パラメータはJSON形式で指定してください')
       return
     }
   }
 
   await primitiveFn(bot, params)
   await stateManager.refresh(bot)
-  bot.chat('完了しました')
+  await bot.chatWithDelay(username, '完了しました')
 }
 
 /**

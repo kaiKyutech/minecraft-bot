@@ -11,10 +11,11 @@ const navigation = require('../creative_actions/navigation')
  *   !creative nav list
  *
  * @param {Object} bot - Mineflayerボット
+ * @param {string} username - コマンド送信者のユーザー名
  * @param {string} commandStr - コマンド文字列（例: "nav register {...}"）
  * @param {Object} stateManager - 状態マネージャー
  */
-async function handleCreativeCommand(bot, commandStr, stateManager) {
+async function handleCreativeCommand(bot, username, commandStr, stateManager) {
   const parts = commandStr.trim().split(' ')
 
   if (parts.length < 2) {
@@ -55,9 +56,9 @@ async function handleCreativeCommand(bot, commandStr, stateManager) {
     )
   }
 
-  // 成功メッセージをチャットに送信
+  // 成功メッセージをウィスパーで送信（ディレイ付き）
   if (result.success) {
-    await bot.chatWithDelay(result.message)
+    await bot.chatWithDelay(username, result.message)
   }
 
   return result

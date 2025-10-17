@@ -3,14 +3,15 @@ const skills = require('../skills')
 /**
  * !skill コマンドのハンドラ
  * @param {Object} bot - Mineflayerボット
+ * @param {string} username - コマンド送信者のユーザー名
  * @param {string} message - チャットメッセージ全体
  * @param {Object} stateManager - 状態マネージャー
  */
-async function handleSkillCommand(bot, message, stateManager) {
+async function handleSkillCommand(bot, username, message, stateManager) {
   const body = message.replace(/^!skill\s*/, '').trim()
 
   if (!body) {
-    bot.chat('スキル名を指定してください')
+    await bot.chatWithDelay(username, 'スキル名を指定してください')
     return
   }
 
@@ -19,7 +20,7 @@ async function handleSkillCommand(bot, message, stateManager) {
 
   const skillFn = skills[nameToken]
   if (typeof skillFn !== 'function') {
-    bot.chat(`未知のスキルです: ${nameToken}`)
+    await bot.chatWithDelay(username, `未知のスキルです: ${nameToken}`)
     return
   }
 
@@ -28,14 +29,14 @@ async function handleSkillCommand(bot, message, stateManager) {
     try {
       params = JSON.parse(paramString)
     } catch (error) {
-      bot.chat('パラメータはJSON形式で指定してください')
+      await bot.chatWithDelay(username, 'パラメータはJSON形式で指定してください')
       return
     }
   }
 
   await skillFn(bot, params, stateManager)
   await stateManager.refresh(bot)
-  bot.chat('スキルが完了しました')
+  await bot.chatWithDelay(username, 'スキルが完了しました')
 }
 
 module.exports = handleSkillCommand

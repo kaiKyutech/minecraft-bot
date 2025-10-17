@@ -21,22 +21,22 @@ const bot = mineflayer.createBot({
 
 bot.loadPlugin(pathfinder)
 
-// チャットスパム対策: 最終送信時刻を記録
-bot.lastChatTime = 0
-bot.chatWithDelay = async (message) => {
-  const MIN_CHAT_INTERVAL = 550 // 0.55秒（余裕を持たせる）
+// ウィスパースパム対策: 最終送信時刻を記録
+bot.lastWhisperTime = 0
+bot.chatWithDelay = async (username, message) => {
+  const MIN_WHISPER_INTERVAL = 550 // 0.55秒（余裕を持たせる）
   const now = Date.now()
-  const timeSinceLastChat = now - bot.lastChatTime
+  const timeSinceLastWhisper = now - bot.lastWhisperTime
 
-  if (timeSinceLastChat < MIN_CHAT_INTERVAL) {
-    const waitTime = MIN_CHAT_INTERVAL - timeSinceLastChat
-    console.log(`[CHAT] Waiting ${waitTime}ms before sending: "${message}"`)
+  if (timeSinceLastWhisper < MIN_WHISPER_INTERVAL) {
+    const waitTime = MIN_WHISPER_INTERVAL - timeSinceLastWhisper
+    console.log(`[WHISPER] Waiting ${waitTime}ms before sending to ${username}: "${message}"`)
     await new Promise(resolve => setTimeout(resolve, waitTime))
   }
 
-  console.log(`[CHAT] Sending: "${message}"`)
-  bot.chat(message)
-  bot.lastChatTime = Date.now()
+  console.log(`[WHISPER] Sending to ${username}: "${message}"`)
+  bot.whisper(username, message)
+  bot.lastWhisperTime = Date.now()
 }
 
 bot.once('spawn', () => {
@@ -45,15 +45,16 @@ bot.once('spawn', () => {
   mineflayerViewer(bot, { port: 3007, firstPerson: true })
 })
 
-bot.on('chat', async (username, message) => {
+// ウィスパー（/msg）でのみコマンドを受け付ける
+bot.on('whisper', async (username, message) => {
   if (username === bot.username) return
 
-  console.log(`[CHAT RECEIVED] ${username}: ${message}`)
-  debugLog(`chat from ${username}: ${message}`)
+  console.log(`[WHISPER RECEIVED] ${username}: ${message}`)
+  debugLog(`whisper from ${username}: ${message}`)
 
   // コマンド以外は無視
   if (!message.startsWith('!')) {
-    console.log(`[CHAT] Ignoring non-command message: "${message}"`)
+    console.log(`[WHISPER] Ignoring non-command message: "${message}"`)
     return
   }
 
@@ -63,8 +64,13 @@ bot.on('chat', async (username, message) => {
     await handleChatCommand(bot, username, message, stateManager)
   } catch (error) {
     console.error('command execution error', error)
-    await bot.chatWithDelay(`Error: ${error.message}`)
+    await bot.chatWithDelay(username, `Error: ${error.message}`)
   }
+})
+
+// 公開チャットは完全に無視
+bot.on('chat', (username, message) => {
+  debugLog(`public chat ignored: ${username}: ${message}`)
 })
 
 bot.on('error', (err) => {

@@ -8,29 +8,29 @@ async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
 
   if (trimmed === '!status') {
-    await handleStatusCommand(bot, stateManager)
+    await handleStatusCommand(bot, username, stateManager)
     return
   }
 
   if (/^!primitive(\s|$)/.test(trimmed)) {
-    await handlePrimitiveCommand(bot, trimmed, stateManager)
+    await handlePrimitiveCommand(bot, username, trimmed, stateManager)
     return
   }
 
   if (/^!skill(\s|$)/.test(trimmed)) {
-    await handleSkillCommand(bot, trimmed, stateManager)
+    await handleSkillCommand(bot, username, trimmed, stateManager)
     return
   }
 
   if (trimmed.startsWith('!goal ')) {
     const goalName = trimmed.replace('!goal ', '').trim()
-    await handleGoalCommand(bot, goalName, stateManager)
+    await handleGoalCommand(bot, username, goalName, stateManager)
     return
   }
 
   if (trimmed.startsWith('!creative ')) {
     const commandStr = trimmed.replace('!creative ', '').trim()
-    await handleCreativeCommand(bot, commandStr, stateManager)
+    await handleCreativeCommand(bot, username, commandStr, stateManager)
     return
   }
 }

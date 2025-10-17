@@ -28,9 +28,6 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
 
     console.log(`[EQUIP_MAINHAND] ${item} を手に持ちました`)
 
-    // デモ用: チャットに通知
-    await bot.chatWithDelay(`${item} を手に持ちました`)
-
   } catch (error) {
     throw new Error(`アイテムを手に持つのに失敗しました: ${error.message}`)
   }

@@ -42,9 +42,6 @@ module.exports = async function equipArmor(bot, params = {}, stateManager) {
 
     console.log(`[EQUIP_ARMOR] ${item} の装備が完了しました`)
 
-    // デモ用: チャットに通知
-    await bot.chatWithDelay(`${item} を装備しました`)
-
   } catch (error) {
     throw new Error(`装備に失敗しました: ${error.message}`)
   }

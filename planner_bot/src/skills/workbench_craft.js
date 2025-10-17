@@ -42,9 +42,6 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
 
     console.log(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
-    // クラフト完了をチャットに通知（デモ用）
-    await bot.chatWithDelay(`${itemName} を作成しました`)
-
   } catch (error) {
     throw new Error(`作業台クラフトに失敗しました: ${error.message}`)
   }

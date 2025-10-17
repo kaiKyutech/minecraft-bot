@@ -4,11 +4,12 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
 /**
  * !goal コマンドのハンドラ
  * @param {Object} bot - Mineflayerボット
+ * @param {string} username - コマンド送信者のユーザー名
  * @param {string} goalName - 目標名
  * @param {Object} stateManager - 状態マネージャー
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
-async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
+async function handleGoalCommand(bot, username, goalName, stateManager, signal = null) {
   const worldState = await stateManager.getState(bot)
   const result = await goapPlanner.plan(goalName, worldState)
 
@@ -27,7 +28,7 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
   }
 
   if (!plan || !Array.isArray(plan)) {
-    await bot.chatWithDelay('目標を実行できません')
+    await bot.chatWithDelay(username, '目標を実行できません')
 
     // 詳細なエラーメッセージを構築
     let errorMessage = '目標を実行できません。'
@@ -35,7 +36,7 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
 
     // 診断情報をチャットに表示
     if (diagnosis) {
-      diagnosisMessages = await sendDiagnosisToChat(bot, diagnosis)
+      diagnosisMessages = await sendDiagnosisToChat(bot, username, diagnosis)
       // コンソールには詳細ログ
       logDiagnosisDetails(diagnosis)
 
@@ -73,20 +74,24 @@ async function handleGoalCommand(bot, goalName, stateManager, signal = null) {
   logPlanDetails(goalName, plan)
   // signalをexecutorに渡す
   await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
+
+  // 成功通知
+  await bot.chatWithDelay(username, `目標「${goalName}」を完了しました`)
 }
 
 /**
- * 診断情報をチャットに送信（LLM向け）
+ * 診断情報をウィスパーで送信
  * @param {Object} bot - Mineflayerボット
+ * @param {string} username - 送信先ユーザー名
  * @param {Object} diagnosis - 診断結果
- * @returns {Array<string>} 送信したメッセージのリスト（会話履歴追加用）
+ * @returns {Array<string>} 送信したメッセージのリスト
  */
-async function sendDiagnosisToChat(bot, diagnosis) {
+async function sendDiagnosisToChat(bot, username, diagnosis) {
   const messages = []
 
   if (diagnosis.error) {
     const msg = `エラー: ${diagnosis.error}`
-    await bot.chatWithDelay(msg)
+    await bot.chatWithDelay(username, msg)
     messages.push(msg)
     return messages
   }
@@ -96,7 +101,7 @@ async function sendDiagnosisToChat(bot, diagnosis) {
   }
 
   const header = '=== 不足している要件 ==='
-  await bot.chatWithDelay(header)
+  await bot.chatWithDelay(username, header)
   messages.push(header)
 
   // 不足している要件を簡潔に表示
@@ -104,18 +109,18 @@ async function sendDiagnosisToChat(bot, diagnosis) {
     const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
     const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
     const msg = `${req.key}: 現在=${current}, 必要=${target}`
-    await bot.chatWithDelay(msg)
+    await bot.chatWithDelay(username, msg)
     messages.push(msg)
   }
 
   const separator = '---'
-  await bot.chatWithDelay(separator)
+  await bot.chatWithDelay(username, separator)
   messages.push(separator)
 
   // 前提条件の詳細を追加
   if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
     const precondHeader = '=== 満たされていない前提条件 ==='
-    await bot.chatWithDelay(precondHeader)
+    await bot.chatWithDelay(username, precondHeader)
     messages.push(precondHeader)
 
     // 目標ごとにグループ化して最も低コストのオプションを表示
@@ -135,7 +140,7 @@ async function sendDiagnosisToChat(bot, diagnosis) {
 
       if (bestSuggestion && bestSuggestion.preconditions) {
         const actionMsg = `${target} を作成するには:`
-        await bot.chatWithDelay(actionMsg)
+        await bot.chatWithDelay(username, actionMsg)
         messages.push(actionMsg)
 
         // 満たされていない前提条件のみ表示
@@ -144,24 +149,24 @@ async function sendDiagnosisToChat(bot, diagnosis) {
           for (const precond of unsatisfied) {
             const formatValue = (val) => typeof val === 'boolean' ? (val ? 'true' : 'false') : val
             const msg = `  - ${precond.key}: 現在=${formatValue(precond.current)}, 必要=${precond.required}`
-            await bot.chatWithDelay(msg)
+            await bot.chatWithDelay(username, msg)
             messages.push(msg)
           }
         } else {
           const msg = `  (全ての前提条件を満たしていますが、ルートが見つかりませんでした)`
-          await bot.chatWithDelay(msg)
+          await bot.chatWithDelay(username, msg)
           messages.push(msg)
         }
       }
     }
 
     const separator2 = '---'
-    await bot.chatWithDelay(separator2)
+    await bot.chatWithDelay(username, separator2)
     messages.push(separator2)
   }
 
   const summary = 'GOAP実行不可: 上記の材料や道具を先に入手してください'
-  await bot.chatWithDelay(summary)
+  await bot.chatWithDelay(username, summary)
   messages.push(summary)
 
   return messages
