@@ -19,7 +19,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
   if (!plan || !Array.isArray(plan)) {
     bot.systemLog('目標を実行できません')
-    bot.addMessage(username, bot.username, '目標を実行できません', 'system_info')
+    bot.addMessage(bot.username, '目標を実行できません', 'system_info')
 
     // 詳細なエラーメッセージを構築
     let errorMessage = '目標を実行できません。'
@@ -68,7 +68,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const startMessage = `目標「${goalName}」を開始します`
   bot.systemLog(startMessage)
   // await bot.speak(username, startMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(username, bot.username, startMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, startMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
 
   // signalをexecutorに渡す
   await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
@@ -77,7 +77,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const completeMessage = `目標「${goalName}」を完了しました`
   bot.systemLog(completeMessage)
   // await bot.speak(username, completeMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(username, bot.username, completeMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, completeMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
 }
 
 /**
@@ -94,7 +94,7 @@ async function sendDiagnosisToChat(bot, username, diagnosis) {
     lines.push(`エラー: ${diagnosis.error}`)
     const fullMessage = lines.join('\n')
     bot.systemLog(fullMessage)
-    bot.addMessage(username, bot.username, fullMessage, 'system_info')
+    bot.addMessage(bot.username, fullMessage, 'system_info')
     return [fullMessage]
   }
 
@@ -156,7 +156,7 @@ async function sendDiagnosisToChat(bot, username, diagnosis) {
   // 1つのメッセージにまとめてコンソールと会話履歴に追加
   const fullMessage = lines.join('\n')
   bot.systemLog(fullMessage)
-  bot.addMessage(username, bot.username, fullMessage, 'system_info')
+  bot.addMessage(bot.username, fullMessage, 'system_info')
 
   return [fullMessage]
 }

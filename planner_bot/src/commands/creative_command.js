@@ -76,7 +76,7 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
   if (result.success) {
     bot.systemLog(result.message)
     // await bot.speak(username, result.message)  // LLMプロジェクトで使用時にアンコメント
-    // bot.addMessage(username, bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+    // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
   }
 
   return result

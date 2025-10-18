@@ -97,10 +97,9 @@ async function handleStatusCommand(bot, username, stateManager) {
   messages.push('GOAP: 素材が近くにあるときに自動実行')
   messages.push('Creative: ナビゲーション（場所の登録・移動）')
 
-  // 1つのメッセージにまとめてコンソールと会話履歴に追加
+  // 1つのメッセージにまとめてコンソール出力のみ
   const fullMessage = messages.join('\n')
   bot.systemLog(fullMessage)
-  bot.addMessage(username, bot.username, fullMessage, 'system_info')
 
   bot.systemLog(`Status sent to ${username}`)
 }

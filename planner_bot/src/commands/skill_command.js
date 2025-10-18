@@ -13,7 +13,7 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   if (!body) {
     const errorMsg = 'スキル名を指定してください'
     bot.systemLog(errorMsg)
-    bot.addMessage(username, bot.username, errorMsg, 'system_info')
+    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -24,7 +24,7 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   if (typeof skillFn !== 'function') {
     const errorMsg = `未知のスキルです: ${nameToken}`
     bot.systemLog(errorMsg)
-    bot.addMessage(username, bot.username, errorMsg, 'system_info')
+    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -35,7 +35,7 @@ async function handleSkillCommand(bot, username, message, stateManager) {
     } catch (error) {
       const errorMsg = 'パラメータはJSON形式で指定してください'
       bot.systemLog(errorMsg)
-      bot.addMessage(username, bot.username, errorMsg, 'system_info')
+      bot.addMessage(bot.username, errorMsg, 'system_info')
       return
     }
   }
@@ -47,7 +47,7 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   const completeMsg = 'スキルが完了しました'
   bot.systemLog(completeMsg)
   // await bot.speak(username, completeMsg)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(username, bot.username, completeMsg, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, completeMsg, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
 }
 
 module.exports = handleSkillCommand

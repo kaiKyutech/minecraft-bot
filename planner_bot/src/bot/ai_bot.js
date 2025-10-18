@@ -22,8 +22,8 @@ function debugLog(message) {
  * @param {Object} bot - Mineflayerボット
  */
 function addLoggingSystem(bot) {
-  // 会話履歴を管理（username -> messages[]）
-  bot.conversationHistory = new Map()
+  // 会話履歴を管理（全員の発言を時系列に保存）
+  bot.conversationHistory = []
 
   /**
    * 1. システムログ（コンソール出力専用）
@@ -45,45 +45,64 @@ function addLoggingSystem(bot) {
 
   /**
    * 3. 会話履歴への追加（唯一の履歴追加ポイント）
-   * @param {string} username - 会話相手のユーザー名
    * @param {string} speaker - 発言者の実名（Bot1, Bot2, player など）
    * @param {string} content - メッセージ内容
    * @param {string} type - メッセージタイプ（'natural_language', 'bot_response', 'system_info' など）
    */
-  bot.addMessage = (username, speaker, content, type) => {
-    if (!bot.conversationHistory.has(username)) {
-      bot.conversationHistory.set(username, [])
-    }
-
+  bot.addMessage = (speaker, content, type) => {
     // role: このボット視点での役割
     // - assistant: 自分（bot.username）の発言
     // - user: それ以外の発言
     const role = speaker === bot.username ? 'assistant' : 'user'
 
-    const history = bot.conversationHistory.get(username)
-    history.push({
+    const messageObj = {
       speaker,     // 発言者の実名（Bot1, Bot2, player など）
-      role,        // このボット視点での役割（assistant=自分, user=それ以外）
+      role,        // このボット視点での役割（assistant=self, user=others）
       content,     // メッセージ内容
       type,        // 'natural_language' | 'bot_response' | 'system_info' など
       timestamp: Date.now()
-    })
+    }
 
-    // 会話履歴の上限管理（ユーザーごとに100メッセージまで）
-    const MAX_HISTORY_PER_USER = 100
-    if (history.length > MAX_HISTORY_PER_USER) {
+    bot.conversationHistory.push(messageObj)
+
+    // 履歴追加をコンソールに出力（生データ）
+    console.log(`[${bot.username}] [HISTORY_ADD] ${JSON.stringify(messageObj)}`)
+
+    // 会話履歴の上限管理（全体で100メッセージまで）
+    const MAX_HISTORY = 100
+    if (bot.conversationHistory.length > MAX_HISTORY) {
       // 古いメッセージから削除（FIFOキュー）
-      history.shift()
+      bot.conversationHistory.shift()
     }
   }
 
   /**
-   * 会話履歴を取得
-   * @param {string} username - ユーザー名
+   * 会話履歴を取得（オプションでフィルタリング可能）
+   * @param {Object} options - フィルタオプション
+   * @param {string} options.username - 特定ユーザーの発言のみ取得
+   * @param {Array<string>} options.usernames - 複数ユーザーの発言のみ取得
+   * @param {string} options.type - 特定タイプのメッセージのみ取得
    * @returns {Array} 会話履歴
    */
-  bot.getConversationHistory = (username) => {
-    return bot.conversationHistory.get(username) || []
+  bot.getConversationHistory = (options = {}) => {
+    let history = bot.conversationHistory
+
+    // username指定があればフィルタ
+    if (options.username) {
+      history = history.filter(msg => msg.speaker === options.username)
+    }
+
+    // 複数username指定
+    if (options.usernames && Array.isArray(options.usernames)) {
+      history = history.filter(msg => options.usernames.includes(msg.speaker))
+    }
+
+    // type指定（natural_language, bot_response, system_infoなど）
+    if (options.type) {
+      history = history.filter(msg => msg.type === options.type)
+    }
+
+    return history
   }
 
   /**
@@ -152,7 +171,7 @@ function createAIBot(id, config, observerPool) {
     }
 
     // 自然言語メッセージ: 会話履歴に追加
-    bot.addMessage(username, username, message, 'natural_language')
+    bot.addMessage(username, message, 'natural_language')
     bot.systemLog(`Natural language message added to conversation history`)
   })
 
