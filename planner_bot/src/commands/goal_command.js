@@ -13,19 +13,9 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const worldState = await stateManager.getState(bot)
   const result = await goapPlanner.plan(goalName, worldState)
 
-  // 新しい戻り値形式に対応
-  // resultがオブジェクトでplanプロパティを持つ場合は新形式、配列の場合は旧形式（後方互換）
-  let plan = null
-  let diagnosis = null
-
-  if (result && typeof result === 'object' && 'plan' in result) {
-    // 新形式: { plan: [...], diagnosis: {...} }
-    plan = result.plan
-    diagnosis = result.diagnosis
-  } else if (Array.isArray(result)) {
-    // 旧形式（後方互換）: plan配列が直接返される
-    plan = result
-  }
+  // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
+  const plan = result.plan
+  const diagnosis = result.diagnosis
 
   if (!plan || !Array.isArray(plan)) {
     await bot.chatWithDelay(username, '目標を実行できません')
