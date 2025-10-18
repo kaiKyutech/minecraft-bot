@@ -18,7 +18,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const diagnosis = result.diagnosis
 
   if (!plan || !Array.isArray(plan)) {
-    await bot.chatWithDelay(username, '目標を実行できません')
+    bot.systemLog('目標を実行できません')
+    bot.addMessage(username, bot.username, '目標を実行できません', 'system_info')
 
     // 詳細なエラーメッセージを構築
     let errorMessage = '目標を実行できません。'
@@ -62,56 +63,60 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   }
 
   logPlanDetails(goalName, plan)
+
+  // 開始通知（LLMプロジェクトで使用する場合は bot.speak() も呼ぶ）
+  const startMessage = `目標「${goalName}」を開始します`
+  bot.systemLog(startMessage)
+  // await bot.speak(username, startMessage)  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(username, bot.username, startMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+
   // signalをexecutorに渡す
   await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
 
-  // 成功通知
-  await bot.chatWithDelay(username, `目標「${goalName}」を完了しました`)
+  // 成功通知（LLMプロジェクトで使用する場合は bot.speak() も呼ぶ）
+  const completeMessage = `目標「${goalName}」を完了しました`
+  bot.systemLog(completeMessage)
+  // await bot.speak(username, completeMessage)  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(username, bot.username, completeMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
 }
 
 /**
- * 診断情報をウィスパーで送信
+ * 診断情報をコンソールと会話履歴に追加（1つのメッセージにまとめる）
  * @param {Object} bot - Mineflayerボット
  * @param {string} username - 送信先ユーザー名
  * @param {Object} diagnosis - 診断結果
  * @returns {Array<string>} 送信したメッセージのリスト
  */
 async function sendDiagnosisToChat(bot, username, diagnosis) {
-  const messages = []
+  const lines = []
 
   if (diagnosis.error) {
-    const msg = `エラー: ${diagnosis.error}`
-    await bot.chatWithDelay(username, msg)
-    messages.push(msg)
-    return messages
+    lines.push(`エラー: ${diagnosis.error}`)
+    const fullMessage = lines.join('\n')
+    bot.systemLog(fullMessage)
+    bot.addMessage(username, bot.username, fullMessage, 'system_info')
+    return [fullMessage]
   }
 
   if (!diagnosis.missingRequirements || diagnosis.missingRequirements.length === 0) {
-    return messages
+    return []
   }
 
-  const header = '=== 不足している要件 ==='
-  await bot.chatWithDelay(username, header)
-  messages.push(header)
+  lines.push('=== GOAP診断: 目標を実行できません ===')
+  lines.push('')
 
   // 不足している要件を簡潔に表示
+  lines.push('【不足している要件】')
   for (const req of diagnosis.missingRequirements) {
     const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
     const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
-    const msg = `${req.key}: 現在=${current}, 必要=${target}`
-    await bot.chatWithDelay(username, msg)
-    messages.push(msg)
+    lines.push(`  ${req.key}: 現在=${current}, 必要=${target}`)
   }
-
-  const separator = '---'
-  await bot.chatWithDelay(username, separator)
-  messages.push(separator)
+  lines.push('')
 
   // 前提条件の詳細を追加
   if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
-    const precondHeader = '=== 満たされていない前提条件 ==='
-    await bot.chatWithDelay(username, precondHeader)
-    messages.push(precondHeader)
+    lines.push('【満たされていない前提条件】')
 
     // 目標ごとにグループ化して最も低コストのオプションを表示
     const groupedByTarget = {}
@@ -129,37 +134,31 @@ async function sendDiagnosisToChat(bot, username, diagnosis) {
         .sort((a, b) => (a.cost || 999) - (b.cost || 999))[0]
 
       if (bestSuggestion && bestSuggestion.preconditions) {
-        const actionMsg = `${target} を作成するには:`
-        await bot.chatWithDelay(username, actionMsg)
-        messages.push(actionMsg)
+        lines.push(`  ${target} を作成するには:`)
 
         // 満たされていない前提条件のみ表示
         const unsatisfied = bestSuggestion.preconditions.filter(p => !p.satisfied)
         if (unsatisfied.length > 0) {
           for (const precond of unsatisfied) {
             const formatValue = (val) => typeof val === 'boolean' ? (val ? 'true' : 'false') : val
-            const msg = `  - ${precond.key}: 現在=${formatValue(precond.current)}, 必要=${precond.required}`
-            await bot.chatWithDelay(username, msg)
-            messages.push(msg)
+            lines.push(`    - ${precond.key}: 現在=${formatValue(precond.current)}, 必要=${precond.required}`)
           }
         } else {
-          const msg = `  (全ての前提条件を満たしていますが、ルートが見つかりませんでした)`
-          await bot.chatWithDelay(username, msg)
-          messages.push(msg)
+          lines.push(`    (全ての前提条件を満たしていますが、ルートが見つかりませんでした)`)
         }
       }
     }
-
-    const separator2 = '---'
-    await bot.chatWithDelay(username, separator2)
-    messages.push(separator2)
+    lines.push('')
   }
 
-  const summary = 'GOAP実行不可: 上記の材料や道具を先に入手してください'
-  await bot.chatWithDelay(username, summary)
-  messages.push(summary)
+  lines.push('→ 上記の材料や道具を先に入手してください')
 
-  return messages
+  // 1つのメッセージにまとめてコンソールと会話履歴に追加
+  const fullMessage = lines.join('\n')
+  bot.systemLog(fullMessage)
+  bot.addMessage(username, bot.username, fullMessage, 'system_info')
+
+  return [fullMessage]
 }
 
 /**

@@ -97,13 +97,12 @@ async function handleStatusCommand(bot, username, stateManager) {
   messages.push('GOAP: 素材が近くにあるときに自動実行')
   messages.push('Creative: ナビゲーション（場所の登録・移動）')
 
-  // ウィスパーで送信（ディレイ付き）
-  for (const msg of messages) {
-    await bot.chatWithDelay(username, msg)
-  }
+  // 1つのメッセージにまとめてコンソールと会話履歴に追加
+  const fullMessage = messages.join('\n')
+  bot.systemLog(fullMessage)
+  bot.addMessage(username, bot.username, fullMessage, 'system_info')
 
-  // コンソールには簡潔なログ
-  console.log(`[STATUS] Status sent to ${username} via whisper`)
+  bot.systemLog(`Status sent to ${username}`)
 }
 
 module.exports = handleStatusCommand

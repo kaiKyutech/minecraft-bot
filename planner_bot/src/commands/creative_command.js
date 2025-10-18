@@ -39,7 +39,7 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     }
   }
 
-  console.log(`[CREATIVE] ${category}.${action}(${JSON.stringify(params)})`)
+  bot.systemLog(`Creative action: ${category}.${action}(${JSON.stringify(params)})`)
 
   let result
 
@@ -72,9 +72,11 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     )
   }
 
-  // 成功メッセージをウィスパーで送信（ディレイ付き）
+  // 成功メッセージを送信（LLMプロジェクトで使用する場合は bot.speak() も呼ぶ）
   if (result.success) {
-    await bot.chatWithDelay(username, result.message)
+    bot.systemLog(result.message)
+    // await bot.speak(username, result.message)  // LLMプロジェクトで使用時にアンコメント
+    // bot.addMessage(username, bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
   }
 
   return result
