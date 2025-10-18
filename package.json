@@ -16,6 +16,7 @@
     "mineflayer": "^4.33.0",
     "mineflayer-pathfinder": "github:Hatadi-v/mineflayer-pathfinder#patch-1",
     "prismarine-viewer": "github:kaiKyutech/prismarine-viewer",
+    "puppeteer": "^24.25.0",
     "yaml": "^2.8.1"
   }
 }
