@@ -301,17 +301,238 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
 
 GOAPで扱えない創造的な行動を実行します。
 
-**カテゴリ**:
-- `nav` (navigation) - ナビゲーション
-- `vis` (vision) - 視覚機能
+---
+
+#### Navigation (`nav`) - 場所の登録と移動
+
+##### `register` - 現在地を名前付きで登録
+
+**パラメータ**:
+- `name` (string, 必須): 場所の名前
+- `blockType` (string, 省略可): 特定ブロックの位置を登録（例: "crafting_table"）
 
 **使用例**:
 ```
 /w Bot1 !creative nav register {"name": "home"}
+/w Bot1 !creative nav register {"name": "workbench", "blockType": "crafting_table"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "場所「home」を登録しました",
+  location: { x: 100, y: 64, z: 200 }
+}
+```
+
+---
+
+##### `goto` - 登録済みの場所に移動
+
+**パラメータ**:
+- `name` (string, 必須): 移動先の場所名
+
+**使用例**:
+```
 /w Bot1 !creative nav goto {"name": "home"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "「home」に到着しました",
+  location: { x: 100, y: 64, z: 200 }
+}
+```
+
+**エラー**: 未登録の場所を指定すると、登録済みの場所一覧が表示されます
+
+---
+
+##### `gotoCoords` - 座標指定で移動
+
+**パラメータ**:
+- `x` (number, 必須): X座標
+- `y` (number, 必須): Y座標
+- `z` (number, 必須): Z座標
+
+**使用例**:
+```
 /w Bot1 !creative nav gotoCoords {"x": 250, "y": 64, "z": -100}
-/w Bot1 !creative nav list
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "(250, 64, -100)に到着しました",
+  location: { x: 250, y: 64, z: -100 }
+}
+```
+
+---
+
+##### `list` - 登録済み場所の一覧
+
+**パラメータ**: なし
+
+**使用例**:
+```
+/w Bot1 !creative nav list {}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "3個の場所が登録されています",
+  locations: {
+    "home": { x: 100, y: 64, z: 200 },
+    "mine": { x: 50, y: 12, z: -30 },
+    "workbench": { x: 102, y: 64, z: 198 }
+  }
+}
+```
+
+---
+
+#### Vision (`vis` / `vision`) - 視覚システム
+
+##### `capture` - 現在の視界のスクリーンショット
+
+**パラメータ**: なし（空オブジェクト `{}` を渡す）
+
+**使用例**:
+```
 /w Bot1 !creative vision capture {}
+/w Bot1 !creative vis capture {}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "スクリーンショットを取得しました",
+  data: {
+    success: true,
+    image: "data:image/png;base64,...",  // Base64画像データ
+    metadata: {
+      botId: "Bot1",
+      position: { x: 100, y: 64, z: 200 },
+      yaw: 0,
+      pitch: 0,
+      timestamp: 1234567890,
+      cameraId: 1
+    }
+  }
+}
+```
+
+**注意**: Observer Poolが初期化されている必要があります
+
+---
+
+##### `captureDirection` - 指定方向を向いてスクリーンショット
+
+**パラメータ**:
+- `yaw` (number, 必須): 水平方向の角度（ラジアン、0=北）
+- `pitch` (number, 必須): 垂直方向の角度（ラジアン、0=水平）
+
+**使用例**:
+```
+/w Bot1 !creative vis captureDirection {"yaw": 0, "pitch": 0}
+/w Bot1 !creative vis captureDirection {"yaw": 1.57, "pitch": -0.5}
+```
+
+**戻り値**: `capture`と同じ形式
+
+**方向の目安**:
+- `yaw: 0` - 北
+- `yaw: 1.57` (π/2) - 東
+- `yaw: 3.14` (π) - 南
+- `yaw: 4.71` (3π/2) - 西
+
+---
+
+##### `capturePanorama` - 周囲4方向のパノラマ撮影
+
+**パラメータ**: なし（空オブジェクト `{}` を渡す）
+
+**使用例**:
+```
+/w Bot1 !creative vision capturePanorama {}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "パノラマ撮影完了（4枚）",
+  data: {
+    screenshots: [
+      {
+        direction: "北",
+        yaw: 0,
+        image: "data:image/png;base64,...",
+        metadata: { ... }
+      },
+      {
+        direction: "東",
+        yaw: 1.57,
+        image: "data:image/png;base64,...",
+        metadata: { ... }
+      },
+      // ... 南、西
+    ],
+    position: { x: 100, y: 64, z: 200 },
+    timestamp: 1234567890
+  }
+}
+```
+
+**注意**: 撮影に約1.2秒かかります（4方向 × 300ms間隔）
+
+---
+
+##### `stats` - Observer Pool統計情報
+
+**パラメータ**: なし（空オブジェクト `{}` を渡す）
+
+**使用例**:
+```
+/w Bot1 !creative vision stats {}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "Observer Pool統計情報",
+  data: {
+    pool: {
+      totalCameras: 1,
+      busyCameras: 0,
+      queueLength: 0
+    },
+    requests: {
+      totalRequests: 10,
+      completedRequests: 10,
+      failedRequests: 0
+    },
+    cameras: [
+      {
+        id: 1,
+        port: 3007,
+        busy: false,
+        totalCaptures: 10,
+        avgWaitTime: 5,
+        avgCaptureTime: 850
+      }
+    ]
+  }
+}
 ```
 
 ---

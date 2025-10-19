@@ -1,387 +1,265 @@
 # Planner Bot - 実装状況
 
-このドキュメントはPlanner Botの現在の実装状況を開発者向けにまとめたものです。
-
 **最終更新**: 2025-10-19
 
----
-
-## 目次
-
-- [アーキテクチャ概要](#アーキテクチャ概要)
-- [GOAP システム](#goap-システム)
-- [Creative アクション](#creative-アクション)
-- [視覚システム (Observer Pool)](#視覚システム-observer-pool)
-- [会話履歴システム](#会話履歴システム)
-- [未実装機能](#未実装機能)
+このドキュメントは実装状況を一目で確認するためのチェックリストです。
+詳細な設計・実装については [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
 
 ---
 
-## アーキテクチャ概要
+## 凡例
+
+- ✅ 実装完了・動作確認済み
+- ⚠️ 実装済み・未テスト
+- ❌ 未実装
+
+---
+
+## アーキテクチャ
 
 ### ボット構成
 
-```
-┌─────────────────────────────────────────┐
-│          1つのプロセス                     │
-│  (node planner_bot/index.js)            │
-├─────────────────────────────────────────┤
-│                                         │
-│  AI Bot 1, 2, 3, ..., N                │
-│    ├─ GOAP Planner                     │
-│    ├─ Skills                           │
-│    ├─ Primitives                       │
-│    ├─ State Manager                    │
-│    └─ Conversation History             │
-│                                         │
-│  Camera-Bot 1, 2, ..., M               │
-│    └─ prismarine-viewer                │
-│                                         │
-│  Observer Pool                          │
-│    └─ Camera-Bot Pool Manager          │
-│       └─ Puppeteer Browsers            │
-└─────────────────────────────────────────┘
-```
+- ✅ AI Bot (複数体対応)
+- ✅ Camera-Bot (複数体対応)
+- ✅ Observer Pool (Camera-Bot管理)
+- ✅ 1プロセスで全ボット起動
 
-### ボット数の設定
+### 設定
 
-`.env`ファイルで設定：
-```env
-AI_BOT_COUNT=5        # AI Bot数（デフォルト: 1）
-CAMERA_COUNT=1        # Camera-Bot数（デフォルト: 1）
-```
-
-**想定スケール**:
-- AI Bot: 1〜300体程度
-- Camera-Bot: 1〜10体程度
-- Camera-BotはAI Bot間で共有（プーリング）
+- ✅ `.env`によるボット数設定
+- ✅ `AI_BOT_COUNT` - AI Bot数
+- ✅ `CAMERA_COUNT` - Camera-Bot数
 
 ---
 
 ## GOAP システム
 
-### 実装状況: ✅ 完成
+### コア機能
 
-#### コア機能
+- ✅ A* プランニング
+- ✅ 状態管理 (State Manager)
+- ✅ リプランニング (失敗時自動再計画)
+- ✅ 診断システム (失敗原因表示)
 
-| 機能 | 状態 | 説明 |
-|------|------|------|
-| A* プランニング | ✅ | 目標状態から逆算してアクションシーケンスを生成 |
-| 状態管理 | ✅ | インベントリ、周辺環境、装備状態を管理 |
-| アクション定義 | ✅ | YAML形式で600+のアクションを定義 |
-| スキルシステム | ✅ | gather, craft, equipなどの高レベル行動 |
-| プリミティブ | ✅ | moveTo, digBlock, craftItemなどの低レベル操作 |
-| リプランニング | ✅ | 実行失敗時に自動で再計画 |
-| 診断システム | ✅ | 失敗時に不足している材料や条件を表示 |
+### アクション定義
 
-#### アクション定義ファイル
+- ✅ リソース採集 (`gather_actions.yaml`)
+- ✅ 手持ちクラフト (`hand_craft_actions.yaml`)
+- ✅ 作業台クラフト (`workbench_craft_actions.yaml`)
+- ✅ 移動・設置 (`movement_actions.yaml`)
 
-- `config/actions/gather_actions.yaml` - リソース採集
-- `config/actions/hand_craft_actions.yaml` - 手持ちクラフト
-- `config/actions/workbench_craft_actions.yaml` - 作業台クラフト
-- `config/actions/movement_actions.yaml` - 移動・設置
+### 状態管理
 
-#### 状態管理
+- ✅ 状態スキーマ (`state_schema.yaml`)
+- ✅ ブロック分類 (`block_categories.yaml`)
+- ✅ インベントリ状態
+- ✅ 周辺環境状態
+- ✅ 装備状態
 
-- `config/state_schema.yaml` - 全状態変数の定義
-- `config/block_categories.yaml` - ブロック分類（logs, planks, stonesなど）
+### スキル
 
-#### コマンド
+- ✅ gather (採集)
+- ✅ craft (クラフト)
+- ✅ equip (装備)
 
-```
-!goal inventory.wooden_pickaxe:1
-!goal inventory.diamond_sword:1
-!goal inventory.oak_planks:10
-```
+### プリミティブ
 
-### 制限事項
+- ✅ moveTo (移動)
+- ✅ digBlock (採掘)
+- ✅ craftItem (クラフト)
+- ✅ equipItem (装備)
 
-- ブロック設置の座標計算が不完全（pathfinder障害物問題）
-- 遠距離移動時のチャンクロード待機なし
-- 敵対Mobとの戦闘アクションなし
+### コマンド
+
+- ✅ `!goal <state>:<value>`
+- ✅ `!skill <name> [params]`
+- ✅ `!primitive <name> [params]`
 
 ---
 
 ## Creative アクション
 
-GOAPで扱えない創造的な行動を提供。
+### Navigation
 
-### Navigation - 実装状況: ✅ 完成
+- ✅ `register` - 現在地を名前付きで登録
+- ✅ `goto` - 登録済みの場所に移動
+- ✅ `gotoCoords` - 座標指定で移動
+- ✅ `list` - 登録済み場所一覧
 
-| アクション | 状態 | 説明 |
-|-----------|------|------|
-| `register` | ✅ | 現在地を名前付きで登録 |
-| `goto` | ✅ | 登録済みの場所に移動 |
-| `gotoCoords` | ✅ | 座標指定で移動 |
-| `list` | ✅ | 登録済み場所の一覧表示 |
+### Vision
 
-**使用例**:
-```
-!creative nav register {"name": "home"}
-!creative nav goto {"name": "home"}
-!creative nav gotoCoords {"x": 250, "y": 64, "z": -100}
-!creative nav list
-```
+- ⚠️ `capture` - スクリーンショット取得
+- ⚠️ `captureDirection` - 指定方向スクリーンショット
+- ⚠️ `capturePanorama` - パノラマ撮影
+- ✅ `stats` - Observer Pool統計
 
-**実装ファイル**: `planner_bot/src/creative_actions/navigation.js`
+### Exploration (未実装)
 
----
+- ❌ `randomWalk` - ランダム探索
+- ❌ `searchBlock` - 特定ブロック探索
+- ❌ `returnHome` - 帰還
 
-### Vision - 実装状況: ⚠️ 未テスト
+### Building (未実装)
 
-| アクション | 状態 | 説明 |
-|-----------|------|------|
-| `capture` | ⚠️ | 現在の視界のスクリーンショット |
-| `captureDirection` | ⚠️ | 指定方向を向いてスクリーンショット |
-| `capturePanorama` | ⚠️ | 周囲4方向のパノラマ撮影 |
-| `stats` | ✅ | Observer Pool統計情報 |
-
-**使用例**:
-```
-!creative vision capture {}
-!creative vision capturePanorama {}
-!creative vision stats {}
-```
-
-**実装ファイル**: `planner_bot/src/creative_actions/vision.js`
-
-**未テスト項目**:
-- prismarine-viewerの起動確認
-- Puppeteerでのスクリーンショット撮影
-- 画像データの保存・利用
+- ❌ `loadBlueprint` - 設計図読み込み
+- ❌ `placeBlocks` - ブロック配置
+- ❌ `build` - 建築実行
 
 ---
 
 ## 視覚システム (Observer Pool)
 
-### 実装状況: ⚠️ コードあり・未テスト
+### コア機能
 
-### アーキテクチャ
+- ✅ Camera-Botプール管理
+- ✅ リクエストキューイング
+- ✅ Camera-Bot割り当て
+- ✅ 統計情報収集
 
-```
-AI Bot 1 ─┐
-AI Bot 2 ─┤
-AI Bot 3 ─┼─> Observer Pool ─┬─> Camera-Bot 1 + Puppeteer
-  ...     │                  ├─> Camera-Bot 2 + Puppeteer
-AI Bot N ─┘                  └─> Camera-Bot M + Puppeteer
-```
+### Camera-Bot
 
-### 動作フロー
+- ⚠️ prismarine-viewer起動
+- ⚠️ TP機能 (AI Botの位置に移動)
+- ⚠️ 視線方向設定
 
-1. **AI Botが視覚リクエスト送信**
-   ```javascript
-   const result = await bot.observerPool.requestCapture({
-     botId: bot.username,
-     position: { x, y, z },
-     yaw: 0,
-     pitch: 0
-   })
-   ```
+### Puppeteer
 
-2. **Observer Poolがリクエストをキューイング**
-   - 空いているCamera-Botを探す
-   - 全部使用中ならキュー待ち
+- ⚠️ ブラウザ起動
+- ⚠️ スクリーンショット撮影
+- ⚠️ 画像データ取得 (Base64)
+- ⚠️ オーバーレイ (位置・方角情報)
 
-3. **Camera-Botに割り当て**
-   - Camera-BotがAI Botの位置にTP
-   - 視線方向を設定
-   - 500ms待機（チャンクロード）
+### 未実装
 
-4. **Puppeteerでスクリーンショット撮影**
-   - prismarine-viewerのポート（例: 3007）にアクセス
-   - 位置・方角情報をオーバーレイ
-   - PNG画像をBase64で取得
-
-5. **画像データを返却**
-   ```javascript
-   {
-     success: true,
-     image: "data:image/png;base64,...",
-     metadata: {
-       botId: "Bot1",
-       position: { x, y, z },
-       yaw: 0,
-       pitch: 0,
-       timestamp: 1234567890,
-       cameraId: 1
-     }
-   }
-   ```
-
-### 実装ファイル
-
-- `planner_bot/src/vision/observer_pool.js` - Observer Pool実装
-- `planner_bot/src/bot/camera_bot.js` - Camera-Bot定義
-- `planner_bot/src/bot/startup.js` - 起動オーケストレーション
-
-### 未確認項目
-
-- [ ] Camera-Botにprismarine-viewerが起動しているか
-- [ ] Puppeteerでアクセスできるか
-- [ ] スクリーンショットが撮れるか
-- [ ] 画像データが正しく返ってくるか
-- [ ] 複数リクエストの並列処理
-
-### 統計情報
-
-```javascript
-const stats = observerPool.getStats()
-// {
-//   pool: { totalCameras: 1, busyCameras: 0, queueLength: 0 },
-//   requests: { totalRequests: 0, completedRequests: 0, failedRequests: 0 },
-//   cameras: [{ id: 1, port: 3007, busy: false, totalCaptures: 0, ... }]
-// }
-```
+- ❌ 画像保存機能
+- ❌ 画像処理機能
+- ❌ LLMへの画像送信
 
 ---
 
 ## 会話履歴システム
 
-### 実装状況: ✅ 完成
+### コア機能
 
-### 設計
+- ✅ 全員の発言を時系列保存
+- ✅ フィルタリング機能
+- ✅ FIFO (100メッセージ上限)
 
-**目的**: 複数プレイヤーとボット間の協力的な会話を管理
+### ログ関数
 
-**データ構造**:
-```javascript
-bot.conversationHistory = [
-  {
-    speaker: "player1",           // 発言者の実名
-    role: "user",                 // このボット視点での役割
-    content: "こんにちは",         // メッセージ内容
-    type: "natural_language",     // メッセージタイプ
-    timestamp: 1234567890
-  },
-  {
-    speaker: "Bot1",
-    role: "assistant",
-    content: "こんにちは！",
-    type: "bot_response",
-    timestamp: 1234567891
-  },
-  {
-    speaker: "Bot1",
-    role: "assistant",
-    content: "GOAP診断: 材料不足",
-    type: "system_info",
-    timestamp: 1234567892
-  }
-]
-```
+- ✅ `bot.systemLog()` - コンソール出力
+- ✅ `bot.speak()` - MC whisper送信
+- ✅ `bot.addMessage()` - 履歴追加
 
-### API
+### フィルタリング
 
-#### `bot.systemLog(message)`
-- **用途**: コンソール出力専用
-- **出力先**: コンソールのみ
+- ✅ ユーザー指定 (`username`)
+- ✅ 複数ユーザー指定 (`usernames`)
+- ✅ タイプ指定 (`type`)
 
-#### `bot.speak(username, message)`
-- **用途**: MCチャットへのwhisper送信
-- **出力先**: Minecraftチャット
-- **注意**: 会話履歴には自動追加されない（`bot.addMessage()`を別途呼ぶ）
+### メッセージタイプ
 
-#### `bot.addMessage(speaker, content, type)`
-- **用途**: 会話履歴への追加（唯一の履歴追加ポイント）
-- **引数**:
-  - `speaker`: 発言者名
-  - `content`: メッセージ内容
-  - `type`: `'natural_language'` | `'bot_response'` | `'system_info'`
+- ✅ `natural_language` - 自然言語
+- ✅ `bot_response` - ボット発話
+- ✅ `system_info` - システム情報
 
-#### `bot.getConversationHistory(options)`
-- **用途**: 会話履歴を取得（フィルタリング可能）
-- **オプション**:
-  - `username`: 特定ユーザーの発言のみ
-  - `usernames`: 複数ユーザーの発言のみ
-  - `type`: 特定タイプのメッセージのみ
+### コマンド
 
-### 使用例
+- ✅ `!history` - 全履歴表示
+- ✅ `!history <user>` - ユーザー指定
+- ✅ `!history <user1>,<user2>` - 複数指定
+- ✅ `!echo <message>` - オウム返しテスト
 
-```javascript
-// LLM用に自然言語のみ取得
-const llmHistory = bot.getConversationHistory()
-  .filter(msg => msg.type !== 'system_info')
+### 未実装
 
-// 特定ユーザーとの会話
-const conversation = bot.getConversationHistory({ username: 'player1' })
-
-// 複数ユーザーのグループ会話
-const group = bot.getConversationHistory({
-  usernames: ['player1', 'player2', 'Bot1']
-})
-```
-
-### 制限
-
-- **最大メッセージ数**: 100（FIFO）
-- **永続化**: なし（ボット再起動で消える）
+- ❌ 会話履歴の永続化
+- ❌ LLMへの履歴送信
 
 ---
 
-## 未実装機能
+## その他コマンド
+
+- ✅ `!status` - 現在の状況表示
+- ✅ `!creative <category> <action> [params]`
+
+---
+
+## 将来実装したい機能
 
 ### 探索システム
 
-- [ ] ランダム探索
-- [ ] 特定ブロック探索
-- [ ] マッピング（訪問済みチャンク記録）
-- [ ] 帰還アルゴリズム
+- ❌ ランダム探索
+- ❌ 特定ブロック探索
+- ❌ マッピング (訪問済みチャンク記録)
+- ❌ 帰還アルゴリズム
+- ❌ 未探索エリア優先探索
 
 ### 建築システム
 
-- [ ] 設計図読み込み
-- [ ] ブロック配置計画
-- [ ] 建築実行
+- ❌ 設計図フォーマット定義
+- ❌ 設計図読み込み
+- ❌ ブロック配置計画
+- ❌ 建築実行
+- ❌ 建築進捗管理
 
 ### 戦闘システム
 
-- [ ] 敵対Mob検出
-- [ ] 攻撃アクション
-- [ ] 回避・防御
+- ❌ 敵対Mob検出
+- ❌ 攻撃アクション
+- ❌ 回避・防御
+- ❌ HP管理
+
+### インベントリ管理
+
+- ❌ アイテム整理
+- ❌ 不要アイテム破棄
+- ❌ チェスト操作
+- ❌ アイテム転送
 
 ### LLM統合
 
-- [ ] 画像をLLMに送信
-- [ ] LLMからのコマンド受信
-- [ ] 自然言語による目標設定
-- [ ] 会話履歴をLLMに渡す
+- ❌ 画像をLLMに送信
+- ❌ LLMからのコマンド受信
+- ❌ 自然言語による目標設定
+- ❌ 会話履歴をLLMに渡す
+- ❌ LLMによる状況判断
 
 ### その他
 
-- [ ] インベントリ整理
-- [ ] アイテムドロップ/拾得
-- [ ] チェスト操作
-- [ ] 村人取引
-- [ ] レッドストーン回路
+- ❌ 村人取引
+- ❌ レッドストーン回路
+- ❌ エンチャント
+- ❌ 醸造
+- ❌ 農業 (自動農場)
 
 ---
 
-## 次のステップ
+## 次のステップ (優先度順)
 
 ### 優先度: 高
 
 1. **視覚システムのテスト**
    - Camera-Botのviewer起動確認
    - スクリーンショット撮影テスト
-   - 画像保存機能
+   - 画像データ取得確認
 
 2. **探索システムの実装**
-   - Creative actionとして実装
-   - ランダム探索から開始
+   - ランダム探索の実装
+   - Creative actionとして追加
 
 3. **建築システムの設計**
    - 設計図フォーマット決定
-   - ブロック配置アルゴリズム
+   - ブロック配置アルゴリズム設計
 
 ### 優先度: 中
 
-- LLM統合準備（画像送信API設計）
+- LLM統合準備 (画像送信API設計)
 - 会話履歴の永続化
-- 戦闘システムの基本設計
+- インベントリ管理機能
 
 ### 優先度: 低
 
-- チェスト操作
+- 戦闘システム
 - 村人取引
 - レッドストーン回路
 
@@ -389,6 +267,6 @@ const group = bot.getConversationHistory({
 
 ## 関連ドキュメント
 
-- [API.md](./API.md) - 外部利用者向けAPIリファレンス
-- [../design/llm-civilization-architecture.md](../design/llm-civilization-architecture.md) - LLM文明シミュレーション設計
-- [../implementation/bot-specification.ja.md](../implementation/bot-specification.ja.md) - プロジェクト仕様書
+- [API.md](./API.md) - 使い方・コマンドリファレンス
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 設計詳細・システムフロー
+- [ISSUES.md](./ISSUES.md) - 現在の課題・未解決問題
