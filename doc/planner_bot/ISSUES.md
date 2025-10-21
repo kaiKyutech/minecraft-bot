@@ -67,33 +67,35 @@
 
 ---
 
-### 視覚システムの未テスト
+### 視覚システムの改善余地
 
-**問題**: Observer Pool と Camera-Bot のコードは実装済みだが、実際の動作テストが未実施。
+**現状**: Puppeteer + prismarine-viewer による視覚システムは基本動作している。
 
-**未検証項目**:
-- Camera-Bot の prismarine-viewer 起動
-- TP 機能 (AI Bot の位置に移動)
-- 視線方向設定 (yaw, pitch)
-- Puppeteer ブラウザ起動
-- スクリーンショット撮影
-- Base64 画像データ取得
-- オーバーレイ表示 (位置・方角情報)
+**動作確認済み**:
+- ✅ Camera-Bot の prismarine-viewer 起動
+- ✅ TP 機能 (AI Bot の位置に移動)
+- ✅ Puppeteer ブラウザ起動とスクリーンショット撮影
+- ✅ Base64 画像データ取得とファイル保存
+- ✅ オーバーレイ表示 (位置・方角情報)
 
-**リスク**:
-- 実際に動作しない可能性がある
-- パフォーマンス問題が発生する可能性
-- メモリリークやブラウザクラッシュの可能性
+**未解決の問題**:
+- ❌ 視線方向 (yaw, pitch) が AI Bot と一致しない
+  - 現在は手動で角度調整が必要: `!creative vision capture {"yaw": 90, "pitch": 0}`
+  - AI Bot の視線方向との変換式が不明
+- ❌ Camera-Bot が AI Bot に近すぎて肩が映り込む
+  - 位置調整が必要（少し後ろに下がる？）
 
-**対策**:
-- ✅ `!creative vision capture` コマンド実装済み
-- ❌ 実際にコマンドを実行してテスト必要
-- ❌ エラーハンドリング、タイムアウト処理の検証
+**将来的な改善案**:
+- `node-canvas-webgl` による直接レンダリング方式への移行検討
+  - `doc/mineflayer/screenshot.js` の実装を参考
+  - メリット: ブラウザ不要、より効率的
+  - デメリット: インストール困難（ネイティブコンパイル必要）、Windows 対応が難しい
+  - 現在の Puppeteer 方式はクロスプラットフォームで動作しているため、優先度は低い
 
 **関連ファイル**:
-- `planner_bot/src/bot/camera_bot.js`
-- `planner_bot/src/bot/observer_pool.js`
+- `planner_bot/src/vision/observer_pool.js`
 - `planner_bot/src/creative_actions/vision.js`
+- `doc/mineflayer/screenshot.js` (参考実装)
 
 ---
 
