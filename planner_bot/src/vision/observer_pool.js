@@ -50,15 +50,9 @@ class ObserverPool extends EventEmitter {
       const bot = cameraBots[i]
       const port = this.cameraStartPort + i
 
-      // Puppeteerブラウザ起動（テスト: headless無効）
+      // Puppeteerブラウザ起動
       const browser = await puppeteer.launch({
-        headless: false,  // ブラウザウィンドウを表示
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--use-gl=egl'
-        ]
+        headless: false
       })
 
       console.log(`[OBSERVER POOL] Camera-${i + 1} ready on port ${port}`)
@@ -182,21 +176,11 @@ class ObserverPool extends EventEmitter {
    * Camera-Botを指定位置・視線方向に移動
    */
   async _moveCameraBot(bot, position, yaw, pitch) {
-    // クリエイティブモードで瞬間移動
-    // ※ サーバーが /tp コマンドを許可している必要がある
-    // ※ または bot.entity.position を直接書き換え（サーバー側で対応必要）
+    // AI Botと同じ位置 + 視線方向にTPして視線を設定
+    bot.chat(`/tp @s ${position.x} ${position.y} ${position.z} ${yaw * 180 / Math.PI} ${pitch * 180 / Math.PI}`)
 
-    // 方法1: /tp コマンド（最も確実）
-    bot.chat(`/tp @s ${position.x} ${position.y} ${position.z}`)
-
-    // 方法2: 内部APIで直接移動（mineflayerの機能による）
-    // bot.entity.position.set(position.x, position.y, position.z)
-
-    // 視線方向を設定
-    bot.look(yaw, pitch, false)
-
-    // 移動完了まで少し待つ
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // 移動・視線設定完了まで待つ
+    await new Promise(resolve => setTimeout(resolve, 200))
   }
 
   /**
@@ -205,17 +189,22 @@ class ObserverPool extends EventEmitter {
   async _captureScreenshot(camera, request) {
     const page = await camera.browser.newPage()
 
+    await page.setViewport({
+      width: 1920,
+      height: 1080,
+      deviceScaleFactor: 1
+    })
+
     try {
-      // prismarine-viewer のローカルポートにアクセス
       await page.goto(`http://localhost:${camera.port}`, {
         waitUntil: 'networkidle2',
         timeout: 5000
       })
 
-      // WebGLレンダリング待機（3D世界の描画を待つ）
+      // 描画完了まで待機
       await new Promise(resolve => setTimeout(resolve, 3000))
 
-      // 方角情報をオーバーレイ（Canvas overlay）
+      // オーバーレイ描画
       await page.evaluate((yaw, pitch, position) => {
         const canvas = document.createElement('canvas')
         canvas.width = window.innerWidth
