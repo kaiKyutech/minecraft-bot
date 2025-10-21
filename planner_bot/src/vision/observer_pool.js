@@ -144,10 +144,7 @@ class ObserverPool extends EventEmitter {
       // 1. Camera-Botを移動
       await this._moveCameraBot(camera.bot, request.position, request.yaw, request.pitch)
 
-      // 2. 少し待つ（チャンクロード待ち）
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // 3. スクリーンショット撮影
+      // 2. スクリーンショット撮影（描画完了待機で十分）
       const screenshot = await this._captureScreenshot(camera, request)
 
       // 4. 統計更新
@@ -177,7 +174,8 @@ class ObserverPool extends EventEmitter {
    */
   async _moveCameraBot(bot, position, yaw, pitch) {
     // AI Botと同じ位置 + 視線方向にTPして視線を設定
-    bot.chat(`/tp @s ${position.x} ${position.y} ${position.z} ${yaw * 180 / Math.PI} ${pitch * 180 / Math.PI}`)
+    // yaw, pitchは既に度数で渡されている
+    bot.chat(`/tp @s ${position.x} ${position.y} ${position.z} ${yaw} ${pitch}`)
 
     // 移動・視線設定完了まで待つ
     await new Promise(resolve => setTimeout(resolve, 200))
@@ -202,7 +200,7 @@ class ObserverPool extends EventEmitter {
       })
 
       // 描画完了まで待機
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      await new Promise(resolve => setTimeout(resolve, 3500))
 
       // オーバーレイ描画
       await page.evaluate((yaw, pitch, position) => {
@@ -221,8 +219,8 @@ class ObserverPool extends EventEmitter {
 
         ctx.fillStyle = 'white'
         ctx.font = '16px monospace'
-        ctx.fillText(`Yaw: ${yaw.toFixed(2)} rad`, 20, 35)
-        ctx.fillText(`Pitch: ${pitch.toFixed(2)} rad`, 20, 55)
+        ctx.fillText(`Yaw: ${yaw.toFixed(2)}°`, 20, 35)
+        ctx.fillText(`Pitch: ${pitch.toFixed(2)}°`, 20, 55)
         ctx.fillText(`Pos: (${Math.floor(position.x)}, ${Math.floor(position.y)}, ${Math.floor(position.z)})`, 20, 75)
 
         document.body.appendChild(canvas)
