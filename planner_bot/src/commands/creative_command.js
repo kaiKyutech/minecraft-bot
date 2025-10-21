@@ -78,9 +78,10 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
   }
 
-  // Vision capture の場合、画像をPNG保存（テスト用）
+  // Vision capture の場合、画像をPNG保存（ボット名ごと）
   if (category === 'vision' && action === 'capture' && result.data && result.data.image) {
-    const outputPath = path.join(__dirname, '..', '..', 'screenshot.png')
+    const filename = `screenshot_${bot.username}.png`
+    const outputPath = path.join(__dirname, '..', '..', filename)
     const imageBuffer = Buffer.from(result.data.image, 'base64')
     fs.writeFileSync(outputPath, imageBuffer)
     bot.systemLog(`Screenshot saved to ${outputPath}`)
