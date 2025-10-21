@@ -51,105 +51,11 @@ async function capture(bot, stateManager, params = {}) {
   }
 }
 
-/**
- * 指定方向を向いてスクリーンショットを取得
- * @param {Object} bot - Mineflayerボット
- * @param {Object} stateManager - 状態マネージャー
- * @param {Object} params - { yaw, pitch }
- */
-async function captureDirection(bot, stateManager, params) {
-  if (params.yaw === undefined || params.pitch === undefined) {
-    throw new Error('yaw と pitch を指定してください')
-  }
-
-  // 指定方向を向く
-  await bot.look(params.yaw, params.pitch, false)
-
-  // 少し待つ
-  await new Promise(resolve => setTimeout(resolve, 200))
-
-  // 通常のcaptureを実行
-  return await capture(bot, stateManager, {})
-}
-
-/**
- * 周囲4方向のスクリーンショットを取得（パノラマ風）
- * @param {Object} bot - Mineflayerボット
- * @param {Object} stateManager - 状態マネージャー
- * @param {Object} params - パラメータ（空でOK）
- */
-async function capturePanorama(bot, stateManager, params = {}) {
-  const directions = [
-    { name: '北', yaw: 0 },
-    { name: '東', yaw: Math.PI / 2 },
-    { name: '南', yaw: Math.PI },
-    { name: '西', yaw: 3 * Math.PI / 2 }
-  ]
-
-  const screenshots = []
-
-  for (const dir of directions) {
-    console.log(`[VISION] Capturing ${dir.name}...`)
-
-    const result = await captureDirection(bot, stateManager, {
-      yaw: dir.yaw,
-      pitch: 0
-    })
-
-    screenshots.push({
-      direction: dir.name,
-      yaw: dir.yaw,
-      image: result.data.image,
-      metadata: result.data.metadata
-    })
-
-    // 次の撮影まで少し待つ
-    await new Promise(resolve => setTimeout(resolve, 300))
-  }
-
-  console.log(`[VISION] Panorama capture completed (${screenshots.length} images)`)
-
-  return {
-    success: true,
-    message: `パノラマ撮影完了（${screenshots.length}枚）`,
-    data: {
-      screenshots,
-      position: bot.entity.position.clone(),
-      timestamp: Date.now()
-    }
-  }
-}
-
-/**
- * Observer Poolの統計情報を取得
- */
-async function stats(bot, stateManager, params = {}) {
-  const observerPool = global.observerPool || bot.observerPool
-
-  if (!observerPool) {
-    throw new Error('Observer Poolが初期化されていません')
-  }
-
-  const stats = observerPool.getStats()
-
-  console.log('[VISION] Observer Pool Stats:')
-  console.log(`  Total cameras: ${stats.pool.totalCameras}`)
-  console.log(`  Busy cameras: ${stats.pool.busyCameras}`)
-  console.log(`  Queue length: ${stats.pool.queueLength}`)
-  console.log(`  Total requests: ${stats.requests.totalRequests}`)
-  console.log(`  Completed: ${stats.requests.completedRequests}`)
-  console.log(`  Failed: ${stats.requests.failedRequests}`)
-
-  return {
-    success: true,
-    message: 'Observer Pool統計情報',
-    data: stats
-  }
-}
+// TODO: 将来実装
+// async function captureDirection(bot, stateManager, params) { ... }
+// async function capturePanorama(bot, stateManager, params = {}) { ... }
+// async function stats(bot, stateManager, params = {}) { ... }
 
 module.exports = {
-  capture,
-  captureDirection,
-  capturePanorama,
-  stats
+  capture
 }

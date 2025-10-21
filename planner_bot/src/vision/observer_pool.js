@@ -50,15 +50,14 @@ class ObserverPool extends EventEmitter {
       const bot = cameraBots[i]
       const port = this.cameraStartPort + i
 
-      // Puppeteerブラウザ起動
+      // Puppeteerブラウザ起動（テスト: headless無効）
       const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,  // ブラウザウィンドウを表示
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu'  // GPU使わない場合
-          // GPU使う場合: '--use-gl=egl'
+          '--use-gl=egl'
         ]
       })
 
@@ -212,6 +211,9 @@ class ObserverPool extends EventEmitter {
         waitUntil: 'networkidle2',
         timeout: 5000
       })
+
+      // WebGLレンダリング待機（3D世界の描画を待つ）
+      await new Promise(resolve => setTimeout(resolve, 3000))
 
       // 方角情報をオーバーレイ（Canvas overlay）
       await page.evaluate((yaw, pitch, position) => {

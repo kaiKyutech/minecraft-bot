@@ -1,18 +1,18 @@
 const navigation = require('../creative_actions/navigation')
 const vision = require('../creative_actions/vision')
+const fs = require('fs')
+const path = require('path')
 
 /**
  * !creative コマンドのハンドラ
  * GOAPで扱えない創造的な行動を実行する
  *
  * 使用例:
- *   !creative nav register {"name": "home"}
- *   !creative nav goto {"name": "home"}
- *   !creative nav gotoCoords {"x": 250, "y": 64, "z": -100}
- *   !creative nav list
- *   !creative vision capture {}
- *   !creative vision capturePanorama {}
- *   !creative vision stats {}
+ *   !creative navigation register {"name": "home"}
+ *   !creative navigation goto {"name": "home"}
+ *   !creative navigation gotoCoords {"x": 250, "y": 64, "z": -100}
+ *   !creative navigation list
+ *   !creative vision capture
  *
  * @param {Object} bot - Mineflayerボット
  * @param {string} username - コマンド送信者のユーザー名
@@ -43,8 +43,8 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
 
   let result
 
-  // カテゴリの判定（navigation / nav）
-  if (category === 'navigation' || category === 'nav') {
+  // カテゴリの判定
+  if (category === 'navigation') {
     if (!navigation[action]) {
       const available = Object.keys(navigation).join(', ')
       throw new Error(
@@ -54,8 +54,7 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     }
     result = await navigation[action](bot, stateManager, params)
   }
-  // カテゴリの判定（vision / vis）
-  else if (category === 'vision' || category === 'vis') {
+  else if (category === 'vision') {
     if (!vision[action]) {
       const available = Object.keys(vision).join(', ')
       throw new Error(
@@ -68,7 +67,7 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
   else {
     throw new Error(
       `未知のカテゴリ: ${category}\n` +
-      `利用可能: nav (navigation), vis (vision)`
+      `利用可能: navigation, vision`
     )
   }
 
@@ -77,6 +76,14 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     bot.systemLog(result.message)
     // await bot.speak(username, result.message)  // LLMプロジェクトで使用時にアンコメント
     // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  }
+
+  // Vision capture の場合、画像をPNG保存（テスト用）
+  if (category === 'vision' && action === 'capture' && result.data && result.data.image) {
+    const outputPath = path.join(__dirname, '..', '..', 'screenshot.png')
+    const imageBuffer = Buffer.from(result.data.image, 'base64')
+    fs.writeFileSync(outputPath, imageBuffer)
+    bot.systemLog(`Screenshot saved to ${outputPath}`)
   }
 
   return result
