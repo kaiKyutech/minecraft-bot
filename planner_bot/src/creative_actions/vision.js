@@ -67,9 +67,28 @@ async function capture(bot, stateManager, params = {}) {
     const yaw = bot.entity.yaw * 180 / Math.PI;
     const pitch = bot.entity.pitch * 180 / Math.PI;
 
+    // 視線先のブロック情報を取得
+    const targetBlock = bot.blockAtCursor(256);
+    let targetInfo = null;
+    if (targetBlock) {
+      targetInfo = {
+        name: targetBlock.name,
+        position: {
+          x: targetBlock.position.x,
+          y: targetBlock.position.y,
+          z: targetBlock.position.z
+        }
+      };
+    }
+
     console.log(`[VISION] Capture from ${bot.username}`);
     console.log(`[VISION] Position: (${Math.floor(position.x)}, ${Math.floor(position.y)}, ${Math.floor(position.z)})`);
     console.log(`[VISION] Yaw: ${yaw.toFixed(2)}°, Pitch: ${pitch.toFixed(2)}°`);
+    if (targetInfo) {
+      console.log(`[VISION] Target: ${targetInfo.name} at (${targetInfo.position.x}, ${targetInfo.position.y}, ${targetInfo.position.z})`);
+    } else {
+      console.log(`[VISION] Target: none`);
+    }
 
     // 4. Puppeteerでスクリーンショット撮影
     browser = await puppeteer.launch({
@@ -93,7 +112,7 @@ async function capture(bot, stateManager, params = {}) {
     await new Promise(resolve => setTimeout(resolve, 3500));
 
     // オーバーレイ描画（位置・方角情報）
-    await page.evaluate((yaw, pitch, position) => {
+    await page.evaluate((yaw, pitch, position, targetInfo) => {
       const canvas = document.createElement('canvas');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -147,13 +166,13 @@ async function capture(bot, stateManager, params = {}) {
       ctx.lineTo(centerX, height);
       ctx.stroke();
 
-      // 中央のラベル（背景付き） - 少し下にずらす
+      // 中央のラベル（背景付き） - ターゲット情報を避けて下にずらす
       const centerYawText = `Yaw: ${Math.floor(yaw)}°`;
       const centerYawMetrics = ctx.measureText(centerYawText);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(centerX + 5, height / 2 + 10, centerYawMetrics.width + 10, 40);
+      ctx.fillRect(centerX + 5, height / 2 + 110, centerYawMetrics.width + 10, 40);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.fillText(centerYawText, centerX + 10, height / 2 + 42);
+      ctx.fillText(centerYawText, centerX + 10, height / 2 + 142);
 
       // 右端の線（赤） - 時計回り方向
       ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
@@ -170,6 +189,59 @@ async function capture(bot, stateManager, params = {}) {
       ctx.fillStyle = 'rgba(255, 50, 50, 0.9)';
       ctx.fillText(rightText, width - rightMetrics.width - 10, height / 2);
 
+      // === ターゲットサークル（画面中央）===
+      // 外側のサークル（緑）
+      ctx.strokeStyle = 'rgba(50, 255, 50, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 十字線（緑）
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      // 横線
+      ctx.moveTo(centerX - 30, centerY);
+      ctx.lineTo(centerX - 20, centerY);
+      ctx.moveTo(centerX + 20, centerY);
+      ctx.lineTo(centerX + 30, centerY);
+      // 縦線
+      ctx.moveTo(centerX, centerY - 30);
+      ctx.lineTo(centerX, centerY - 20);
+      ctx.moveTo(centerX, centerY + 20);
+      ctx.lineTo(centerX, centerY + 30);
+      ctx.stroke();
+
+      // 中央の点（緑）
+      ctx.fillStyle = 'rgba(50, 255, 50, 0.9)';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ターゲット情報をサークル下に表示
+      if (targetInfo) {
+        ctx.font = 'bold 22px monospace';
+        const targetName = targetInfo.name;
+        const targetPos = `(${targetInfo.position.x}, ${targetInfo.position.y}, ${targetInfo.position.z})`;
+
+        const nameMetrics = ctx.measureText(targetName);
+        const posMetrics = ctx.measureText(targetPos);
+
+        // 背景（名前）
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(centerX - nameMetrics.width / 2 - 5, centerY + 35, nameMetrics.width + 10, 30);
+        // テキスト（名前）
+        ctx.fillStyle = 'rgba(50, 255, 50, 0.9)';
+        ctx.fillText(targetName, centerX - nameMetrics.width / 2, centerY + 57);
+
+        // 背景（座標）
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(centerX - posMetrics.width / 2 - 5, centerY + 68, posMetrics.width + 10, 30);
+        // テキスト（座標）
+        ctx.fillStyle = 'rgba(50, 255, 50, 0.9)';
+        ctx.fillText(targetPos, centerX - posMetrics.width / 2, centerY + 90);
+      }
+
       // === 情報ボックス（左上、縦並び）===
       ctx.fillStyle = 'white';
       ctx.font = '24px monospace';
@@ -178,25 +250,35 @@ async function capture(bot, stateManager, params = {}) {
       const yawInfoStr = `Yaw: ${Math.floor(yaw)}°`;
       const pitchInfoStr = `Pitch: ${Math.floor(pitch)}°`;
 
+      // ターゲットブロック情報
+      let targetStr;
+      if (targetInfo) {
+        targetStr = `Target: ${targetInfo.name} at (${targetInfo.position.x}, ${targetInfo.position.y}, ${targetInfo.position.z})`;
+      } else {
+        targetStr = `Target: none`;
+      }
+
       // 背景ボックス
       const boxPadding = 10;
       const lineHeight = 35;
       const posMetrics = ctx.measureText(posStr);
       const yawInfoMetrics = ctx.measureText(yawInfoStr);
       const pitchInfoMetrics = ctx.measureText(pitchInfoStr);
-      const maxWidth = Math.max(posMetrics.width, yawInfoMetrics.width, pitchInfoMetrics.width);
+      const targetMetrics = ctx.measureText(targetStr);
+      const maxWidth = Math.max(posMetrics.width, yawInfoMetrics.width, pitchInfoMetrics.width, targetMetrics.width);
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(10, 10, maxWidth + boxPadding * 2, lineHeight * 3 + boxPadding);
+      ctx.fillRect(10, 10, maxWidth + boxPadding * 2, lineHeight * 4 + boxPadding);
 
       // テキスト描画
       ctx.fillStyle = 'white';
       ctx.fillText(posStr, 20, 40);
       ctx.fillText(yawInfoStr, 20, 75);
       ctx.fillText(pitchInfoStr, 20, 110);
+      ctx.fillText(targetStr, 20, 145);
 
       document.body.appendChild(canvas);
-    }, yaw, pitch, position);
+    }, yaw, pitch, position, targetInfo);
 
     // スクリーンショット撮影
     const screenshot = await page.screenshot({
