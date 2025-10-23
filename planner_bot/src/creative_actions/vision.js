@@ -56,7 +56,7 @@ async function capture(bot, stateManager, params = {}) {
 
     // 4. Puppeteerでスクリーンショット撮影
     browser = await puppeteer.launch({
-      headless: false,  // ブラウザウィンドウを表示
+      headless: true,  // ブラウザウィンドウを表示
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
