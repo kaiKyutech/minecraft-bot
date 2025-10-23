@@ -1,7 +1,5 @@
 const navigation = require('../creative_actions/navigation')
 const vision = require('../creative_actions/vision')
-const fs = require('fs')
-const path = require('path')
 
 /**
  * !creative コマンドのハンドラ
@@ -78,14 +76,9 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
   }
 
-  // Vision capture の場合、画像をPNG保存（ボット名ごと）
-  if (category === 'vision' && action === 'capture' && result.data && result.data.image) {
-    const filename = `screenshot_${bot.username}.png`
-    const outputPath = path.join(__dirname, '..', '..', filename)
-    const imageBuffer = Buffer.from(result.data.image, 'base64')
-    fs.writeFileSync(outputPath, imageBuffer)
-    bot.systemLog(`Screenshot saved to ${outputPath}`)
-  }
+  // Vision capture の結果にはbase64画像データが含まれている
+  // result.data.image にbase64文字列が入っており、他プロジェクトで利用可能
+  // ファイル保存は vision.js 内で既に行われている
 
   return result
 }

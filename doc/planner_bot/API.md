@@ -616,36 +616,351 @@ GOAPで扱えない創造的な行動を実行します。
 
 ---
 
-## 例: LLMプロジェクトでの使用
+## LLMプロジェクトでの使用方法
+
+Planner Botは**ライブラリとして他のプロジェクトから直接使用できます**。Minecraftチャット経由ではなく、コマンドハンドラを直接呼び出すことで、高速かつ型安全にボットを制御できます。
+
+### アーキテクチャ
+
+```
+┌─────────────────────────────────────┐
+│  LLMプロジェクト（別リポジトリ）      │
+│  - Claude / GPT-4 Vision            │
+│  - LangChain / 独自実装              │
+│  - 戦略的判断・意思決定              │
+├─────────────────────────────────────┤
+│  ↓ 直接関数呼び出し                  │
+├─────────────────────────────────────┤
+│  planner_bot (ライブラリとして使用)   │
+│  - handleGoalCommand()              │
+│  - handleSkillCommand()             │
+│  - handleCreativeCommand()          │
+│  - handleStatusCommand()            │
+└─────────────────────────────────────┘
+```
+
+---
+
+### 基本的な使い方
 
 ```javascript
-const { createAIBot } = require('planner_bot/src/bot/ai_bot')
+// LLMプロジェクトのメインファイル
+const { createAIBot } = require('./planner_bot/src/bot/ai_bot');
+const { handleGoalCommand } = require('./planner_bot/src/commands/goal_command');
+const { handleCreativeCommand } = require('./planner_bot/src/commands/creative_command');
+const createStateManager = require('./planner_bot/src/planner/state_manager');
 
-const bot = createAIBot(1, config, observerPool)
+// ボット作成
+const bot = createAIBot(1, {
+  host: 'localhost',
+  port: 25565,
+  username: 'LLM_Bot',
+  version: false
+});
 
-// LLMに会話履歴を渡す
-async function getResponseFromLLM(username) {
-  // 自然言語メッセージのみ取得（システム情報を除外）
+const stateManager = createStateManager();
+
+// 準備完了まで待つ
+bot.once('spawn', async () => {
+  console.log('Bot ready!');
+});
+```
+
+---
+
+### パターン1: Vision + LLM判断 + GOAP実行
+
+```javascript
+const Anthropic = require('@anthropic-ai/sdk');
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+async function analyzeAndAct(bot, stateManager) {
+  // 1. スクリーンショット撮影
+  const visionResult = await handleCreativeCommand(
+    bot,
+    'llm_agent',
+    'vision capture',
+    stateManager
+  );
+
+  const base64Image = visionResult.data.image;  // ← base64文字列
+
+  // 2. Claude Vision APIで状況分析
+  const analysisResponse = await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    messages: [{
+      role: "user",
+      content: [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: "image/png",
+            data: base64Image
+          }
+        },
+        {
+          type: "text",
+          text: "この画像を分析してください。近くに木はありますか？何をすべきですか？"
+        }
+      ]
+    }]
+  });
+
+  const analysis = analysisResponse.content[0].text;
+  console.log('Claude分析:', analysis);
+
+  // 3. 分析結果に基づいてGOAPコマンド実行
+  if (analysis.includes("木が見える")) {
+    console.log('木を発見。木のつるはしを作成します...');
+
+    try {
+      await handleGoalCommand(
+        bot,
+        'llm_agent',
+        'inventory.wooden_pickaxe:1',
+        stateManager
+      );
+      console.log('木のつるはし作成完了！');
+    } catch (error) {
+      console.error('失敗:', error.message);
+      // エラー診断は会話履歴から取得可能
+      const diagnostics = bot.getConversationHistory({ type: 'system_info' });
+      console.log('診断情報:', diagnostics);
+    }
+  }
+}
+```
+
+---
+
+### パターン2: コマンドハンドラの直接使用
+
+```javascript
+// 各コマンドハンドラをインポート
+const { handleChatCommand } = require('./planner_bot/src/commands');
+const { handleGoalCommand } = require('./planner_bot/src/commands/goal_command');
+const { handleSkillCommand } = require('./planner_bot/src/commands/skill_command');
+const { handleCreativeCommand } = require('./planner_bot/src/commands/creative_command');
+const { handleStatusCommand } = require('./planner_bot/src/commands/status_command');
+
+// GOAP自動プランニング
+await handleGoalCommand(bot, 'llm', 'inventory.wooden_pickaxe:1', stateManager);
+
+// スキル直接実行
+await handleSkillCommand(bot, 'llm', 'skill gatherWood {"count": 10}', stateManager);
+
+// クリエイティブアクション
+const screenshot = await handleCreativeCommand(bot, 'llm', 'vision capture', stateManager);
+await handleCreativeCommand(bot, 'llm', 'navigation register {"name": "home"}', stateManager);
+await handleCreativeCommand(bot, 'llm', 'navigation goto {"name": "home"}', stateManager);
+
+// ステータス確認
+await handleStatusCommand(bot, 'llm', stateManager);
+
+// または統一インターフェース（内部で上記を呼び出す）
+await handleChatCommand(bot, 'llm', '!goal inventory.wooden_pickaxe:1', stateManager);
+await handleChatCommand(bot, 'llm', '!creative vision capture', stateManager);
+```
+
+---
+
+### パターン3: base64画像データの取得と利用
+
+```javascript
+// Vision capture の結果構造
+const result = await handleCreativeCommand(bot, 'llm', 'vision capture', stateManager);
+
+console.log(result);
+// {
+//   success: true,
+//   message: 'スクリーンショットを取得しました',
+//   data: {
+//     image: 'iVBORw0KGgoAAAANS...',  // ← base64文字列（そのままLLMに送信可能）
+//     filepath: 'C:\\...\\screenshots\\screenshot_Bot1.png',  // ファイルパス
+//     metadata: {
+//       botId: 'Bot1',
+//       position: { x: 10, y: 64, z: 20 },
+//       yaw: 90,
+//       pitch: 0,
+//       timestamp: 1729671234567
+//     }
+//   }
+// }
+
+// base64をそのままLLM APIに送信
+const base64Image = result.data.image;
+
+// Claude
+await anthropic.messages.create({
+  model: "claude-3-5-sonnet-20241022",
+  messages: [{
+    role: "user",
+    content: [{
+      type: "image",
+      source: { type: "base64", media_type: "image/png", data: base64Image }
+    }]
+  }]
+});
+
+// OpenAI GPT-4 Vision
+await openai.chat.completions.create({
+  model: "gpt-4-vision-preview",
+  messages: [{
+    role: "user",
+    content: [{
+      type: "image_url",
+      image_url: { url: `data:image/png;base64,${base64Image}` }
+    }]
+  }]
+});
+```
+
+---
+
+### パターン4: 会話履歴をLLMに渡す
+
+```javascript
+async function chatWithLLM(bot, username, userMessage) {
+  // 1. ユーザーメッセージを会話履歴に追加
+  bot.addMessage(username, userMessage, 'natural_language');
+
+  // 2. 会話履歴を取得（システム情報を除外）
   const history = bot.getConversationHistory()
     .filter(msg => msg.type !== 'system_info')
     .map(msg => ({
-      role: msg.role,
+      role: msg.role,      // "assistant" or "user"
       content: msg.content
-    }))
+    }));
 
-  // LLM APIに送信（例: OpenAI）
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
+  // 3. LLM APIに送信
+  const response = await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    system: "あなたはMinecraftボットです。ユーザーの指示に従って行動してください。",
     messages: history
-  })
+  });
 
-  const reply = response.choices[0].message.content
+  const reply = response.content[0].text;
 
-  // ボットの応答を送信＆記録
-  bot.systemLog(`-> ${username}: ${reply}`)
-  await bot.speak(username, reply)
-  bot.addMessage(bot.username, reply, 'bot_response')
+  // 4. ボットの応答を送信＆記録
+  bot.systemLog(`-> ${username}: ${reply}`);
+  await bot.speak(username, reply);
+  bot.addMessage(bot.username, reply, 'bot_response');
+
+  return reply;
 }
+```
+
+---
+
+### Minecraftチャット経由 vs 直接関数呼び出し
+
+| 方法 | メリット | デメリット | 用途 |
+|------|---------|-----------|------|
+| **Minecraftチャット** | ボット独立動作、設定不要 | 文字列パース、遅い | 手動テスト、デモ |
+| **直接関数呼び出し** | 高速、型安全、base64直接取得 | 同一プロセス必要 | LLM統合、本番運用 |
+
+---
+
+### 注意事項
+
+#### 1. botインスタンスの共有
+LLMプロジェクトとplanner_botは**同じプロセス内で動作**する必要があります。
+
+#### 2. エラーハンドリング
+コマンドハンドラは失敗時に`throw`します。必ず`try-catch`で囲んでください。
+
+```javascript
+try {
+  await handleGoalCommand(bot, 'llm', 'inventory.wooden_pickaxe:1', stateManager);
+} catch (error) {
+  console.error('GOAPコマンド失敗:', error.message);
+  // 診断情報は会話履歴から取得
+  const diagnostics = bot.getConversationHistory({ type: 'system_info' });
+}
+```
+
+#### 3. base64画像データのサイズ
+スクリーンショットは約500KB-2MBのbase64文字列になります。LLM APIのサイズ制限に注意してください。
+
+---
+
+### 完全な例: LLMボット統合
+
+```javascript
+const Anthropic = require('@anthropic-ai/sdk');
+const { createAIBot } = require('./planner_bot/src/bot/ai_bot');
+const { handleCreativeCommand } = require('./planner_bot/src/commands/creative_command');
+const { handleGoalCommand } = require('./planner_bot/src/commands/goal_command');
+const createStateManager = require('./planner_bot/src/planner/state_manager');
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// ボット作成
+const bot = createAIBot(1, {
+  host: 'localhost',
+  port: 25565,
+  username: 'ClaudeBot',
+  version: false
+});
+
+const stateManager = createStateManager();
+
+bot.once('spawn', async () => {
+  console.log('ClaudeBot起動！');
+
+  // 定期的に周囲を観察して行動
+  setInterval(async () => {
+    try {
+      // 1. スクリーンショット撮影
+      const screenshot = await handleCreativeCommand(
+        bot,
+        'system',
+        'vision capture',
+        stateManager
+      );
+
+      // 2. Claudeに状況判断を依頼
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 512,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png",
+                data: screenshot.data.image
+              }
+            },
+            {
+              type: "text",
+              text: "この画像を見て、次に何をすべきか判断してください。木を切る、石を掘る、クラフトするなど。具体的なGOAP目標を教えてください。"
+            }
+          ]
+        }]
+      });
+
+      const decision = response.content[0].text;
+      console.log('Claude判断:', decision);
+
+      // 3. Claudeの判断に基づいて行動
+      if (decision.includes("wooden_pickaxe")) {
+        await handleGoalCommand(bot, 'system', 'inventory.wooden_pickaxe:1', stateManager);
+      } else if (decision.includes("stone_pickaxe")) {
+        await handleGoalCommand(bot, 'system', 'inventory.stone_pickaxe:1', stateManager);
+      }
+      // ... 他の判断処理
+
+    } catch (error) {
+      console.error('エラー:', error.message);
+    }
+  }, 30000);  // 30秒ごと
+});
 ```
 
 ---
