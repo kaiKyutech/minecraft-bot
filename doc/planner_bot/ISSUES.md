@@ -77,7 +77,80 @@
 - `maxDistance`縮小でタイムアウト頻度は減少したが、採集効率も低下
 - 根本的解決にはWorker Threads化が必要
 
-**検討中の根本的解決策: Worker Threads化**
+**検討中の解決策**
+
+#### 解決策1: `bot.findBlocks()` の非同期分割実装（推奨）
+
+`bot.findBlocks()` が最大のボトルネック（500-1000ms）であり、これを自作して非同期化する。
+
+**アイデア**:
+- 16×16×16ブロックのチャンクごとにスキャン
+- 各チャンク処理後に `setImmediate()` でEvent Loopに制御を返す
+- keep-aliveパケット処理を挟みながらスキャン継続
+
+**実装イメージ**:
+```javascript
+async function findBlocksAsync(bot, blockType, maxDistance) {
+  const results = [];
+  const chunkSize = 16;
+
+  for (let cx = -maxDistance; cx < maxDistance; cx += chunkSize) {
+    for (let cy = -maxDistance; cy < maxDistance; cy += chunkSize) {
+      for (let cz = -maxDistance; cz < maxDistance; cz += chunkSize) {
+        // 16x16x16チャンクをスキャン
+        const chunkBlocks = scanChunk(bot, blockType, cx, cy, cz, chunkSize);
+        results.push(...chunkBlocks);
+
+        // Event Loopに制御を返す（keep-alive応答可能に）
+        await new Promise(resolve => setImmediate(resolve));
+      }
+    }
+  }
+
+  return results;
+}
+
+function scanChunk(bot, blockType, startX, startY, startZ, size) {
+  const results = [];
+  const endX = startX + size;
+  const endY = startY + size;
+  const endZ = startZ + size;
+
+  for (let x = startX; x < endX; x++) {
+    for (let y = startY; y < endY; y++) {
+      for (let z = startZ; z < endZ; z++) {
+        const block = bot.blockAt(new Vec3(x, y, z));
+        if (block && block.name === blockType) {
+          results.push(block.position);
+        }
+      }
+    }
+  }
+
+  return results;
+}
+```
+
+**メリット**:
+- ✅ Worker Threads不要（実装がシンプル）
+- ✅ `bot`オブジェクトをそのまま使える
+- ✅ Event Loopブロックを回避
+- ✅ keep-alive応答が間に合う
+- ✅ `maxDistance: 100` に戻せる（採集効率向上）
+
+**デメリット**:
+- ❌ スキャン時間は短縮されない（ただしタイムアウトは回避）
+- ❌ Mineflayerの`bot.findBlocks()`を置き換える必要がある
+
+**実装優先度**: **高** - Worker Threadsより現実的で効果的
+
+**関連ファイル**:
+- `planner_bot/src/primitives.js` - `findBlocksAsync()` 新規実装
+- `planner_bot/src/skills/gather.js` - `bot.findBlocks()` → `findBlocksAsync()` に置き換え
+
+---
+
+#### 解決策2: Worker Threads化（大規模向け、実装コスト高）
 
 メインスレッドはkeep-alive応答専用にし、重い処理をWorker Threadに分離する。
 
