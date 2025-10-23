@@ -13,7 +13,7 @@ const ACTION_FILES = [
   'equipment_actions.yaml'
 ]
 const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 2000
-const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50
+const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50  // 50 → 25に短縮
 
 let domain
 
@@ -83,7 +83,8 @@ class MinHeap {
 }
 
 function yieldToEventLoop() {
-  return new Promise((resolve) => setImmediate(resolve))
+  // process.nextTick()を使用してI/Oフェーズの前に制御を返す
+  return new Promise((resolve) => process.nextTick(resolve))
 }
 
 function loadDomain() {

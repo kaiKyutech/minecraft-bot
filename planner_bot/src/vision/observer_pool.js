@@ -122,10 +122,13 @@ class ObserverPool extends EventEmitter {
     // リクエストを取り出し
     const request = this.requestQueue.shift()
 
-    // Camera-Botに割り当て
-    await this._executeCapture(availableCamera, request)
+    // Camera-Botに割り当て（非同期で実行、awaitしない）
+    this._executeCapture(availableCamera, request)
+      .catch(error => {
+        console.error(`[OBSERVER POOL] Capture failed:`, error)
+      })
 
-    // 次のリクエストを処理
+    // 次のリクエストを処理（即座に次を試みる）
     this._processQueue()
   }
 
@@ -166,6 +169,9 @@ class ObserverPool extends EventEmitter {
 
     } finally {
       camera.busy = false
+
+      // カメラが解放されたので、キューの次のリクエストを処理
+      setImmediate(() => this._processQueue())
     }
   }
 

@@ -123,7 +123,8 @@ function addLoggingSystem(bot) {
  * @returns {Object} Mineflayerボットインスタンス
  */
 function createAIBot(id, config, observerPool) {
-  const botName = `${config.username}${id}`
+  // AI_BOT_COUNT=1の場合は番号を付けない（マルチプロセス対応）
+  const botName = config.aiBotCount === 1 ? config.username : `${config.username}${id}`
 
   console.log(`[AI-BOT] Creating ${botName}...`)
 

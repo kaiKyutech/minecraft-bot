@@ -60,7 +60,8 @@ async function startBots(config) {
       host: config.host,
       port: config.port,
       version: config.version,
-      username: config.username
+      username: config.username,
+      aiBotCount: config.aiBotCount
     }, observerPool)
     aiBots.push(bot)
 

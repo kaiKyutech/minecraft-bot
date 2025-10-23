@@ -18,6 +18,118 @@
 
 ## 重要度: 高
 
+### Keep-alive タイムアウト問題（マルチボット時）
+
+**問題**: 10体以上のボットが同時に `!goal` コマンドを実行すると、30秒のkeep-aliveタイムアウトで切断される。
+
+**発生条件**:
+- 複数のボット（10体以上）が同時にGOAPコマンドを実行
+- マルチプロセス構成（各ボット独立プロセス）でも発生
+- Paper 1.20.1サーバーで確認
+
+**根本原因**:
+- GOAP planning（A*探索）がEvent Loopをブロック
+- `bot.findBlocks(maxDistance: 100)` が500-1000msかかる
+- スキル実行中もEvent Loopが重い処理で占有される
+- 結果として、サーバーからのkeep-aliveパケットに30秒以内に応答できない
+
+**試した対策と効果**:
+
+1. **Event Loop最適化**
+   - ✅ `gather.js: maxDistance: 100→10` に変更
+     - `bot.findBlocks()`のスキャン範囲を縮小（200³→20³ブロック）
+     - 効果: タイムアウトは減少したが、10体同時実行では依然として発生
+   - ✅ `goap.js: YIELD_INTERVAL: 50→25` に変更
+     - A*探索中のEvent Loop yield頻度を2倍に
+     - 効果: 若干改善したが根本的解決には至らず
+   - ✅ `goap.js: setImmediate→process.nextTick` に変更
+     - I/O処理（keep-alive）の優先度向上
+     - 効果: 微小な改善のみ
+
+2. **マルチプロセス化（バッチファイル）**
+   - ✅ `start_multiple.bat` / `start_multiple_silent.bat` 作成
+     - 各ボットを独立したNode.jsプロセスで起動（`.env: AI_BOT_COUNT=1`）
+     - 環境変数で個別にボット名を設定: `set MC_USERNAME=Bot1`
+     - 効果: **1体では安定動作、10体では時々タイムアウト発生**
+   - ✅ PM2設定ファイル `ecosystem.config.js` 作成（未使用）
+     - 100体分のプロセス定義を動的生成
+     - バッチファイルより管理が楽だが、現状は使用していない
+
+3. **サーバー側設定変更**
+   - ✅ `paper-global.yml: max-joins-per-tick: 5→100` に変更
+     - ボット接続時の同時接続数上限を引き上げ
+     - 効果: 接続フェーズは改善（keep-aliveタイムアウトとは無関係）
+   - ✅ `bukkit.yml: connection-throttle: 4000→0` に変更
+     - 同一IPからの連続接続制限を解除
+     - 効果: バッチファイル起動時の待機時間を5秒→1秒に短縮可能
+   - ✅ `start.bat: -Dpaper.playerconnection.keepalive=120` 追加
+     - Paper 1.20.1では**効果なし**（設定が認識されていない可能性）
+     - デフォルトの30秒タイムアウトのまま
+
+4. **起動間隔の調整**
+   - ✅ バッチファイルの`timeout`を1秒→5秒→1秒に調整
+     - Paperサーバーでは`connection-throttle`により5秒必要だったが、設定変更後は1秒で安定
+     - 効果: 100体の起動時間が8.3分→1.7分に短縮
+
+**結論**:
+- マルチプロセス構成でも、各ボット内のEvent Loopブロックは解決できていない
+- 10体程度が限界で、それ以上は時々タイムアウトが発生
+- `maxDistance`縮小でタイムアウト頻度は減少したが、採集効率も低下
+- 根本的解決にはWorker Threads化が必要
+
+**検討中の根本的解決策: Worker Threads化**
+
+メインスレッドはkeep-alive応答専用にし、重い処理をWorker Threadに分離する。
+
+**アーキテクチャ**:
+```
+Main Thread (Keep-alive担当)
+  ├─ Mineflayer bot instance
+  ├─ チャット監視（軽量）
+  ├─ Keep-alive自動応答 ✓
+  └─ bot API実行（findBlocks等）
+
+Worker Thread (CPU集約処理担当)
+  ├─ GOAP planning
+  ├─ スキル実行ロジック
+  └─ bot API必要時はメインに要求（RPC）
+```
+
+**通信フロー例**:
+1. ユーザー: `!goal inventory.wooden_pickaxe:1`
+2. メイン: チャット受信 → Workerに転送
+3. Worker: GOAP planning実行（重い、独立Event Loop）
+4. Worker: `bot.findBlocks()` 必要 → メインに要求
+5. メイン: bot API実行 → Workerに結果返送
+6. Worker: スキル続行
+7. Worker: 完了 → メインに通知
+
+**メリット**:
+- メインのEvent Loopは常に軽量 → keep-alive応答保証
+- 重い処理は別スレッド → CPU使用率分散
+- 100体以上のスケーラビリティ
+
+**デメリット**:
+- 実装複雑（RPC通信、プロキシオブジェクト）
+- bot APIのシリアライズ制限
+- デバッグ困難
+
+**実装が必要なファイル**:
+- `src/worker/goap_worker.js` (新規)
+- `src/worker/bot_proxy.js` (新規)
+- `src/bot/ai_bot.js` (Worker管理追加)
+- `src/commands/goal_command.js` (Workerに委譲)
+- `src/commands/skill_command.js` (Workerに委譲)
+
+**実装優先度**: 現在は保留。まず1体での動作を安定させることを優先。
+
+**関連ファイル**:
+- `planner_bot/src/planner/goap.js`
+- `planner_bot/src/skills/gather.js`
+- `planner_bot/src/vision/observer_pool.js`
+
+---
+
 ### Pathfinder タイムアウト問題
 
 **問題**: `gather_*` スキル実行時に pathfinder が `moveTo timeout` で頻繁に失敗し、無駄なリプランニングが発生する。
