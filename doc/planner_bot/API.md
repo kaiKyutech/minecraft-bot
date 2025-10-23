@@ -402,12 +402,15 @@ GOAPで扱えない創造的な行動を実行します。
 
 ##### `capture` - 現在の視界のスクリーンショット
 
-**パラメータ**: なし（空オブジェクト `{}` を渡す）
+**パラメータ**:
+- `yaw` (number, オプション): 水平方向の角度（度数）
+- `pitch` (number, オプション): 垂直方向の角度（度数）
 
 **使用例**:
 ```
 /w Bot1 !creative vision capture {}
-/w Bot1 !creative vis capture {}
+/w Bot1 !creative vision capture {"yaw": 0, "pitch": 0}
+/w Bot1 !creative vision capture {"yaw": 90, "pitch": -45}
 ```
 
 **戻り値**:
@@ -416,122 +419,43 @@ GOAPで扱えない創造的な行動を実行します。
   success: true,
   message: "スクリーンショットを取得しました",
   data: {
-    success: true,
-    image: "data:image/png;base64,...",  // Base64画像データ
+    image: "base64string...",  // Base64画像データ（data:image/png;base64,は含まない）
+    filepath: "C:\\path\\to\\screenshots\\screenshot_Bot1.png",
     metadata: {
       botId: "Bot1",
       position: { x: 100, y: 64, z: 200 },
-      yaw: 0,
-      pitch: 0,
-      timestamp: 1234567890,
-      cameraId: 1
+      yaw: 0,        // Mineflayer座標系（度数）
+      pitch: 0,      // 度数
+      timestamp: 1234567890
     }
   }
 }
 ```
 
-**注意**: Observer Poolが初期化されている必要があります
+**座標系（重要）**:
+実測に基づく座標系（Mineflayer公式ドキュメントとは異なります）：
 
----
+- **Yaw（水平方向）**: 北を0°として反時計回り
+  - 北 = 0°
+  - 西 = 90°
+  - 南 = 180°
+  - 東 = 270° または -90°
 
-##### `captureDirection` - 指定方向を向いてスクリーンショット
+- **Pitch（垂直方向）**:
+  - 水平 = 0°
+  - 真上 = -90°
+  - 真下 = 90°
 
-**パラメータ**:
-- `yaw` (number, 必須): 水平方向の角度（ラジアン、0=北）
-- `pitch` (number, 必須): 垂直方向の角度（ラジアン、0=水平）
+**注意**: Mineflayer公式ドキュメントには「東=0°」と記載されていますが、実際の動作では「北=0°」です。
 
-**使用例**:
-```
-/w Bot1 !creative vis captureDirection {"yaw": 0, "pitch": 0}
-/w Bot1 !creative vis captureDirection {"yaw": 1.57, "pitch": -0.5}
-```
-
-**戻り値**: `capture`と同じ形式
-
-**方向の目安**:
-- `yaw: 0` - 北
-- `yaw: 1.57` (π/2) - 東
-- `yaw: 3.14` (π) - 南
-- `yaw: 4.71` (3π/2) - 西
-
----
-
-##### `capturePanorama` - 周囲4方向のパノラマ撮影
-
-**パラメータ**: なし（空オブジェクト `{}` を渡す）
-
-**使用例**:
-```
-/w Bot1 !creative vision capturePanorama {}
-```
-
-**戻り値**:
+**LLMプロジェクトでの使用時**:
+「南を向いて」などの自然言語指示を受けた場合は、以下のように変換してください：
 ```javascript
-{
-  success: true,
-  message: "パノラマ撮影完了（4枚）",
-  data: {
-    screenshots: [
-      {
-        direction: "北",
-        yaw: 0,
-        image: "data:image/png;base64,...",
-        metadata: { ... }
-      },
-      {
-        direction: "東",
-        yaw: 1.57,
-        image: "data:image/png;base64,...",
-        metadata: { ... }
-      },
-      // ... 南、西
-    ],
-    position: { x: 100, y: 64, z: 200 },
-    timestamp: 1234567890
-  }
-}
-```
-
-**注意**: 撮影に約1.2秒かかります（4方向 × 300ms間隔）
-
----
-
-##### `stats` - Observer Pool統計情報
-
-**パラメータ**: なし（空オブジェクト `{}` を渡す）
-
-**使用例**:
-```
-/w Bot1 !creative vision stats {}
-```
-
-**戻り値**:
-```javascript
-{
-  success: true,
-  message: "Observer Pool統計情報",
-  data: {
-    pool: {
-      totalCameras: 1,
-      busyCameras: 0,
-      queueLength: 0
-    },
-    requests: {
-      totalRequests: 10,
-      completedRequests: 10,
-      failedRequests: 0
-    },
-    cameras: [
-      {
-        id: 1,
-        port: 3007,
-        busy: false,
-        totalCaptures: 10,
-        avgWaitTime: 5,
-        avgCaptureTime: 850
-      }
-    ]
-  }
+const directions = {
+  '北': 0,
+  '西': 90,
+  '南': 180,
+  '東': -90  // または 270
 }
 ```
 
