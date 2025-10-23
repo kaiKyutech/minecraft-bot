@@ -140,5 +140,72 @@ module.exports = {
       message: `${names.length}個の場所が登録されています`,
       locations: locations
     }
+  },
+
+  /**
+   * プレイヤーを追跡
+   * @param {Object} bot - Mineflayerボット
+   * @param {Object} stateManager - 状態マネージャー
+   * @param {Object} params - {username?: string}
+   */
+  async follow(bot, stateManager, params) {
+    const targetUsername = params.username
+    if (!targetUsername) {
+      throw new Error('追跡するプレイヤー名（username）が必要です')
+    }
+
+    const targetPlayer = bot.players[targetUsername]
+    if (!targetPlayer || !targetPlayer.entity) {
+      throw new Error(`プレイヤー「${targetUsername}」が見つかりません`)
+    }
+
+    console.log(`[NAVIGATION] ${targetUsername} を追跡開始`)
+
+    // 既に追跡中なら停止
+    if (bot.followTarget) {
+      bot.pathfinder.setGoal(null)
+    }
+
+    // 追跡情報を保存
+    bot.followTarget = targetUsername
+
+    // pathfinderを使って追跡
+    const { GoalFollow } = require('mineflayer-pathfinder').goals
+    const goal = new GoalFollow(targetPlayer.entity, 3) // 3ブロック距離を保つ
+
+    bot.pathfinder.setGoal(goal, true)
+
+    return {
+      success: true,
+      message: `${targetUsername} の追跡を開始しました`,
+      target: targetUsername
+    }
+  },
+
+  /**
+   * 追跡を停止
+   * @param {Object} bot - Mineflayerボット
+   * @param {Object} stateManager - 状態マネージャー
+   * @param {Object} params - {}
+   */
+  async stopFollow(bot, stateManager, params) {
+    if (!bot.followTarget) {
+      return {
+        success: true,
+        message: '追跡していません'
+      }
+    }
+
+    const target = bot.followTarget
+    bot.followTarget = null
+    bot.pathfinder.setGoal(null)
+
+    console.log(`[NAVIGATION] ${target} の追跡を停止しました`)
+
+    return {
+      success: true,
+      message: `${target} の追跡を停止しました`,
+      previousTarget: target
+    }
   }
 }
