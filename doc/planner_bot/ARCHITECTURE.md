@@ -1,6 +1,6 @@
 # Planner Bot - アーキテクチャ
 
-**最終更新**: 2025-10-19
+**最終更新**: 2025-10-24
 
 このドキュメントは各システムの設計思想とフローを記述します。
 使い方については [API.md](./API.md)、実装状況は [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) を参照してください。
@@ -13,7 +13,7 @@
 - [ボット起動フロー](#ボット起動フロー)
 - [GOAP システム](#goap-システム)
 - [Creative Actions](#creative-actions)
-- [視覚システム (Observer Pool)](#視覚システム-observer-pool)
+- [視覚システム](#視覚システム)
 - [会話履歴システム](#会話履歴システム)
 - [ログシステム](#ログシステム)
 
@@ -27,22 +27,17 @@
 ┌─────────────────────────────────────┐
 │  Planner Bot Process                │
 │                                     │
-│  ┌─────────────┐  ┌──────────────┐ │
-│  │  AI Bot #1  │  │ Camera-Bot#1 │ │
-│  │  AI Bot #2  │  │ Camera-Bot#2 │ │
-│  │  AI Bot #3  │  │ Camera-Bot#3 │ │
-│  └─────────────┘  └──────────────┘ │
+│  ┌─────────────┐                   │
+│  │  AI Bot #1  │                   │
+│  │  AI Bot #2  │                   │
+│  │  AI Bot #3  │                   │
+│  └─────────────┘                   │
 │                                     │
-│  ┌─────────────────────────────────┐│
-│  │     Observer Pool               ││
-│  │  (Camera-Bot管理)               ││
-│  └─────────────────────────────────┘│
 └─────────────────────────────────────┘
 ```
 
 - **AI Bot**: GOAP + Creative Actions でタスク実行
-- **Camera-Bot**: prismarine-viewer 起動し、AI Bot の視点でスクリーンショット撮影
-- **Observer Pool**: Camera-Bot のプール管理、リクエストキューイング
+- 各AI Botが必要に応じて prismarine-viewer を起動してスクリーンショット撮影
 
 ### 設定
 
@@ -50,7 +45,6 @@
 
 ```bash
 AI_BOT_COUNT=3        # AI Bot数
-CAMERA_COUNT=3        # Camera-Bot数
 ```
 
 ---
@@ -62,23 +56,16 @@ planner_bot/index.js
     │
     ├─ loadConfig()          # .env読み込み
     │
-    ├─ createObserverPool()  # Observer Pool初期化
-    │
-    ├─ createAIBots()        # AI Bot起動 (AI_BOT_COUNT体)
-    │   └─ createAIBot()
-    │       ├─ mineflayer.createBot()
-    │       ├─ addLoggingSystem()        # ログ・履歴システム追加
-    │       ├─ setupSkillSystem()        # スキル登録
-    │       ├─ setupPrimitives()         # プリミティブ登録
-    │       ├─ setupCreativeActions()    # Creative Actions登録
-    │       └─ setupEventHandlers()      # イベントハンドラ登録
-    │           ├─ on('spawn')
-    │           └─ on('whisper')         # コマンド処理
-    │
-    └─ createCameraBots()    # Camera-Bot起動 (CAMERA_COUNT体)
-        └─ createCameraBot()
+    └─ createAIBots()        # AI Bot起動 (AI_BOT_COUNT体)
+        └─ createAIBot()
             ├─ mineflayer.createBot()
-            └─ Observer Pool に登録
+            ├─ addLoggingSystem()        # ログ・履歴システム追加
+            ├─ setupSkillSystem()        # スキル登録
+            ├─ setupPrimitives()         # プリミティブ登録
+            ├─ setupCreativeActions()    # Creative Actions登録
+            └─ setupEventHandlers()      # イベントハンドラ登録
+                ├─ on('spawn')           # 起動時にコマンド例を表示
+                └─ on('whisper')         # コマンド処理
 ```
 
 ---
@@ -215,14 +202,14 @@ Replanning...
 
 ### 概要
 
-GOAP では扱えない「探索」「建築」「視覚」などの創造的な行動を実装するカテゴリです。
+GOAP では扱えない「探索」「建築」「視覚」「追跡」などの創造的な行動を実装するカテゴリです。
 
 ### 構成
 
 ```
 src/creative_actions/
-  ├─ navigation.js    # ナビゲーション (場所登録、移動)
-  ├─ vision.js        # 視覚 (スクリーンショット、Observer Pool連携)
+  ├─ navigation.js    # ナビゲーション (場所登録、移動、追跡)
+  ├─ vision.js        # 視覚 (スクリーンショット)
   ├─ exploration.js   # 探索 (未実装)
   └─ building.js      # 建築 (未実装)
 ```
@@ -231,7 +218,7 @@ src/creative_actions/
 
 ```
 ┌──────────────────────────────────────┐
-│  Named Locations (bot._namedLocations) │
+│  Named Locations (stateManager)      │
 │                                      │
 │  {                                   │
 │    "home": { x: 100, y: 64, z: 200 } │
@@ -242,12 +229,15 @@ src/creative_actions/
          v                    v
     register()            goto()
     gotoCoords()          list()
+    follow()              stopFollow()
 ```
 
 - **register**: 現在地を名前付きで保存
 - **goto**: 保存した場所に移動 (mineflayer-pathfinder 使用)
 - **gotoCoords**: 座標指定で移動
 - **list**: 保存済み場所一覧
+- **follow**: プレイヤーを追跡（3ブロック距離を保つ）
+- **stopFollow**: 追跡停止
 
 ### Vision アクション
 
@@ -260,113 +250,108 @@ src/creative_actions/
               │
               v
 ┌─────────────────────────────────────┐
-│  Observer Pool                      │
-│  - Camera-Bot割り当て               │
-│  - リクエストキューイング           │
-└─────────────────────────────────────┘
-              │
-              v
-┌─────────────────────────────────────┐
-│  Camera-Bot                         │
-│  - AI Botの位置にTP                 │
-│  - 視線方向設定                     │
+│  vision.capture()                   │
+│  - 動的ポート取得 (get-port)        │
 │  - prismarine-viewer起動            │
+│  - 視線方向設定 (bot.look)          │
 └─────────────────────────────────────┘
               │
               v
 ┌─────────────────────────────────────┐
 │  Puppeteer                          │
-│  - ブラウザ起動                     │
+│  - ブラウザ起動 (headless)          │
 │  - スクリーンショット撮影           │
-│  - Base64データ取得                 │
+│  - オーバーレイ描画                 │
 └─────────────────────────────────────┘
               │
               v
-        画像データ返却
-```
-
-- **capture**: 現在視点のスクリーンショット
-- **captureDirection**: 指定方向のスクリーンショット
-- **capturePanorama**: 4方向 (N, E, S, W) のパノラマ撮影
-- **stats**: Observer Pool統計情報
-
----
-
-## 視覚システム (Observer Pool)
-
-### 設計思想
-
-AI Bot が直接 prismarine-viewer を起動すると負荷が高いため、専用の **Camera-Bot** を用意してプール管理します。
-
-### Observer Pool の役割
-
-```
 ┌─────────────────────────────────────┐
-│  Observer Pool                      │
-│                                     │
-│  - Camera-Bot 登録管理              │
-│  - リクエストキューイング           │
-│  - Camera-Bot 割り当て              │
-│  - 統計情報収集                     │
+│  後処理                             │
+│  - Base64データ取得                 │
+│  - ファイル保存                     │
+│  - Viewer/Browser クローズ          │
 └─────────────────────────────────────┘
 ```
 
-### リクエストフロー
+- **capture**: 現在視点のスクリーンショット（yaw/pitch指定可能）
+- 必要な時だけViewerを起動し、撮影後は即座にクローズ
+- 動的ポート割り当てで複数ボット同時撮影可能
 
-```
-AI Bot: capture()
-    │
-    v
-Observer Pool: requestCamera()
-    │
-    ├─ 空きCamera-Botあり
-    │   └─> 即座に割り当て
-    │
-    └─ 空きCamera-Botなし
-        └─> キュー待機
-            └─> 空きができたら処理
-```
+---
 
-### Camera-Bot の責務
+## 視覚システム
 
-```
-1. prismarine-viewer 起動
-   │
-   v
-2. AI Botの位置にTP
-   │  /tp @s x y z yaw pitch
-   │
-   v
-3. Puppeteer でスクリーンショット撮影
-   │  - ブラウザ起動
-   │  - 指定URL (http://localhost:3000) にアクセス
-   │  - オーバーレイ描画 (位置・方角情報)
-   │  - スクリーンショット
-   │
-   v
-4. Base64データ取得
-   │
-   v
-5. Observer Pool に返却
-   │
-   v
-6. AI Bot に画像データ返却
-```
+### 設計思想の変遷
 
-### 統計情報
+**旧設計（Observer Pool）:**
+- 専用のCamera-Botを用意してプール管理
+- 複数AI Botで共有する設計
+- 300AI Botが頻繁にスクリーンショットを撮る想定
 
-Observer Pool は以下の統計を収集:
+**現在の設計（シンプル化）:**
+- AI Bot自身が必要な時だけViewerを起動
+- スクリーンショットは数秒〜数分に1回程度
+- リソース共有は不要（YAGNI原則）
+
+### 実装詳細
 
 ```javascript
-{
-  total: 3,                    // Camera-Bot総数
-  available: 2,                // 空きCamera-Bot数
-  busy: 1,                     // 使用中Camera-Bot数
-  queueLength: 0,              // キュー待ちリクエスト数
-  requestsProcessed: 42,       // 処理済みリクエスト数
-  averageWaitTime: 0.3         // 平均待機時間 (秒)
+async function capture(bot, stateManager, params) {
+  // 1. 動的ポート取得
+  const port = await getPort()
+
+  // 2. Viewer起動
+  const viewer = mineflayerViewer(bot, { port, firstPerson: true })
+
+  // 3. 視線方向設定（オプション）
+  if (params.yaw !== undefined || params.pitch !== undefined) {
+    await bot.look(yawRadians, pitchRadians, true)
+  }
+
+  // 4. Puppeteerでスクリーンショット
+  const browser = await puppeteer.launch({ headless: true })
+  const page = await browser.newPage()
+  await page.goto(`http://localhost:${port}`)
+
+  // 5. オーバーレイ描画
+  await page.evaluate((yaw, pitch, position, targetInfo) => {
+    // Canvas描画: ヒートマップ、ターゲットサークル、座標情報
+  })
+
+  const screenshot = await page.screenshot({ encoding: 'base64' })
+
+  // 6. クリーンアップ
+  await browser.close()
+  viewer.close()
+  bot.viewer = null
+
+  return { image: screenshot, ... }
 }
 ```
+
+### オーバーレイ情報
+
+**左上情報ボックス:**
+- `Pos: x, y, z`
+- `Yaw: 90°`
+- `Pitch: 10°`
+- `Target: oak_log at (130, 64, -50)` （視線先ブロック）
+
+**Yaw視野ガイド:**
+- 画面左端（青）: 現在Yaw + 60°
+- 画面中央（白）: 現在Yaw
+- 画面右端（赤）: 現在Yaw - 60°
+
+**ターゲットサークル（緑）:**
+- 画面中央に十字線とサークル
+- 視線先ブロック情報を表示（`bot.blockAtCursor(256)`）
+
+### 座標系
+
+- **Yaw**: 北=0°, 反時計回り（西=90°, 南=180°, 東=270°）
+- **Pitch**: 0°=水平, マイナス=上, プラス=下
+
+**注意**: Mineflayer公式ドキュメント（東=0°）とは異なる実測値
 
 ---
 
@@ -511,6 +496,27 @@ const fullMessage = `目標を実行できません:\n${reason}\n\n診断:\n${di
 bot.systemLog(fullMessage)                      // コンソール出力
 bot.addMessage(bot.username, fullMessage, 'system_info')  // 履歴記録
 ```
+
+---
+
+## 将来の拡張計画
+
+### topDownMap（俯瞰ヒートマップ）
+
+周囲の地形を俯瞰視点でヒートマップ画像として生成する機能。
+
+**仕様:**
+- 相対高度を色で表現（赤=高い、緑=同じ、青=低い）
+- 重要オブジェクトをマーク（🌲木、⚙️建材、"Stone"）
+- 常に北が上、グリッド線で座標表示
+- ボット位置を中央の×印で表示
+
+**技術課題:**
+- ブロックのクラスタリング
+- Canvas での絵文字/テキスト描画
+- パフォーマンス最適化
+
+詳細は [API.md - topDownMap](./API.md#topdownmap) を参照。
 
 ---
 
