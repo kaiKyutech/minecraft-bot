@@ -119,10 +119,9 @@ function addLoggingSystem(bot) {
  * AI Botを作成
  * @param {number} id - ボットID
  * @param {Object} config - 設定
- * @param {Object} observerPool - Observer Poolインスタンス
  * @returns {Object} Mineflayerボットインスタンス
  */
-function createAIBot(id, config, observerPool) {
+function createAIBot(id, config) {
   // AI_BOT_COUNT=1の場合は番号を付けない（マルチプロセス対応）
   const botName = config.aiBotCount === 1 ? config.username : `${config.username}${id}`
 
@@ -142,9 +141,6 @@ function createAIBot(id, config, observerPool) {
 
   // 統一されたログシステムを追加
   addLoggingSystem(bot)
-
-  // Observer Poolへの参照を保持
-  bot.observerPool = observerPool
 
   // スポーン時
   bot.once('spawn', () => {

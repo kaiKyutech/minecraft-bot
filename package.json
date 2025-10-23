@@ -13,6 +13,7 @@
   "dependencies": {
     "canvas": "^3.2.0",
     "dotenv": "^17.2.3",
+    "get-port": "^7.1.0",
     "mineflayer": "^4.33.0",
     "mineflayer-pathfinder": "github:Hatadi-v/mineflayer-pathfinder#patch-1",
     "prismarine-viewer": "github:kaiKyutech/prismarine-viewer",
