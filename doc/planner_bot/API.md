@@ -374,6 +374,49 @@ GOAPで扱えない創造的な行動を実行します。
 
 ---
 
+##### `follow` - プレイヤーを追跡
+
+**パラメータ**:
+- `username` (string, 必須): 追跡するプレイヤー名
+
+**使用例**:
+```
+/w Bot1 !creative nav follow {"username": "RitsukaAlice"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "RitsukaAlice の追跡を開始しました",
+  target: "RitsukaAlice"
+}
+```
+
+**動作**: 指定したプレイヤーを3ブロックの距離を保って追跡します。
+
+---
+
+##### `stopFollow` - 追跡停止
+
+**パラメータ**: なし
+
+**使用例**:
+```
+/w Bot1 !creative nav stopFollow {}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "RitsukaAlice の追跡を停止しました",
+  previousTarget: "RitsukaAlice"
+}
+```
+
+---
+
 ##### `list` - 登録済み場所の一覧
 
 **パラメータ**: なし
