@@ -379,7 +379,8 @@ GOAPで扱えない創造的な行動を実行します。
 Yaw角度と距離を指定して移動します。目標地点のY座標は自動的に地表の高さを検出します。
 
 **パラメータ**:
-- `yaw` (number, 必須): 移動方向（度数、北=0°、反時計回り）
+- `yaw` (number, オプション): 移動方向（度数、北=0°、反時計回り）
+  - 省略時は現在の視線方向に進む
 - `distance` (number, 必須): 移動距離（ブロック数）
 - `verticalMode` (string, オプション): 地表検出モード（デフォルト: `"nearest"`）
   - `"nearest"`: 現在地に最も近い地面（デフォルト）
@@ -389,7 +390,10 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
 
 **使用例**:
 ```
-# 通常の移動（一番近い地面へ）
+# 現在向いている方向に進む
+/w Bot1 !creative navigation moveInDirection {"distance": 10}
+
+# 方向を指定して移動
 /w Bot1 !creative navigation moveInDirection {"yaw": 90, "distance": 10}
 
 # 洞窟の床を目指す
@@ -511,12 +515,24 @@ AI Botが自分自身の視界のスクリーンショットを撮影します�
 **パラメータ**:
 - `yaw` (number, オプション): 水平方向の角度（度数）
 - `pitch` (number, オプション): 垂直方向の角度（度数）
+- `renderWait` (number, オプション): 描画待機時間（ミリ秒、デフォルト: 10000）
+  - prismarine-viewerのメッシュ生成完了を待つ時間
+  - 近距離のみ: 5000ms程度
+  - 遠距離まで: 10000ms以上推奨
 
 **使用例**:
 ```
+# デフォルト（10秒待機）
 /w Bot1 !creative vision capture {}
+
+# 視線方向指定
 /w Bot1 !creative vision capture {"yaw": 0, "pitch": 0}
-/w Bot1 !creative vision capture {"yaw": 90, "pitch": -45}
+
+# 短距離用（5秒待機）
+/w Bot1 !creative vision capture {"yaw": 90, "renderWait": 5000}
+
+# 超遠距離用（15秒待機）
+/w Bot1 !creative vision capture {"yaw": 0, "renderWait": 15000}
 ```
 
 **戻り値**:
@@ -556,6 +572,15 @@ AI Botが自分自身の視界のスクリーンショットを撮影します�
 **注意**:
 - Mineflayer公式ドキュメントには「東=0°」と記載されていますが、実際の動作では「北=0°」です
 - Pitchは数値が増えると下を向きます（直感と逆なので注意）
+
+**描画待機時間（renderWait）について**:
+- prismarine-viewerは近いブロックから順番にメッシュ化します
+- 待機時間が短いと遠くのブロックが描画されず、空の色だけが表示されます
+- 目安:
+  - 近距離（村の中など）: 5000ms
+  - 中距離（村全体が見える）: 10000ms（デフォルト）
+  - 遠距離（広範囲の地形）: 15000ms以上
+- この待機時間はGPUではなく、CPUのメッシュ生成処理を待っています
 
 **視線先ブロック情報**:
 `bot.blockAtCursor()` で最大256ブロック先まで検出し、画面中央の緑のターゲットサークル下に表示されます：
