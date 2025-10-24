@@ -93,7 +93,7 @@ async function handleStatusCommand(bot, username, stateManager) {
 
   // 6. 利用可能なシステム
   messages.push('---')
-  messages.push('システム: !goal (GOAP), !creative nav')
+  messages.push('システム: !goal (GOAP), !creative navigation')
   messages.push('GOAP: 素材が近くにあるときに自動実行')
   messages.push('Creative: ナビゲーション（場所の登録・移動）')
 

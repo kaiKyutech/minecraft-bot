@@ -1,9 +1,127 @@
 const primitives = require('../primitives')
+const { Vec3 } = require('vec3')
 
 /**
  * Navigation Actions - 場所の登録と移動
  * GOAPではなくLLMが直接制御する創造的行動
  */
+
+/**
+ * 固体の地面として扱えるブロックかどうか
+ * @param {string} blockName - ブロック名
+ * @returns {boolean}
+ */
+function isSolidGround(blockName) {
+  // 空気や液体、葉っぱは地面として扱わない
+  const nonSolidBlocks = [
+    'air', 'cave_air', 'void_air',
+    'water', 'lava', 'flowing_water', 'flowing_lava',
+    'oak_leaves', 'spruce_leaves', 'birch_leaves', 'jungle_leaves',
+    'acacia_leaves', 'dark_oak_leaves', 'azalea_leaves', 'flowering_azalea_leaves',
+    'mangrove_leaves', 'cherry_leaves'
+  ]
+  return !nonSolidBlocks.includes(blockName)
+}
+
+/**
+ * 指定したY座標の上に2ブロック分の空間があるか確認
+ * @param {Object} bot - Mineflayerボット
+ * @param {number} x - X座標
+ * @param {number} y - Y座標（地面）
+ * @param {number} z - Z座標
+ * @returns {boolean}
+ */
+function hasSpaceAbove(bot, x, y, z) {
+  const space1 = bot.blockAt(new Vec3(x, y + 1, z))
+  const space2 = bot.blockAt(new Vec3(x, y + 2, z))
+
+  return space1 && space1.name === 'air' && space2 && space2.name === 'air'
+}
+
+/**
+ * 指定座標の地表高さを取得
+ * @param {Object} bot - Mineflayerボット
+ * @param {number} x - X座標
+ * @param {number} z - Z座標
+ * @param {string} verticalMode - 探索モード ("nearest" | "above" | "below" | "surface")
+ * @returns {number} Y座標（立てる位置）
+ */
+function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
+  const startY = Math.floor(bot.entity.position.y)
+  const maxRange = 50
+
+  // "surface" モード: 上空から下に探索（空が見える地表）
+  if (verticalMode === 'surface') {
+    const maxY = 320  // Minecraft 1.18+ の最大高度
+    const minY = -64  // Minecraft 1.18+ の最小高度
+
+    for (let y = maxY; y >= minY; y--) {
+      const block = bot.blockAt(new Vec3(x, y, z))
+      if (block && isSolidGround(block.name)) {
+        // 上に2ブロック分の空間があるか確認
+        if (hasSpaceAbove(bot, x, y, z)) {
+          console.log(`[NAVIGATION] 地表を検出: Y=${y + 1}`)
+          return y + 1
+        }
+      }
+    }
+    throw new Error('地表が見つかりません')
+  }
+
+  // "below" モード: 下方向のみ探索
+  if (verticalMode === 'below') {
+    for (let offset = 1; offset <= maxRange; offset++) {
+      const block = bot.blockAt(new Vec3(x, startY - offset, z))
+      if (block && isSolidGround(block.name)) {
+        // 上に2ブロック分の空間があるか確認
+        if (hasSpaceAbove(bot, x, startY - offset, z)) {
+          return startY - offset + 1
+        }
+      }
+    }
+    throw new Error(`現在地より下に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
+  }
+
+  // "above" モード: 上方向のみ探索
+  if (verticalMode === 'above') {
+    for (let offset = 1; offset <= maxRange; offset++) {
+      const block = bot.blockAt(new Vec3(x, startY + offset, z))
+      if (block && isSolidGround(block.name)) {
+        // 上に2ブロック分の空間があるか確認
+        if (hasSpaceAbove(bot, x, startY + offset, z)) {
+          return startY + offset + 1
+        }
+      }
+    }
+    throw new Error(`現在地より上に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
+  }
+
+  // "nearest" モード: 上下交互に探索
+  for (let offset = 1; offset <= maxRange; offset++) {
+    // 下を確認
+    const blockBelow = bot.blockAt(new Vec3(x, startY - offset, z))
+    if (blockBelow && isSolidGround(blockBelow.name)) {
+      // 上に2ブロック分の空間があるか確認
+      if (hasSpaceAbove(bot, x, startY - offset, z)) {
+        return startY - offset + 1
+      }
+    }
+
+    // 上を確認
+    const blockAbove = bot.blockAt(new Vec3(x, startY + offset, z))
+    if (blockAbove && isSolidGround(blockAbove.name)) {
+      // 上に2ブロック分の空間があるか確認
+      if (hasSpaceAbove(bot, x, startY + offset, z)) {
+        return startY + offset + 1
+      }
+    }
+  }
+
+  // 見つからなければ現在地のY座標を返す
+  console.log(`[NAVIGATION] 立てる地面が見つかりませんでした。現在地のY座標を使用します`)
+  return startY
+}
+
 module.exports = {
   /**
    * 現在地を名前付きで登録
@@ -206,6 +324,74 @@ module.exports = {
       success: true,
       message: `${target} の追跡を停止しました`,
       previousTarget: target
+    }
+  },
+
+  /**
+   * 方向と距離を指定して移動
+   * @param {Object} bot - Mineflayerボット
+   * @param {Object} stateManager - 状態マネージャー
+   * @param {Object} params - {yaw: number, distance: number, verticalMode?: string}
+   */
+  async moveInDirection(bot, stateManager, params) {
+    const { yaw, distance, verticalMode = 'nearest' } = params
+
+    if (yaw === undefined) {
+      throw new Error('方向（yaw）が必要です')
+    }
+    if (distance === undefined) {
+      throw new Error('距離（distance）が必要です')
+    }
+
+    // 有効な verticalMode かチェック
+    const validModes = ['nearest', 'above', 'below', 'surface']
+    if (!validModes.includes(verticalMode)) {
+      throw new Error(`verticalMode は ${validModes.join(', ')} のいずれかである必要があります`)
+    }
+
+    const currentPos = bot.entity.position
+
+    // Yaw（度数）を使って目標XZ座標を計算
+    // Mineflayer座標系: 北=0°, 反時計回り（西=90°, 南=180°, 東=270°または-90°）
+    const yawRadians = yaw * Math.PI / 180
+    const targetX = Math.floor(currentPos.x - Math.sin(yawRadians) * distance)
+    const targetZ = Math.floor(currentPos.z - Math.cos(yawRadians) * distance)
+
+    console.log(`[NAVIGATION] Yaw ${yaw}° 方向に ${distance} ブロック移動開始`)
+    console.log(`[NAVIGATION] 目標XZ: (${targetX}, ${targetZ})`)
+
+    // 目標座標の地表高さを取得
+    let targetY
+    try {
+      targetY = findSurfaceHeight(bot, targetX, targetZ, verticalMode)
+      console.log(`[NAVIGATION] 目標Y座標: ${targetY} (verticalMode: ${verticalMode})`)
+    } catch (error) {
+      console.error(`[NAVIGATION] ${error.message}`)
+      throw error
+    }
+
+    // 移動実行
+    await primitives.moveTo(bot, {
+      position: { x: targetX, y: targetY, z: targetZ },
+      range: 3.0
+    })
+
+    const finalPos = bot.entity.position
+    console.log(`[NAVIGATION] 到達: (${Math.floor(finalPos.x)}, ${Math.floor(finalPos.y)}, ${Math.floor(finalPos.z)})`)
+
+    return {
+      success: true,
+      message: `Yaw ${yaw}° 方向に ${distance} ブロック移動しました`,
+      targetPosition: {
+        x: targetX,
+        y: targetY,
+        z: targetZ
+      },
+      actualPosition: {
+        x: Math.floor(finalPos.x),
+        y: Math.floor(finalPos.y),
+        z: Math.floor(finalPos.z)
+      }
     }
   }
 }

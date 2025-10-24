@@ -313,8 +313,8 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav register {"name": "home"}
-/w Bot1 !creative nav register {"name": "workbench", "blockType": "crafting_table"}
+/w Bot1 !creative navigation register {"name": "home"}
+/w Bot1 !creative navigation register {"name": "workbench", "blockType": "crafting_table"}
 ```
 
 **戻り値**:
@@ -335,7 +335,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav goto {"name": "home"}
+/w Bot1 !creative navigation goto {"name": "home"}
 ```
 
 **戻り値**:
@@ -360,7 +360,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav gotoCoords {"x": 250, "y": 64, "z": -100}
+/w Bot1 !creative navigation gotoCoords {"x": 250, "y": 64, "z": -100}
 ```
 
 **戻り値**:
@@ -374,6 +374,62 @@ GOAPで扱えない創造的な行動を実行します。
 
 ---
 
+##### `moveInDirection` - 方向と距離を指定して移動
+
+Yaw角度と距離を指定して移動します。目標地点のY座標は自動的に地表の高さを検出します。
+
+**パラメータ**:
+- `yaw` (number, 必須): 移動方向（度数、北=0°、反時計回り）
+- `distance` (number, 必須): 移動距離（ブロック数）
+- `verticalMode` (string, オプション): 地表検出モード（デフォルト: `"nearest"`）
+  - `"nearest"`: 現在地に最も近い地面（デフォルト）
+  - `"below"`: 現在地より下の地面のみ（洞窟の床を目指す）
+  - `"above"`: 現在地より上の地面のみ（洞窟から地上へ）
+  - `"surface"`: 上空から探索して空が見える地表のみ（地上を歩きたい時）
+
+**使用例**:
+```
+# 通常の移動（一番近い地面へ）
+/w Bot1 !creative navigation moveInDirection {"yaw": 90, "distance": 10}
+
+# 洞窟の床を目指す
+/w Bot1 !creative navigation moveInDirection {"yaw": 0, "distance": 15, "verticalMode": "below"}
+
+# 洞窟から地上へ
+/w Bot1 !creative navigation moveInDirection {"yaw": 180, "distance": 5, "verticalMode": "above"}
+
+# 地表を歩く（洞窟に潜らない）
+/w Bot1 !creative navigation moveInDirection {"yaw": 90, "distance": 20, "verticalMode": "surface"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "Yaw 90° 方向に 10 ブロック移動しました",
+  targetPosition: { x: 110, y: 65, z: 200 },
+  actualPosition: { x: 109, y: 65, z: 199 }
+}
+```
+
+**動作**:
+1. Yaw角度とdistanceから目標XZ座標を計算
+2. 目標座標の地表高さを探索（verticalModeに応じて探索）
+   - `nearest`: 現在地から±1, ±2, ±3... と上下交互に探索（最大50ブロック）
+   - `below`: 現在地から下方向のみ探索（最大50ブロック）
+   - `above`: 現在地から上方向のみ探索（最大50ブロック）
+   - `surface`: Y=320から-64まで下方向に探索し、最初に見つかる地表
+3. 見つかった地面の上に2ブロック分の空間があることを確認（全モード共通）
+4. pathfinderで目標座標へ移動（range=3.0ブロック）
+
+**座標系**: 北=0°、反時計回り（西=90°、南=180°、東=270°）
+
+**利点**:
+- LLMがスクリーンショットの視野角から方向を理解しやすく、正確な座標計算が不要
+- `surface`モードで地上を歩き続けることができ、洞窟に潜り込むのを防げる
+
+---
+
 ##### `follow` - プレイヤーを追跡
 
 **パラメータ**:
@@ -381,7 +437,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav follow {"username": "RitsukaAlice"}
+/w Bot1 !creative navigation follow {"username": "RitsukaAlice"}
 ```
 
 **戻り値**:
@@ -403,7 +459,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav stopFollow {}
+/w Bot1 !creative navigation stopFollow {}
 ```
 
 **戻り値**:
@@ -423,7 +479,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative nav list {}
+/w Bot1 !creative navigation list {}
 ```
 
 **戻り値**:

@@ -152,6 +152,7 @@ function createAIBot(id, config) {
     console.log(`  !goal inventory.stick:4`)
     console.log(`  !skill gather {"blockType": "oak_log", "count": 5}`)
     console.log(`  !creative vision capture {"yaw": 90, "pitch": 0}`)
+    console.log(`  !creative navigation moveInDirection {"yaw": 90, "distance": 10}`)
     console.log(`  !creative navigation follow {"username": "PlayerName"}`)
     console.log(`  !creative navigation stopFollow {}`)
     console.log(`  !status`)
