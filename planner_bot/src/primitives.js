@@ -23,8 +23,8 @@ async function moveTo(bot, params = {}) {
   if (timeout === undefined) {
     // タイムアウトが指定されていない場合は、距離に応じて動的に設定
     const distance = bot.entity.position.distanceTo(position)
-    // 1ブロックあたり200ms + 基本10秒（最小10秒、最大60秒）
-    timeout = Math.max(10000, Math.min(60000, 10000 + distance * 200))
+    // 1ブロックあたり1秒（1000ms）、最小30秒
+    timeout = Math.max(30000, distance * 1000)
   }
 
   // タイムアウトがnullの場合はタイムアウトなし
