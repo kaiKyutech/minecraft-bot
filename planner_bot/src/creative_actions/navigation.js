@@ -334,13 +334,17 @@ module.exports = {
    * @param {Object} params - {yaw: number, distance: number, verticalMode?: string}
    */
   async moveInDirection(bot, stateManager, params) {
-    const { yaw, distance, verticalMode = 'nearest' } = params
+    const { distance, verticalMode = 'nearest' } = params
+    let { yaw } = params
 
-    if (yaw === undefined) {
-      throw new Error('方向（yaw）が必要です')
-    }
     if (distance === undefined) {
       throw new Error('距離（distance）が必要です')
+    }
+
+    // yawが指定されていない場合は現在の視線方向を使用
+    if (yaw === undefined) {
+      yaw = bot.entity.yaw * 180 / Math.PI  // ラジアンから度数に変換
+      console.log(`[NAVIGATION] yaw未指定、現在の視線方向を使用: ${yaw.toFixed(2)}°`)
     }
 
     // 有効な verticalMode かチェック
@@ -357,7 +361,7 @@ module.exports = {
     const targetX = Math.floor(currentPos.x - Math.sin(yawRadians) * distance)
     const targetZ = Math.floor(currentPos.z - Math.cos(yawRadians) * distance)
 
-    console.log(`[NAVIGATION] Yaw ${yaw}° 方向に ${distance} ブロック移動開始`)
+    console.log(`[NAVIGATION] Yaw ${yaw.toFixed(2)}° 方向に ${distance} ブロック移動開始`)
     console.log(`[NAVIGATION] 目標XZ: (${targetX}, ${targetZ})`)
 
     // 目標座標の地表高さを取得

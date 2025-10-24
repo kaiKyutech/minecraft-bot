@@ -146,16 +146,6 @@ function createAIBot(id, config) {
   bot.once('spawn', () => {
     console.log(`[AI-BOT] ${botName} spawned`)
     debugLog(`${botName} spawned, ready to receive goals`)
-
-    // 使用例を表示
-    console.log(`[AI-BOT] コマンド例:`)
-    console.log(`  !goal inventory.stick:4`)
-    console.log(`  !skill gather {"blockType": "oak_log", "count": 5}`)
-    console.log(`  !creative vision capture {"yaw": 90, "pitch": 0}`)
-    console.log(`  !creative navigation moveInDirection {"yaw": 90, "distance": 10}`)
-    console.log(`  !creative navigation follow {"username": "PlayerName"}`)
-    console.log(`  !creative navigation stopFollow {}`)
-    console.log(`  !status`)
   })
 
   // ウィスパーコマンド受付

@@ -4,6 +4,7 @@
  */
 
 const { createAIBot } = require('./ai_bot');
+const chalk = require('chalk');
 
 /**
  * 全ボットを起動
@@ -65,14 +66,24 @@ function printCompletionBanner(aiCount) {
   console.log('All bots are now running!');
   console.log('='.repeat(60));
   console.log(`AI Bots: ${aiCount}`);
-  console.log('\nCommands (via Minecraft chat):');
-  console.log('  !creative vision capture {"yaw": 90, "pitch": 0}');
-  console.log('  !creative navigation register {"name": "home"}');
-  console.log('  !creative navigation goto {"name": "home"}');
-  console.log('  !goal <goal_name>');
-  console.log('  !status');
-  console.log('  !skill <skill_name> [params]');
-  console.log('  !primitive <primitive_name> [params]');
+  console.log('\nAvailable Commands (via Minecraft whisper):');
+  console.log(chalk.gray('  必須パラメータ: 黄色 | オプション: グレー'));
+  console.log('');
+  console.log('  GOAP System:');
+  console.log('    !goal ' + chalk.yellow('inventory.stick:4'));
+  console.log('    !skill ' + chalk.yellow('gather') + ' ' + chalk.gray('{"blockType": "oak_log", "count": 5}'));
+  console.log('    !status');
+  console.log('');
+  console.log('  Vision (スクリーンショット撮影):');
+  console.log('    !creative vision capture ' + chalk.gray('{"yaw": 90, "pitch": 0, "renderWait": 5000}'));
+  console.log('');
+  console.log('  Navigation (移動):');
+  console.log('    !creative navigation register ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !creative navigation goto ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !creative navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": 90, "verticalMode": "surface"') + '}');
+  console.log('    !creative navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
+  console.log('    !creative navigation stopFollow {}');
+  console.log('');
   console.log('='.repeat(60));
 }
 
