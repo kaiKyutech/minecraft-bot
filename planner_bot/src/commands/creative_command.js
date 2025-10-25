@@ -1,5 +1,6 @@
 const navigation = require('../creative_actions/navigation')
 const vision = require('../creative_actions/vision')
+const exploration = require('../creative_actions/exploration')
 
 /**
  * !creative コマンドのハンドラ
@@ -62,10 +63,20 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     }
     result = await vision[action](bot, stateManager, params)
   }
+  else if (category === 'exploration') {
+    if (!exploration[action]) {
+      const available = Object.keys(exploration).join(', ')
+      throw new Error(
+        `未知のexploration操作: ${action}\n` +
+        `利用可能: ${available}`
+      )
+    }
+    result = await exploration[action](bot, stateManager, params)
+  }
   else {
     throw new Error(
       `未知のカテゴリ: ${category}\n` +
-      `利用可能: navigation, vision`
+      `利用可能: navigation, vision, exploration`
     )
   }
 

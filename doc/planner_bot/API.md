@@ -609,7 +609,145 @@ const directions = {
 
 ---
 
-##### `topDownMap` - 俯瞰ヒートマップ生成（計画中・未実装）
+#### Chat (`chat`) - チャット・発話システム
+
+##### `broadcast` - 範囲内プレイヤーへ発話（実装予定）
+
+指定範囲内のプレイヤー全員にメッセージを送信します（`/w @a[distance=..N]`を使用）。
+
+**パラメータ**:
+- `message` (string, 必須): 発話内容
+- `range` (number, オプション): 範囲（ブロック、デフォルト: 100）
+
+**使用例**:
+```
+# 100ブロック内の全員に発話
+/w Bot1 !creative chat broadcast {"message": "ダイアモンドを見つけました！"}
+
+# 50ブロック内の全員に発話
+/w Bot1 !creative chat broadcast {"message": "助けが必要です", "range": 50}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "範囲100ブロック内のプレイヤーに発話しました",
+  broadcast: {
+    content: "ダイアモンドを見つけました！",
+    range: 100
+  }
+}
+```
+
+**用途**:
+- LLMの出力をゲーム内で発話
+- 発見した情報を周囲に共有
+- マルチプレイヤーとの協調
+
+---
+
+##### `say` - 公開チャット発話（実装予定）
+
+サーバー全体の公開チャットにメッセージを送信します。
+
+**パラメータ**:
+- `message` (string, 必須): 発話内容
+
+**使用例**:
+```
+/w Bot1 !creative chat say {"message": "探索を開始します"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "公開チャットに発話しました",
+  content: "探索を開始します"
+}
+```
+
+**注意**:
+- サーバー全員に見えるため、スパム防止に注意
+- 重要な通知のみに使用推奨
+
+---
+
+#### Exploration (`exploration`) - 探索システム
+
+##### `scanBlocks` - 周辺ブロック情報取得（実装予定）
+
+周囲のブロックを走査し、JSON形式で構造化データとして返します。
+
+**パラメータ**:
+- `range` (number, オプション): スキャン範囲（デフォルト: 32ブロック）
+- `types` (array, オプション): フィルタするブロックタイプのリスト（省略時は全て）
+  - 例: `["diamond_ore", "air", "cave_air"]`
+
+**使用例**:
+```
+# 周囲32ブロックの全ブロックを取得
+/w Bot1 !creative exploration scanBlocks {}
+
+# 周囲64ブロックのダイアモンド鉱石のみ
+/w Bot1 !creative exploration scanBlocks {"range": 64, "types": ["diamond_ore"]}
+
+# 洞窟入口を探す（空気ブロック）
+/w Bot1 !creative exploration scanBlocks {"range": 50, "types": ["air", "cave_air"]}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "1234個のブロックをスキャンしました",
+  data: {
+    range: 32,
+    centerPosition: { x: 100, y: 64, z: 200 },
+    blocks: [
+      {
+        name: "diamond_ore",
+        position: { x: 105, y: 12, z: 210 },
+        distance: 52.3,
+        relativePosition: { x: 5, y: -52, z: 10 }
+      },
+      {
+        name: "air",
+        position: { x: 98, y: 63, z: 195 },
+        distance: 5.7,
+        relativePosition: { x: -2, y: -1, z: -5 }
+      }
+      // ... 他のブロック
+    ],
+    summary: {
+      totalBlocks: 1234,
+      uniqueTypes: 45,
+      blockCounts: {
+        "stone": 800,
+        "air": 300,
+        "diamond_ore": 3,
+        // ...
+      }
+    }
+  }
+}
+```
+
+**用途**:
+- ダイアモンド鉱石の発見
+- 洞窟入口の検出（空気ブロックの塊）
+- 特定資源の位置把握
+- LLM側でフィルタリング・分析して戦略決定
+
+**注意**:
+- 大量のデータが返るため、`types`でフィルタ推奨
+- 距離はユークリッド距離（直線距離）
+- `relativePosition`は現在地からの相対座標
+
+---
+
+##### `topDownMap` - 俯瞰ヒートマップ生成（実装予定）
 
 周囲の地形を俯瞰視点でヒートマップ画像として生成します。
 
