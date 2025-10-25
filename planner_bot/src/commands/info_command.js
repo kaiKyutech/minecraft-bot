@@ -161,7 +161,7 @@ async function getVisionInfo(bot, stateManager, params) {
 async function getScanBlocksInfo(bot, stateManager, params) {
   const range = params.range !== undefined ? params.range : 32;
   let filterTypes = params.types !== undefined ? params.types : params.type;
-  const maxChecks = params.maxChecks !== undefined ? params.maxChecks : 100000;
+  const maxChecks = params.maxChecks !== undefined ? params.maxChecks : 25000;
   const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
   const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
   const yawDegrees = params.yaw !== undefined
