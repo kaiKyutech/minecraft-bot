@@ -117,10 +117,11 @@
   - オブジェクトマーク（木、石、洞窟入口など）
   - 北を上にした座標グリッド
   - **目的**: LLMが地形を理解して移動判断
-- 🔄 `scanBlocks` - 周辺ブロック情報取得（実装予定）
-  - 周囲N範囲内のブロック一覧をJSON形式で返す
-  - ブロック名、座標、距離を構造化データで提供
-  - **目的**: ダイアモンド鉱石、洞窟入口の発見
+- ✅ `scanBlocks` - 周辺ブロック情報取得
+  - `!info scanBlocks` で周囲ブロックを高速に収集・JSONで返却
+  - `range` / `type(s)` / `limit` をサポートし、距離順に並べ替え
+  - **実装場所**: `planner_bot/src/commands/info_command.js`
+  - **用途**: 鉱石・構造物の発見、洞窟入口（空気ブロック）の検出
 - ❌ `randomWalk` - ランダム探索（優先度低）
 - ❌ `searchBlock` - 特定ブロック探索（優先度低）
 - ❌ `returnHome` - 帰還（優先度低）
@@ -267,17 +268,11 @@
 
 ### 🎯 最優先（洞窟探索・ダイアモンド発見のために必須）
 
-1. **scanBlocks - 周辺ブロック情報取得**
-   - 周囲の全ブロックをJSON形式で返す
-   - ダイアモンド鉱石、洞窟入口（空気ブロック）を発見
-   - LLM側でフィルタリング可能な構造化データ
-   - **実装場所**: `creative_actions/exploration.js`
-
-2. **topDownMap - 俯瞰ヒートマップ生成**
+1. **topDownMap - 俯瞰ヒートマップ生成**
    - 相対高度を色で表現（画像生成）
    - オブジェクトマーク（木、石、洞窟入口など）
    - LLMが地形を俯瞰して移動判断
-   - **実装場所**: `creative_actions/exploration.js`
+   - **想定実装場所**: `creative_actions/exploration.js`
 
 ### ✅ 完了済み（moveInDirection改善）
 
@@ -315,6 +310,9 @@
   - ✅ 4つの地表検出モード (nearest, below, above, surface)
   - ✅ 2ブロック分の空間確認（全モード）
   - ✅ Yaw座標系修正（vision と一致）
+
+### Exploration システム
+- ✅ `scanBlocks` を `!info` コマンドに統合し、高速な範囲スキャンと `range` / `type(s)` / `limit` パラメータを追加
 
 ### プリミティブ
 - ✅ `moveTo` タイムアウト計算改善（線形増加、1ブロック=1秒、最小30秒）

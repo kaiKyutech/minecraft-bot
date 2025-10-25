@@ -676,74 +676,73 @@ const directions = {
 
 #### Exploration (`exploration`) - 探索システム
 
-##### `scanBlocks` - 周辺ブロック情報取得（実装予定）
+##### `scanBlocks` - 周辺ブロック情報取得
 
-周囲のブロックを走査し、JSON形式で構造化データとして返します。
+`!info scanBlocks` で利用する周辺環境スキャン。ボットを中心とした立方体範囲を走査し、指定条件に合致したブロック情報を JSON で返します。Mineflayer の `bot.findBlocks` を多重呼び出しするのではなく、チャンクキャッシュを直接走査するため広範囲でも高速です。
 
 **パラメータ**:
-- `range` (number, オプション): スキャン範囲（デフォルト: 32ブロック）
-- `types` (array, オプション): フィルタするブロックタイプのリスト（省略時は全て）
-  - 例: `["diamond_ore", "air", "cave_air"]`
+- `range` (number, オプション): スキャン半径（デフォルト `32`）。中心ブロックからの距離で判定します。
+- `type` / `types` (string | string[], オプション): 取得対象のブロック名。単一指定は `type`、複数指定は配列または `types` で渡します。省略時は非空気ブロック全て。
+- `limit` (number, オプション): 収集するブロック数の上限（デフォルト `1000`）。複数種類を指定した場合も合計件数で打ち切ります。
 
 **使用例**:
 ```
-# 周囲32ブロックの全ブロックを取得
-/w Bot1 !creative exploration scanBlocks {}
+# 周囲32ブロックの状況を取得
+/w Bot1 !info scanBlocks {}
 
-# 周囲64ブロックのダイアモンド鉱石のみ
-/w Bot1 !creative exploration scanBlocks {"range": 64, "types": ["diamond_ore"]}
+# ダイアモンド鉱石だけを 64 ブロック以内で探す
+/w Bot1 !info scanBlocks {"range": 64, "types": ["diamond_ore"]}
 
-# 洞窟入口を探す（空気ブロック）
-/w Bot1 !creative exploration scanBlocks {"range": 50, "types": ["air", "cave_air"]}
+# クラフティングテーブルを 1 件だけ取得
+/w Bot1 !info scanBlocks {"type": "crafting_table", "limit": 1}
 ```
 
 **戻り値**:
 ```javascript
 {
   success: true,
-  message: "1234個のブロックをスキャンしました",
+  type: "scanBlocks",
   data: {
-    range: 32,
-    centerPosition: { x: 100, y: 64, z: 200 },
+    summary: {
+      totalBlocks: 124,
+      uniqueTypes: 5,
+      typeCounts: {
+        grass_block: 60,
+        dirt: 55,
+        bedrock: 8,
+        furnace: 1
+      },
+      scanRange: 32,
+      scanCenter: { x: 9, y: -60, z: 8 }
+    },
     blocks: [
       {
-        name: "diamond_ore",
-        position: { x: 105, y: 12, z: 210 },
-        distance: 52.3,
-        relativePosition: { x: 5, y: -52, z: 10 }
+        name: "furnace",
+        position: { x: 10, y: -60, z: 8 },
+        relativePosition: { x: 1, y: 0, z: 0 },
+        distance: 0
       },
       {
-        name: "air",
-        position: { x: 98, y: 63, z: 195 },
-        distance: 5.7,
-        relativePosition: { x: -2, y: -1, z: -5 }
+        name: "grass_block",
+        position: { x: 9, y: -61, z: 8 },
+        relativePosition: { x: 0, y: -1, z: 0 },
+        distance: 1
       }
-      // ... 他のブロック
-    ],
-    summary: {
-      totalBlocks: 1234,
-      uniqueTypes: 45,
-      blockCounts: {
-        "stone": 800,
-        "air": 300,
-        "diamond_ore": 3,
-        // ...
-      }
-    }
+      // ...最大 limit 件まで距離が近い順で続く
+    ]
   }
 }
 ```
 
 **用途**:
-- ダイアモンド鉱石の発見
-- 洞窟入口の検出（空気ブロックの塊）
-- 特定資源の位置把握
-- LLM側でフィルタリング・分析して戦略決定
+- 鉱石や構造物の位置を高速に特定
+- LLM 側で洞窟入口（空気ブロックの集まり）や資源分布を解析
+- 周囲環境を丸ごと取得して戦略判断に利用
 
-**注意**:
-- 大量のデータが返るため、`types`でフィルタ推奨
-- 距離はユークリッド距離（直線距離）
-- `relativePosition`は現在地からの相対座標
+**補足**:
+- `blocks` 配列はボットからの距離でソート済みです。`relativePosition` は中心ブロックからの差分座標。
+- コンソールにはサマリーと先頭 10 件を出力しますが、戻り値には `limit` 件分が含まれます。
+- `limit` を上げるとデータ量と処理時間が増えるため、外部 API として消費する際は用途に応じて調整してください。
 
 ---
 
