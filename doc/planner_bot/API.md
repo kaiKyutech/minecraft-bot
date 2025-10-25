@@ -681,9 +681,12 @@ const directions = {
 `!info scanBlocks` で利用する周辺環境スキャン。ボットを中心とした立方体範囲を走査し、指定条件に合致したブロック情報を JSON で返します。Mineflayer の `bot.findBlocks` を多重呼び出しするのではなく、チャンクキャッシュを直接走査するため広範囲でも高速です。
 
 **パラメータ**:
-- `range` (number, オプション): スキャン半径（デフォルト `32`）。中心ブロックからの距離で判定します。
+- `range` (number, オプション): スキャン半径（デフォルト `32`、最小 `0`）。中心ブロックからのユークリッド距離で判定します。
 - `type` / `types` (string | string[], オプション): 取得対象のブロック名。単一指定は `type`、複数指定は配列または `types` で渡します。省略時は非空気ブロック全て。
-- `limit` (number, オプション): 収集するブロック数の上限（デフォルト `1000`）。複数種類を指定した場合も合計件数で打ち切ります。
+- `limit` (number, オプション): 収集するブロック数の上限（デフォルト `1000`、最小 `1`）。複数種類を指定した場合も合計件数で打ち切ります。
+- `minYOffset` / `maxYOffset` (number, オプション): 上下方向の探索範囲を中心ブロックからの相対値で制限します（単位: ブロック）。未指定時は `-range` / `+range`。負値で下方向、正値で上方向を指定します。`minYOffset` ≤ `maxYOffset` を守ってください。
+- `yaw` (number, オプション): 探索の基準方位（度数法）。省略時はボットの現在 yaw。0° が北（Z-）、90° が東（X+）。値は任意ですが 0〜360° の範囲に正規化して利用するのが推奨です。
+- `coneAngle` (number, オプション): `yaw` を中心にした水平扇形の開き角（度数法）。0〜360° を想定。0 の場合は一点方向、360 以上を指定すると実質的に全方向が対象になります。
 
 **使用例**:
 ```
@@ -695,6 +698,15 @@ const directions = {
 
 # クラフティングテーブルを 1 件だけ取得
 /w Bot1 !info scanBlocks {"type": "crafting_table", "limit": 1}
+
+# 高さ方向を ±5 に絞って平面付近のみ取得
+/w Bot1 !info scanBlocks {"range": 48, "minYOffset": -5, "maxYOffset": 5}
+
+# 視線方向±30°の扇形だけを探索
+/w Bot1 !info scanBlocks {"range": 40, "coneAngle": 60}
+
+# 北(0°)方向の狭い扇形で鉱石を探索
+/w Bot1 !info scanBlocks {"range": 64, "yaw": 0, "coneAngle": 45, "types": ["iron_ore", "coal_ore"]}
 ```
 
 **戻り値**:
