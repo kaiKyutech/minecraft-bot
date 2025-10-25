@@ -683,7 +683,7 @@ const directions = {
 **パラメータ**:
 - `range` (number, オプション): スキャン半径（デフォルト `32`、最小 `0`）。中心ブロックからのユークリッド距離で判定します。
 - `type` / `types` (string | string[], オプション): 取得対象のブロック名。単一指定は `type`、複数指定は配列または `types` で渡します。省略時は非空気ブロック全て。
-- `limit` (number, オプション): 収集するブロック数の上限（デフォルト `1000`、最小 `1`）。複数種類を指定した場合も合計件数で打ち切ります。
+- `maxChecks` (number, オプション): 探索する座標の最大数（デフォルト `25000`、最小 `1`）。上限に達すると走査を中断します。
 - `minYOffset` / `maxYOffset` (number, オプション): 上下方向の探索範囲を中心ブロックからの相対値で制限します（単位: ブロック）。未指定時は `-range` / `+range`。負値で下方向、正値で上方向を指定します。`minYOffset` ≤ `maxYOffset` を守ってください。
 - `yaw` (number, オプション): 探索の基準方位（度数法）。省略時はボットの現在 yaw。0° が北（Z-）、90° が東（X+）。値は任意ですが 0〜360° の範囲に正規化して利用するのが推奨です。
 - `coneAngle` (number, オプション): `yaw` を中心にした水平扇形の開き角（度数法）。0〜360° を想定。0 の場合は一点方向、360 以上を指定すると実質的に全方向が対象になります。
@@ -696,8 +696,8 @@ const directions = {
 # ダイアモンド鉱石だけを 64 ブロック以内で探す
 /w Bot1 !info scanBlocks {"range": 64, "types": ["diamond_ore"]}
 
-# クラフティングテーブルを 1 件だけ取得
-/w Bot1 !info scanBlocks {"type": "crafting_table", "limit": 1}
+# クラフティングテーブルを近傍から探索（最大 5,000 ブロックをチェック）
+/w Bot1 !info scanBlocks {"type": "crafting_table", "maxChecks": 5000}
 
 # 高さ方向を ±5 に絞って平面付近のみ取得
 /w Bot1 !info scanBlocks {"range": 48, "minYOffset": -5, "maxYOffset": 5}
@@ -725,6 +725,12 @@ const directions = {
         furnace: 1
       },
       scanRange: 32,
+      checksUsed: 8120,
+      eligiblePositions: 12000,
+      farthestDistance: 47,
+      estimatedPositions: 18000,
+      estimatedCoveragePercent: 45.0,
+      maxChecks: 100000,
       scanCenter: { x: 9, y: -60, z: 8 }
     },
     blocks: [
@@ -740,7 +746,7 @@ const directions = {
         relativePosition: { x: 0, y: -1, z: 0 },
         distance: 1
       }
-      // ...最大 limit 件まで距離が近い順で続く
+      // ...距離が近い順で続く
     ]
   }
 }
@@ -753,8 +759,10 @@ const directions = {
 
 **補足**:
 - `blocks` 配列はボットからの距離でソート済みです。`relativePosition` は中心ブロックからの差分座標。
-- コンソールにはサマリーと先頭 10 件を出力しますが、戻り値には `limit` 件分が含まれます。
-- `limit` を上げるとデータ量と処理時間が増えるため、外部 API として消費する際は用途に応じて調整してください。
+- コンソールにはサマリーと先頭 10 件を出力しますが、戻り値には探索で検出したすべてのブロックが含まれます。
+- `maxChecks` を増やすほど広範囲を探索できますが、処理時間も比例して伸びます。用途に応じて調整してください。
+- サマリーの `checksUsed` / `eligiblePositions` / `farthestDistance` / `estimatedCoveragePercent` で走査状況と探索範囲の広がりを把握できます。
+- `estimatedPositions` / `estimatedCoveragePercent` は幾何学的な近似値で、探索条件が広い場合の目安になります。
 
 ---
 
