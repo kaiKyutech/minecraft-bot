@@ -78,6 +78,7 @@ function printCompletionBanner(aiCount) {
   console.log('    !info all  ' + chalk.gray('# inventory + position + locations'));
   console.log('    !info vision ' + chalk.gray('{"yaw": 90, "pitch": 0, "renderWait": 5000}'));
   console.log('    !info scanBlocks ' + chalk.gray('{"range": 32, "types": ["diamond_ore"]}'));
+  console.log('                  ' + chalk.gray('# types または単一指定の type でフィルタ可能'));
   console.log('');
   console.log('  Navigation (移動):');
   console.log('    !navigation register ' + chalk.yellow('{"name": "home"}'));

@@ -13,6 +13,7 @@
  *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
  */
 
+const { Vec3 } = require("vec3");
 const vision = require('../vision/capture')
 
 /**
@@ -158,84 +159,97 @@ async function getVisionInfo(bot, stateManager, params) {
  * 周辺ブロック情報を取得（スキャン）
  */
 async function getScanBlocksInfo(bot, stateManager, params) {
-  const range = params.range !== undefined ? params.range : 32
-  const filterTypes = params.types // undefined or array of block names
-  const limit = params.limit !== undefined ? params.limit : 1000
+  const range = params.range !== undefined ? params.range : 32;
+  let filterTypes = params.types !== undefined ? params.types : params.type;
+  const limit = params.limit !== undefined ? params.limit : 1000;
 
-  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks...`)
+  if (typeof filterTypes === "string") {
+    filterTypes = [filterTypes];
+  }
+
+  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks...`);
   if (filterTypes) {
-    bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(', ')}`)
+    bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
   }
 
-  const currentPos = bot.entity.position
-  const blocks = []
-  const typeCounts = {}
+  const typeFilterSet = (() => {
+    if (!filterTypes || filterTypes.length === 0) return null;
 
-  // bot.findBlocks()を使って範囲内のブロックを探索
-  let blockIds
-  if (filterTypes && filterTypes.length > 0) {
-    // 指定されたブロック名をIDに変換
-    blockIds = filterTypes
-      .map(typeName => bot.registry.blocksByName[typeName]?.id)
-      .filter(id => id !== undefined)
-
-    if (blockIds.length === 0) {
-      throw new Error(`指定されたブロックタイプが見つかりません: ${filterTypes.join(', ')}`)
+    const set = new Set();
+    for (const typeName of filterTypes) {
+      const blockDef = bot.registry.blocksByName[typeName];
+      if (!blockDef) {
+        throw new Error(`指定されたブロックタイプが見つかりません: ${typeName}`);
+      }
+      set.add(typeName);
     }
-  } else {
-    // 全ブロックタイプを対象（空気ブロックは除外）
-    blockIds = Object.values(bot.registry.blocksByName)
-      .filter(block => !block.name.includes('air'))
-      .map(block => block.id)
-  }
+    return set;
+  })();
 
-  // findBlocks()は最大で128個までしか返さないため、タイプごとに分けて検索
-  const foundPositions = []
+  const centerPos = bot.entity.position;
+  const centerFloor = new Vec3(
+    Math.floor(centerPos.x),
+    Math.floor(centerPos.y),
+    Math.floor(centerPos.z)
+  );
 
-  for (const blockId of blockIds) {
-    if (foundPositions.length >= limit) break
+  const gameMinY = typeof bot.game?.minY === "number" ? bot.game.minY : centerFloor.y - range;
+  const gameMaxY = typeof bot.game?.height === "number"
+    ? gameMinY + bot.game.height - 1
+    : centerFloor.y + range;
 
-    const positions = bot.findBlocks({
-      matching: blockId,
-      maxDistance: range,
-      count: Math.min(128, limit - foundPositions.length)
-    })
+  const minX = centerFloor.x - range;
+  const maxX = centerFloor.x + range;
+  const minY = Math.max(centerFloor.y - range, gameMinY);
+  const maxY = Math.min(centerFloor.y + range, gameMaxY);
+  const minZ = centerFloor.z - range;
+  const maxZ = centerFloor.z + range;
 
-    foundPositions.push(...positions)
-  }
+  const xOrder = buildAxisOrder(minX, maxX, centerFloor.x);
+  const yOrder = buildAxisOrder(minY, maxY, centerFloor.y);
+  const zOrder = buildAxisOrder(minZ, maxZ, centerFloor.z);
 
-  bot.systemLog(`[INFO] Found ${foundPositions.length} blocks`)
+  const blocks = [];
+  const typeCounts = {};
 
-  // 各ブロックの情報を収集
-  for (const pos of foundPositions) {
-    const block = bot.blockAt(pos)
-    if (!block) continue
+  outer: for (const x of xOrder) {
+    for (const y of yOrder) {
+      for (const z of zOrder) {
+        const pos = new Vec3(x, y, z);
+        const distance = centerPos.distanceTo(pos);
+        if (distance > range) continue;
 
-    const blockName = block.name
-    const distance = Math.floor(currentPos.distanceTo(pos))
-    const relativePos = {
-      x: pos.x - Math.floor(currentPos.x),
-      y: pos.y - Math.floor(currentPos.y),
-      z: pos.z - Math.floor(currentPos.z)
+        const block = bot.blockAt(pos, false);
+        if (!block) continue;
+        if (block.name.includes("air")) continue;
+        if (typeFilterSet && !typeFilterSet.has(block.name)) continue;
+
+        const distanceInt = Math.floor(distance);
+        const relativePos = {
+          x: pos.x - centerFloor.x,
+          y: pos.y - centerFloor.y,
+          z: pos.z - centerFloor.z
+        };
+
+        blocks.push({
+          name: block.name,
+          position: { x: pos.x, y: pos.y, z: pos.z },
+          relativePosition: relativePos,
+          distance: distanceInt
+        });
+
+        typeCounts[block.name] = (typeCounts[block.name] || 0) + 1;
+
+        if (blocks.length >= limit) {
+          break outer;
+        }
+      }
     }
-
-    blocks.push({
-      name: blockName,
-      position: {
-        x: pos.x,
-        y: pos.y,
-        z: pos.z
-      },
-      relativePosition: relativePos,
-      distance: distance
-    })
-
-    // タイプごとのカウント
-    typeCounts[blockName] = (typeCounts[blockName] || 0) + 1
   }
 
-  // 距離でソート（近い順）
-  blocks.sort((a, b) => a.distance - b.distance)
+  bot.systemLog(`[INFO] Found ${blocks.length} blocks`);
+
+  blocks.sort((a, b) => a.distance - b.distance);
 
   // サマリー情報
   const summary = {
@@ -244,9 +258,9 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     typeCounts: typeCounts,
     scanRange: range,
     scanCenter: {
-      x: Math.floor(currentPos.x),
-      y: Math.floor(currentPos.y),
-      z: Math.floor(currentPos.z)
+      x: centerFloor.x,
+      y: centerFloor.y,
+      z: centerFloor.z
     }
   }
 
@@ -343,3 +357,28 @@ async function handleInfoCommand(bot, username, message, stateManager) {
 }
 
 module.exports = handleInfoCommand
+
+function buildAxisOrder(min, max, center) {
+  const order = []
+  const lowerSteps = center - min
+  const upperSteps = max - center
+
+  if (center >= min && center <= max) {
+    order.push(center)
+  }
+
+  const maxStep = Math.max(lowerSteps, upperSteps)
+  for (let step = 1; step <= maxStep; step++) {
+    const below = center - step
+    const above = center + step
+
+    if (below >= min) {
+      order.push(below)
+    }
+    if (above <= max) {
+      order.push(above)
+    }
+  }
+
+  return order
+}
