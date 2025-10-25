@@ -30,6 +30,9 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       continue
     }
 
+    // アクション開始前に最新状態へ更新（各ステップ1回）もしかするとこれじゃgoapが崩れるかもしれない。実験的にここだけにしてみる。
+    await stateManager.refresh(bot)
+
     const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
 
     if (!preconditionStatus.satisfied) {
@@ -190,8 +193,8 @@ async function executeStep(bot, step, stateManager, signal = null) {
   console.log(`[EXECUTION] ステップ: ${step.action}`)
   console.log('='.repeat(80))
 
-  // アクション実行前に状態を更新
-  await stateManager.refresh(bot)
+  // アクション実行前に状態を更新 34行に移動してみた。実験です。うまくいかない可能性があります。
+  //await stateManager.refresh(bot)
 
   // signalがabortされたら、bot操作を中断するリスナーを設定
   let abortHandler = null
@@ -216,8 +219,8 @@ async function executeStep(bot, step, stateManager, signal = null) {
     // スキル実行
     await skill(bot, step.params || {}, stateManager)
 
-    // アクション実行後に状態を更新
-    await stateManager.refresh(bot)
+      // アクション実行前に状態を更新　34行に移動してみた。実験です。うまくいかない可能性があります。
+      //await stateManager.refresh(bot)
 
     console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
     console.log('='.repeat(80) + '\n')
@@ -312,6 +315,8 @@ async function executeSimplePlan(bot, plan, stateManager, signal = null) {
     }
 
     if (!step.skill) continue
+
+    await stateManager.refresh(bot)
 
     const status = await analyseStepPreconditions(bot, step, stateManager)
     if (!status.satisfied) {
