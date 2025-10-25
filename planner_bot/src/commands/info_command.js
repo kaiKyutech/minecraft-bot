@@ -13,7 +13,7 @@
  *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
  */
 
-const vision = require('../creative_actions/vision')
+const vision = require('../vision/capture')
 
 /**
  * インベントリ情報を取得

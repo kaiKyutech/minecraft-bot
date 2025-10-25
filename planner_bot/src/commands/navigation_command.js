@@ -1,4 +1,4 @@
-const navigation = require('../creative_actions/navigation')
+const navigation = require('../navigation/actions')
 
 /**
  * !navigation コマンドのハンドラ

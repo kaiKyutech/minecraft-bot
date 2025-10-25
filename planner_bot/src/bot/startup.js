@@ -86,6 +86,9 @@ function printCompletionBanner(aiCount) {
   console.log('    !navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
   console.log('    !navigation stopFollow {}');
   console.log('');
+  console.log('  Creative (建築など):');
+  console.log(chalk.gray('    !creative  # 未実装（将来の拡張用）'));
+  console.log('');
   console.log('='.repeat(60));
 }
 
