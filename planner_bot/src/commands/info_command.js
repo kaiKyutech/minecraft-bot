@@ -162,6 +162,8 @@ async function getScanBlocksInfo(bot, stateManager, params) {
   const range = params.range !== undefined ? params.range : 32;
   let filterTypes = params.types !== undefined ? params.types : params.type;
   const limit = params.limit !== undefined ? params.limit : 1000;
+  const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
+  const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
 
   if (typeof filterTypes === "string") {
     filterTypes = [filterTypes];
@@ -200,8 +202,8 @@ async function getScanBlocksInfo(bot, stateManager, params) {
 
   const minX = centerFloor.x - range;
   const maxX = centerFloor.x + range;
-  const minY = Math.max(centerFloor.y - range, gameMinY);
-  const maxY = Math.min(centerFloor.y + range, gameMaxY);
+  const minY = Math.max(centerFloor.y + minYOffset, gameMinY);
+  const maxY = Math.min(centerFloor.y + maxYOffset, gameMaxY);
   const minZ = centerFloor.z - range;
   const maxZ = centerFloor.z + range;
 
