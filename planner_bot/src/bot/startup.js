@@ -74,8 +74,9 @@ function printCompletionBanner(aiCount) {
   console.log('    !skill ' + chalk.yellow('gather') + ' ' + chalk.gray('{"blockType": "oak_log", "count": 5}'));
   console.log('    !status');
   console.log('');
-  console.log('  Vision (スクリーンショット撮影):');
-  console.log('    !creative vision capture ' + chalk.gray('{"yaw": 90, "pitch": 0, "renderWait": 5000}'));
+  console.log('  Information (情報取得):');
+  console.log('    !info all  ' + chalk.gray('# inventory + position + locations'));
+  console.log('    !info vision ' + chalk.gray('{"yaw": 90, "pitch": 0, "renderWait": 5000}'));
   console.log('');
   console.log('  Navigation (移動):');
   console.log('    !creative navigation register ' + chalk.yellow('{"name": "home"}'));

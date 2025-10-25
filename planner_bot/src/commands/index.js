@@ -3,12 +3,18 @@ const handleSkillCommand = require('./skill_command')
 const handlePrimitiveCommand = require('./primitive_command')
 const handleCreativeCommand = require('./creative_command')
 const handleStatusCommand = require('./status_command')
+const handleInfoCommand = require('./info_command')
 
 async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
 
   if (trimmed === '!status') {
     await handleStatusCommand(bot, username, stateManager)
+    return
+  }
+
+  if (/^!info(\s|$)/.test(trimmed)) {
+    await handleInfoCommand(bot, username, trimmed, stateManager)
     return
   }
 

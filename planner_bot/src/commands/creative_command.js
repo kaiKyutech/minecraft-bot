@@ -1,5 +1,4 @@
 const navigation = require('../creative_actions/navigation')
-const vision = require('../creative_actions/vision')
 const exploration = require('../creative_actions/exploration')
 
 /**
@@ -10,8 +9,7 @@ const exploration = require('../creative_actions/exploration')
  *   !creative navigation register {"name": "home"}
  *   !creative navigation goto {"name": "home"}
  *   !creative navigation gotoCoords {"x": 250, "y": 64, "z": -100}
- *   !creative navigation list
- *   !creative vision capture
+ *   !creative navigation moveInDirection {"distance": 10}
  *
  * @param {Object} bot - Mineflayerボット
  * @param {string} username - コマンド送信者のユーザー名
@@ -25,8 +23,8 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     throw new Error('使用方法: !creative <category> <action> [params]')
   }
 
-  const category = parts[0]  // navigation, vision, exploration, etc.
-  const action = parts[1]    // register, goto, capture, etc.
+  const category = parts[0]  // navigation, exploration, etc.
+  const action = parts[1]    // register, goto, etc.
 
   let params = {}
   if (parts.length > 2) {
@@ -53,16 +51,6 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     }
     result = await navigation[action](bot, stateManager, params)
   }
-  else if (category === 'vision') {
-    if (!vision[action]) {
-      const available = Object.keys(vision).join(', ')
-      throw new Error(
-        `未知のvision操作: ${action}\n` +
-        `利用可能: ${available}`
-      )
-    }
-    result = await vision[action](bot, stateManager, params)
-  }
   else if (category === 'exploration') {
     if (!exploration[action]) {
       const available = Object.keys(exploration).join(', ')
@@ -76,7 +64,7 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
   else {
     throw new Error(
       `未知のカテゴリ: ${category}\n` +
-      `利用可能: navigation, vision, exploration`
+      `利用可能: navigation, exploration`
     )
   }
 
@@ -86,10 +74,6 @@ async function handleCreativeCommand(bot, username, commandStr, stateManager) {
     // await bot.speak(username, result.message)  // LLMプロジェクトで使用時にアンコメント
     // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
   }
-
-  // Vision capture の結果にはbase64画像データが含まれている
-  // result.data.image にbase64文字列が入っており、他プロジェクトで利用可能
-  // ファイル保存は vision.js 内で既に行われている
 
   return result
 }

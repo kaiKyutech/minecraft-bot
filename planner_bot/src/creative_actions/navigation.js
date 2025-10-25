@@ -229,38 +229,6 @@ module.exports = {
   },
 
   /**
-   * 登録済み場所の一覧
-   * @param {Object} bot - Mineflayerボット
-   * @param {Object} stateManager - 状態マネージャー
-   * @param {Object} params - {}
-   */
-  async list(bot, stateManager, params) {
-    const locations = stateManager.getLocations()
-    const names = Object.keys(locations)
-
-    if (names.length === 0) {
-      console.log('[NAVIGATION] 登録された場所はありません')
-      return {
-        success: true,
-        message: '登録された場所はありません',
-        locations: {}
-      }
-    }
-
-    console.log('[NAVIGATION] 登録済みの場所:')
-    for (const name of names) {
-      const loc = locations[name]
-      console.log(`  - ${name}: (${loc.x}, ${loc.y}, ${loc.z})`)
-    }
-
-    return {
-      success: true,
-      message: `${names.length}個の場所が登録されています`,
-      locations: locations
-    }
-  },
-
-  /**
    * プレイヤーを追跡
    * @param {Object} bot - Mineflayerボット
    * @param {Object} stateManager - 状態マネージャー
