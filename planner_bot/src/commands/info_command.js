@@ -161,7 +161,7 @@ async function getVisionInfo(bot, stateManager, params) {
 async function getScanBlocksInfo(bot, stateManager, params) {
   const range = params.range !== undefined ? params.range : 32;
   let filterTypes = params.types !== undefined ? params.types : params.type;
-  const limit = params.limit !== undefined ? params.limit : 1000;
+  const maxChecks = params.maxChecks !== undefined ? params.maxChecks : 100000;
   const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
   const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
   const yawDegrees = params.yaw !== undefined
@@ -175,7 +175,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     filterTypes = [filterTypes];
   }
 
-  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks...`);
+  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks (maxChecks=${maxChecks})...`);
   if (filterTypes) {
     bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
   }
@@ -219,6 +219,10 @@ async function getScanBlocksInfo(bot, stateManager, params) {
 
   const blocks = [];
   const typeCounts = {};
+  let checkedCount = 0;
+  let eligibleTotal = 0;
+  let limitReached = false;
+  let farthestCheckedDistance = 0;
 
   const directionYawRad = yawDegrees !== null
     ? degreesToRadians(yawDegrees)
@@ -242,17 +246,11 @@ async function getScanBlocksInfo(bot, stateManager, params) {
         const distance = centerPos.distanceTo(pos);
         if (distance > range) continue;
 
-        const block = bot.blockAt(pos, false);
-        if (!block) continue;
-        if (block.name.includes("air")) continue;
-        if (typeFilterSet && !typeFilterSet.has(block.name)) continue;
-
+        const offsetX = pos.x - centerFloor.x;
+        const offsetZ = pos.z - centerFloor.z;
         if (coneHalfAngleRad !== null) {
-          const offsetX = pos.x - centerFloor.x;
-          const offsetZ = pos.z - centerFloor.z;
-          if (!(offsetX === 0 && offsetZ === 0)) {
-            const horizontalDist = Math.hypot(offsetX, offsetZ);
-            if (horizontalDist === 0) continue;
+          const horizontalDist = Math.hypot(offsetX, offsetZ);
+          if (horizontalDist !== 0) {
             const dirX = offsetX / horizontalDist;
             const dirZ = offsetZ / horizontalDist;
             const dot = clampDot(forward2D.x * dirX + forward2D.z * dirZ);
@@ -261,11 +259,27 @@ async function getScanBlocksInfo(bot, stateManager, params) {
           }
         }
 
+        eligibleTotal++;
+        if (checkedCount >= maxChecks) {
+          limitReached = true;
+          break outer;
+        }
+
+        checkedCount++;
+        if (distance > farthestCheckedDistance) {
+          farthestCheckedDistance = distance;
+        }
+
+        const block = bot.blockAt(pos, false);
+        if (!block) continue;
+        if (block.name.includes("air")) continue;
+        if (typeFilterSet && !typeFilterSet.has(block.name)) continue;
+
         const distanceInt = Math.floor(distance);
         const relativePos = {
-          x: pos.x - centerFloor.x,
+          x: offsetX,
           y: pos.y - centerFloor.y,
-          z: pos.z - centerFloor.z
+          z: offsetZ
         };
 
         blocks.push({
@@ -276,15 +290,16 @@ async function getScanBlocksInfo(bot, stateManager, params) {
         });
 
         typeCounts[block.name] = (typeCounts[block.name] || 0) + 1;
-
-        if (blocks.length >= limit) {
-          break outer;
-        }
       }
     }
   }
 
-  bot.systemLog(`[INFO] Found ${blocks.length} blocks`);
+  const estimatedEligible = estimateEligiblePositions(range, minYOffset, maxYOffset, coneAngleDegrees);
+  const estimatedCoverage = estimatedEligible > 0 ? Math.min(checkedCount / estimatedEligible, 1) : 1;
+  const estimatedCoveragePercent = Number((estimatedCoverage * 100).toFixed(2));
+  const statusSuffix = limitReached ? ' (maxChecks reached)' : '';
+  const farthestDistance = Math.floor(farthestCheckedDistance);
+  bot.systemLog(`[INFO] Found ${blocks.length} blocks (checked ${checkedCount}/${eligibleTotal} positions, estCoverage ${estimatedCoveragePercent}%)${statusSuffix}`);
 
   blocks.sort((a, b) => a.distance - b.distance);
 
@@ -293,6 +308,12 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     totalBlocks: blocks.length,
     uniqueTypes: Object.keys(typeCounts).length,
     typeCounts: typeCounts,
+    checksUsed: checkedCount,
+    maxChecks: maxChecks,
+    eligiblePositions: eligibleTotal,
+    estimatedPositions: estimatedEligible,
+    estimatedCoveragePercent: estimatedCoveragePercent,
+    farthestDistance: farthestDistance,
     scanRange: range,
     scanCenter: {
       x: centerFloor.x,
@@ -428,4 +449,26 @@ function clampDot(value) {
   if (value > 1) return 1
   if (value < -1) return -1
   return value
+}
+
+function estimateEligiblePositions(range, minYOffset, maxYOffset, coneAngleDegrees) {
+  if (maxYOffset < minYOffset) return 0
+
+  const angle = coneAngleDegrees !== null ? Math.abs(coneAngleDegrees) : 360
+  const normalizedAngle = Math.min(angle % 360 || angle, 360)
+  const coneFraction = normalizedAngle / 360
+  if (coneFraction === 0) return 0
+
+  const minY = Math.ceil(Math.max(-range, minYOffset))
+  const maxY = Math.floor(Math.min(range, maxYOffset))
+  if (maxY < minY) return 0
+
+  let total = 0
+  for (let dy = minY; dy <= maxY; dy++) {
+    const layerRadiusSquared = range * range - dy * dy
+    if (layerRadiusSquared <= 0) continue
+    total += Math.PI * layerRadiusSquared * coneFraction
+  }
+
+  return Math.max(0, Math.round(total))
 }
