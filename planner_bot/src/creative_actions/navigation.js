@@ -178,10 +178,13 @@ module.exports = {
     const location = stateManager.getLocation(params.name)
     if (!location) {
       const registered = Object.keys(stateManager.namedLocations)
-      throw new Error(
-        `場所「${params.name}」は登録されていません。` +
-        `登録済み: ${registered.length > 0 ? registered.join(', ') : 'なし'}`
-      )
+      const message = `場所「${params.name}」は登録されていません。登録済み: ${registered.length > 0 ? registered.join(', ') : 'なし'}`
+      console.log(`[NAVIGATION] ${message}`)
+      return {
+        success: false,
+        message: message,
+        registeredLocations: registered
+      }
     }
 
     console.log(`[NAVIGATION] 「${params.name}」へ移動開始: (${location.x}, ${location.y}, ${location.z})`)

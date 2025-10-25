@@ -10,6 +10,7 @@
  * 使用例:
  *   !info all
  *   !info vision {"yaw": 90, "pitch": 0}
+ *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
  */
 
 const vision = require('../creative_actions/vision')
@@ -154,6 +155,108 @@ async function getVisionInfo(bot, stateManager, params) {
 }
 
 /**
+ * 周辺ブロック情報を取得（スキャン）
+ */
+async function getScanBlocksInfo(bot, stateManager, params) {
+  const range = params.range !== undefined ? params.range : 32
+  const filterTypes = params.types // undefined or array of block names
+  const limit = params.limit !== undefined ? params.limit : 1000
+
+  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks...`)
+  if (filterTypes) {
+    bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(', ')}`)
+  }
+
+  const currentPos = bot.entity.position
+  const blocks = []
+  const typeCounts = {}
+
+  // bot.findBlocks()を使って範囲内のブロックを探索
+  let blockIds
+  if (filterTypes && filterTypes.length > 0) {
+    // 指定されたブロック名をIDに変換
+    blockIds = filterTypes
+      .map(typeName => bot.registry.blocksByName[typeName]?.id)
+      .filter(id => id !== undefined)
+
+    if (blockIds.length === 0) {
+      throw new Error(`指定されたブロックタイプが見つかりません: ${filterTypes.join(', ')}`)
+    }
+  } else {
+    // 全ブロックタイプを対象（空気ブロックは除外）
+    blockIds = Object.values(bot.registry.blocksByName)
+      .filter(block => !block.name.includes('air'))
+      .map(block => block.id)
+  }
+
+  // findBlocks()は最大で128個までしか返さないため、タイプごとに分けて検索
+  const foundPositions = []
+
+  for (const blockId of blockIds) {
+    if (foundPositions.length >= limit) break
+
+    const positions = bot.findBlocks({
+      matching: blockId,
+      maxDistance: range,
+      count: Math.min(128, limit - foundPositions.length)
+    })
+
+    foundPositions.push(...positions)
+  }
+
+  bot.systemLog(`[INFO] Found ${foundPositions.length} blocks`)
+
+  // 各ブロックの情報を収集
+  for (const pos of foundPositions) {
+    const block = bot.blockAt(pos)
+    if (!block) continue
+
+    const blockName = block.name
+    const distance = Math.floor(currentPos.distanceTo(pos))
+    const relativePos = {
+      x: pos.x - Math.floor(currentPos.x),
+      y: pos.y - Math.floor(currentPos.y),
+      z: pos.z - Math.floor(currentPos.z)
+    }
+
+    blocks.push({
+      name: blockName,
+      position: {
+        x: pos.x,
+        y: pos.y,
+        z: pos.z
+      },
+      relativePosition: relativePos,
+      distance: distance
+    })
+
+    // タイプごとのカウント
+    typeCounts[blockName] = (typeCounts[blockName] || 0) + 1
+  }
+
+  // 距離でソート（近い順）
+  blocks.sort((a, b) => a.distance - b.distance)
+
+  // サマリー情報
+  const summary = {
+    totalBlocks: blocks.length,
+    uniqueTypes: Object.keys(typeCounts).length,
+    typeCounts: typeCounts,
+    scanRange: range,
+    scanCenter: {
+      x: Math.floor(currentPos.x),
+      y: Math.floor(currentPos.y),
+      z: Math.floor(currentPos.z)
+    }
+  }
+
+  return {
+    blocks: blocks,
+    summary: summary
+  }
+}
+
+/**
  * すべての基本情報を取得（inventory, position, locations）
  */
 async function getAllInfo(bot, stateManager) {
@@ -181,7 +284,7 @@ async function handleInfoCommand(bot, username, message, stateManager) {
   const parts = trimmed.split(' ')
 
   if (parts.length < 2) {
-    throw new Error('使用方法: !info <type>\n利用可能: all, vision')
+    throw new Error('使用方法: !info <type>\n利用可能: all, vision, scanBlocks')
   }
 
   const infoType = parts[1]
@@ -212,10 +315,22 @@ async function handleInfoCommand(bot, username, message, stateManager) {
     const { image, ...metadata } = data
     bot.systemLog(JSON.stringify({ ...metadata, imageSize: image ? image.length : 0 }, null, 2))
   }
+  else if (infoType === 'scanBlocks') {
+    data = await getScanBlocksInfo(bot, stateManager, params)
+    bot.systemLog('[INFO] ScanBlocks data:')
+    // ブロックリストは長いので要約のみ出力
+    bot.systemLog(JSON.stringify({ summary: data.summary }, null, 2))
+    if (data.blocks.length <= 10) {
+      bot.systemLog(JSON.stringify({ blocks: data.blocks }, null, 2))
+    } else {
+      bot.systemLog(`[INFO] ${data.blocks.length} blocks found (showing first 10):`)
+      bot.systemLog(JSON.stringify({ blocks: data.blocks.slice(0, 10) }, null, 2))
+    }
+  }
   else {
     throw new Error(
       `未知の情報タイプ: ${infoType}\n` +
-      `利用可能: all, vision`
+      `利用可能: all, vision, scanBlocks`
     )
   }
 

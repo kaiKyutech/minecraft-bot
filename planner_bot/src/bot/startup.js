@@ -77,13 +77,14 @@ function printCompletionBanner(aiCount) {
   console.log('  Information (情報取得):');
   console.log('    !info all  ' + chalk.gray('# inventory + position + locations'));
   console.log('    !info vision ' + chalk.gray('{"yaw": 90, "pitch": 0, "renderWait": 5000}'));
+  console.log('    !info scanBlocks ' + chalk.gray('{"range": 32, "types": ["diamond_ore"]}'));
   console.log('');
   console.log('  Navigation (移動):');
-  console.log('    !creative navigation register ' + chalk.yellow('{"name": "home"}'));
-  console.log('    !creative navigation goto ' + chalk.yellow('{"name": "home"}'));
-  console.log('    !creative navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": 90, "verticalMode": "surface"') + '}');
-  console.log('    !creative navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
-  console.log('    !creative navigation stopFollow {}');
+  console.log('    !navigation register ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !navigation goto ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": 90, "verticalMode": "surface"') + '}');
+  console.log('    !navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
+  console.log('    !navigation stopFollow {}');
   console.log('');
   console.log('='.repeat(60));
 }

@@ -4,6 +4,7 @@ const handlePrimitiveCommand = require('./primitive_command')
 const handleCreativeCommand = require('./creative_command')
 const handleStatusCommand = require('./status_command')
 const handleInfoCommand = require('./info_command')
+const handleNavigationCommand = require('./navigation_command')
 
 async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
@@ -15,6 +16,11 @@ async function handleChatCommand(bot, username, message, stateManager) {
 
   if (/^!info(\s|$)/.test(trimmed)) {
     await handleInfoCommand(bot, username, trimmed, stateManager)
+    return
+  }
+
+  if (/^!navigation(\s|$)/.test(trimmed)) {
+    await handleNavigationCommand(bot, username, trimmed, stateManager)
     return
   }
 
