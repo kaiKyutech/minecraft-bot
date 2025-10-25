@@ -158,7 +158,6 @@ function createAIBot(id, config) {
     // !で始まるメッセージ: コマンド（会話履歴に入れない）
     if (message.startsWith('!')) {
       try {
-        await stateManager.refresh(bot)
         await handleChatCommand(bot, username, message, stateManager)
       } catch (error) {
         bot.systemLog(`Command error: ${error.message}`)

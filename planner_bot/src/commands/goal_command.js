@@ -10,6 +10,8 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  */
 async function handleGoalCommand(bot, username, goalName, stateManager, signal = null) {
+  // プランニング前に必ず最新の状態を取得
+  await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
   const result = await goapPlanner.plan(goalName, worldState)
 

@@ -43,8 +43,9 @@ async function handlePrimitiveCommand(bot, username, message, stateManager) {
   }
 
   bot.systemLog(`Executing primitive: ${primitiveName} with params: ${JSON.stringify(params)}`)
+  await stateManager.refresh(bot)  // プリミティブ実行前に最新状態を取得
   await primitiveFn(bot, params)
-  await stateManager.refresh(bot)
+  await stateManager.refresh(bot)  // プリミティブ実行後に状態を更新
 
   const completeMsg = '完了しました'
   bot.systemLog(completeMsg)

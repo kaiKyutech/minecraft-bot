@@ -16,10 +16,13 @@ const vision = require('../creative_actions/vision')
 
 /**
  * インベントリ情報を取得
+ * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
  */
-async function getInventoryInfo(bot, stateManager) {
-  await stateManager.refresh(bot)
-  const worldState = await stateManager.getState(bot)
+async function getInventoryInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
 
   const inventory = worldState.inventory?.counts || {}
   const items = []
@@ -71,10 +74,13 @@ async function getInventoryInfo(bot, stateManager) {
 
 /**
  * 位置情報を取得
+ * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
  */
-async function getPositionInfo(bot, stateManager) {
-  await stateManager.refresh(bot)
-  const worldState = await stateManager.getState(bot)
+async function getPositionInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
 
   const position = {
     x: Math.floor(bot.entity.position.x),
@@ -151,8 +157,13 @@ async function getVisionInfo(bot, stateManager, params) {
  * すべての基本情報を取得（inventory, position, locations）
  */
 async function getAllInfo(bot, stateManager) {
-  const inventory = await getInventoryInfo(bot, stateManager)
-  const position = await getPositionInfo(bot, stateManager)
+  // 一度だけrefreshを呼ぶ
+  await stateManager.refresh(bot)
+  const worldState = await stateManager.getState(bot)
+
+  // 取得済みのworldStateを各関数に渡す
+  const inventory = await getInventoryInfo(bot, stateManager, worldState)
+  const position = await getPositionInfo(bot, stateManager, worldState)
   const locations = await getLocationsInfo(bot, stateManager)
 
   return {

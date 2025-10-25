@@ -41,8 +41,9 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   }
 
   bot.systemLog(`Executing skill: ${nameToken} with params: ${JSON.stringify(params)}`)
+  await stateManager.refresh(bot)  // スキル実行前に最新状態を取得
   await skillFn(bot, params, stateManager)
-  await stateManager.refresh(bot)
+  await stateManager.refresh(bot)  // スキル実行後に状態を更新
 
   const completeMsg = 'スキルが完了しました'
   bot.systemLog(completeMsg)
