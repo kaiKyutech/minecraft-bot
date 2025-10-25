@@ -164,6 +164,12 @@ async function getScanBlocksInfo(bot, stateManager, params) {
   const limit = params.limit !== undefined ? params.limit : 1000;
   const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
   const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
+  const yawDegrees = params.yaw !== undefined
+    ? params.yaw
+    : params.directionYaw !== undefined
+      ? params.directionYaw
+      : null;
+  const coneAngleDegrees = params.coneAngle !== undefined ? params.coneAngle : null;
 
   if (typeof filterTypes === "string") {
     filterTypes = [filterTypes];
@@ -214,6 +220,21 @@ async function getScanBlocksInfo(bot, stateManager, params) {
   const blocks = [];
   const typeCounts = {};
 
+  const directionYawRad = yawDegrees !== null
+    ? degreesToRadians(yawDegrees)
+    : bot.entity?.yaw ?? 0;
+  const coneHalfAngleRad = coneAngleDegrees !== null
+    ? Math.max(0, degreesToRadians(coneAngleDegrees) / 2)
+    : null;
+  const forward2D = new Vec3(
+    -Math.sin(directionYawRad),
+    0,
+    -Math.cos(directionYawRad)
+  );
+  const forwardLen = Math.hypot(forward2D.x, forward2D.z) || 1;
+  forward2D.x /= forwardLen;
+  forward2D.z /= forwardLen;
+
   outer: for (const x of xOrder) {
     for (const y of yOrder) {
       for (const z of zOrder) {
@@ -225,6 +246,20 @@ async function getScanBlocksInfo(bot, stateManager, params) {
         if (!block) continue;
         if (block.name.includes("air")) continue;
         if (typeFilterSet && !typeFilterSet.has(block.name)) continue;
+
+        if (coneHalfAngleRad !== null) {
+          const offsetX = pos.x - centerFloor.x;
+          const offsetZ = pos.z - centerFloor.z;
+          if (!(offsetX === 0 && offsetZ === 0)) {
+            const horizontalDist = Math.hypot(offsetX, offsetZ);
+            if (horizontalDist === 0) continue;
+            const dirX = offsetX / horizontalDist;
+            const dirZ = offsetZ / horizontalDist;
+            const dot = clampDot(forward2D.x * dirX + forward2D.z * dirZ);
+            const angle = Math.acos(dot);
+            if (angle > coneHalfAngleRad) continue;
+          }
+        }
 
         const distanceInt = Math.floor(distance);
         const relativePos = {
@@ -383,4 +418,14 @@ function buildAxisOrder(min, max, center) {
   }
 
   return order
+}
+
+function degreesToRadians(deg) {
+  return (deg * Math.PI) / 180
+}
+
+function clampDot(value) {
+  if (value > 1) return 1
+  if (value < -1) return -1
+  return value
 }
