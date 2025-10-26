@@ -435,7 +435,10 @@ function delay(ms) {
 async function findBlock(bot, params = {}) {
   // 条件に一致するブロックを1つ探索し、位置情報を返す
   const options = buildFindBlockOptions(params)
+  const start = process.hrtime.bigint()
   const block = bot.findBlock(options)
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6
+  console.log(`[PRIMITIVES] findBlock match=${describeMatch(params.match)} distance=${options.maxDistance} took ${elapsedMs.toFixed(1)}ms`)
   if (!block) throw new Error('条件に合うブロックが見つかりません')
   return {
     position: block.position.clone(),
@@ -447,7 +450,10 @@ async function findBlock(bot, params = {}) {
 async function findBlocks(bot, params = {}) {
   // 条件に一致するブロックを複数探索し、位置情報リストを返す
   const options = buildFindBlockOptions(params)
+  const start = process.hrtime.bigint()
   const blocks = bot.findBlocks(options)
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6
+  console.log(`[PRIMITIVES] findBlocks match=${describeMatch(params.match)} distance=${options.maxDistance} count=${options.count} took ${elapsedMs.toFixed(1)}ms`)
   if (!blocks || blocks.length === 0) {
     throw new Error('条件に合うブロックが見つかりません')
   }
@@ -512,4 +518,16 @@ module.exports = {
   findBlocks,
   equipBestToolForBlock,
   findBestTool
+}
+
+function describeMatch(match) {
+  if (typeof match === 'string') return match
+  if (Array.isArray(match)) return `[${match.join(',')}]`
+  if (typeof match === 'object' && match !== null) {
+    const parts = []
+    if (Array.isArray(match.equals)) parts.push(`equals=${match.equals.join(',')}`)
+    if (typeof match.includes === 'string') parts.push(`includes=${match.includes}`)
+    return `{${parts.join(' ')}}`
+  }
+  return String(match)
 }
