@@ -75,7 +75,8 @@ function printCompletionBanner(aiCount) {
   console.log('    !status');
   console.log('');
   console.log('  Conversation (会話):');
-  console.log('    !chat ' + chalk.yellow('PlayerName Hello!') + chalk.gray('  # 指定プレイヤーにwhisper送信'));
+  console.log('    !chat ' + chalk.yellow('PlayerName Hello!') + chalk.gray('  # 距離内ならwhisper送信 (デフォルト15ブロック)'));
+  console.log('    !chat ' + chalk.yellow('{\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 30}'));
   console.log('    !history  ' + chalk.gray('# 全会話履歴を表示'));
   console.log('    !history ' + chalk.yellow('PlayerName') + chalk.gray('  # 特定プレイヤーの履歴のみ'));
   console.log('    !history ' + chalk.yellow('Player1,Player2') + chalk.gray('  # 複数プレイヤー指定'));

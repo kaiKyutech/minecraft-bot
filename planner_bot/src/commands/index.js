@@ -87,20 +87,132 @@ async function handleChatCommand(bot, username, message, stateManager) {
     return
   }
 
-  // チャット送信（whisper）
+  // チャット送信（whisper with distance check）
   if (trimmed.startsWith('!chat ')) {
-    const parts = trimmed.replace('!chat ', '').trim().split(' ')
-    const targetUsername = parts[0]
-    const message = parts.slice(1).join(' ')
+    const args = trimmed.replace('!chat ', '').trim()
 
-    if (!targetUsername || !message) {
-      throw new Error('使用方法: !chat <username> <message>')
+    // JSON形式のパラメータをパース
+    let targetUsername, message, maxDistance = 15
+
+    // JSON形式かどうかをチェック
+    if (args.startsWith('{')) {
+      try {
+        const params = JSON.parse(args)
+        targetUsername = params.username
+        message = params.message
+        if (params.maxDistance !== undefined) {
+          maxDistance = Math.min(params.maxDistance, 100) // 最大100に制限
+        }
+      } catch (error) {
+        return {
+          success: false,
+          reason: 'invalid_format',
+          error: 'JSON parse error',
+          usage: '!chat {\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 15}'
+        }
+      }
+    } else {
+      // 簡易形式: !chat username message
+      const parts = args.split(' ')
+      targetUsername = parts[0]
+      message = parts.slice(1).join(' ')
     }
 
-    bot.systemLog(`[CHAT] Sending to ${targetUsername}: ${message}`)
+    if (!targetUsername || !message) {
+      return {
+        success: false,
+        reason: 'invalid_format',
+        usage: '!chat <username> <message> or !chat {\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 15}'
+      }
+    }
+
+    // 対象プレイヤーの存在確認
+    const targetPlayer = bot.players[targetUsername]
+    if (!targetPlayer) {
+      bot.systemLog(`[CHAT] Player ${targetUsername} not found`)
+
+      // 会話履歴に記録（発話を試みた事実として）
+      bot.addMessage(bot.username, {
+        message: message,
+        delivered: false,
+        reason: 'player_not_found',
+        targetUsername: targetUsername,
+        maxDistance: maxDistance
+      }, 'bot_response')
+
+      return {
+        success: false,
+        reason: 'player_not_found',
+        targetUsername: targetUsername
+      }
+    }
+
+    // エンティティ情報の確認（距離計算に必要）
+    if (!targetPlayer.entity) {
+      bot.systemLog(`[CHAT] Player ${targetUsername} entity not available`)
+
+      // 会話履歴に記録（発話を試みた事実として）
+      bot.addMessage(bot.username, {
+        message: message,
+        delivered: false,
+        reason: 'entity_not_available',
+        targetUsername: targetUsername,
+        maxDistance: maxDistance
+      }, 'bot_response')
+
+      return {
+        success: false,
+        reason: 'entity_not_available',
+        targetUsername: targetUsername
+      }
+    }
+
+    // 距離チェック
+    const distance = bot.entity.position.distanceTo(targetPlayer.entity.position)
+    const distanceRounded = Math.floor(distance)
+
+    if (distance > maxDistance) {
+      bot.systemLog(`[CHAT] ${targetUsername} is too far (${distanceRounded} blocks, max=${maxDistance})`)
+
+      // 送信失敗でも会話履歴に記録（発話を試みた事実として）
+      bot.addMessage(bot.username, {
+        message: message,
+        delivered: false,
+        reason: 'out_of_range',
+        targetUsername: targetUsername,
+        distance: distanceRounded,
+        maxDistance: maxDistance
+      }, 'bot_response')
+
+      return {
+        success: false,
+        reason: 'out_of_range',
+        targetUsername: targetUsername,
+        distance: distanceRounded,
+        maxDistance: maxDistance
+      }
+    }
+
+    // 距離内なので送信
+    bot.systemLog(`[CHAT] Sending to ${targetUsername} (${distanceRounded} blocks): ${message}`)
     await bot.speak(targetUsername, message)
-    bot.addMessage(bot.username, message, 'bot_response')
-    return
+
+    // 会話履歴に構造化データとして記録
+    bot.addMessage(bot.username, {
+      message: message,
+      delivered: true,
+      targetUsername: targetUsername,
+      distance: distanceRounded,
+      maxDistance: maxDistance
+    }, 'bot_response')
+
+    return {
+      success: true,
+      targetUsername: targetUsername,
+      distance: distanceRounded,
+      maxDistance: maxDistance,
+      message: message
+    }
   }
 
   // 実験用: オウム返し（LLM発話のシミュレーション）- 後方互換性のため残す
