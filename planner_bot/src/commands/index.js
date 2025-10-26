@@ -1,3 +1,4 @@
+const { performance } = require('perf_hooks')
 const handleGoalCommand = require('./goal_command')
 const handleSkillCommand = require('./skill_command')
 const handlePrimitiveCommand = require('./primitive_command')
@@ -12,6 +13,17 @@ async function handleChatCommand(bot, username, message, stateManager) {
   if (trimmed === '!status') {
     await handleStatusCommand(bot, username, stateManager)
     return
+  }
+
+  if (trimmed === '!refresh') {
+    const start = performance.now()
+    await stateManager.refresh(bot)
+    const elapsed = performance.now() - start
+    bot.systemLog(`[REFRESH] Completed in ${elapsed.toFixed(1)}ms`)
+    return {
+      success: true,
+      durationMs: elapsed
+    }
   }
 
   if (/^!info(\s|$)/.test(trimmed)) {
