@@ -89,9 +89,12 @@ function printCompletionBanner(aiCount) {
   console.log('  Navigation (移動):');
   console.log('    !navigation register {' + chalk.yellow('"name": "home"') + chalk.gray(', "coords": ([100, 64, 200])') + '}');
   console.log('    !navigation goto ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !navigation gotoCoords {' + chalk.yellow('"coords": [100, 64, 200]') + '}');
   console.log('    !navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": (current), "verticalMode": ("nearest")') + '}');
   console.log('    !navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
   console.log('    !navigation stopFollow {}');
+  console.log('    !navigation dropItem {' + chalk.yellow('"targetPlayer": "PlayerName", "itemName": "iron_ingot"') + chalk.gray(', "count": (1), "maxDistance": (100)') + '}');
+  console.log('    !navigation pickupItems ' + chalk.gray('{"range": (5)}  # itemName 省略時は全アイテム'));
   console.log('');
   console.log('  Creative (建築など):');
   console.log(chalk.gray('    !creative  # 未実装（将来の拡張用）'));

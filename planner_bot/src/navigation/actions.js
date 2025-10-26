@@ -221,26 +221,35 @@ module.exports = {
    * 座標指定で移動
    * @param {Object} bot - Mineflayerボット
    * @param {Object} stateManager - 状態マネージャー
-   * @param {Object} params - {x: number, y: number, z: number}
+   * @param {Object} params - {coords: [x, y, z]}
    */
   async gotoCoords(bot, stateManager, params) {
-    const { x, y, z } = params
-    if (x === undefined || y === undefined || z === undefined) {
-      throw new Error('座標（x, y, z）が必要です')
+    if (!params.coords) {
+      throw new Error('座標（coords）が必要です')
     }
 
-    console.log(`[NAVIGATION] 座標 (${x}, ${y}, ${z}) へ移動開始`)
+    if (!Array.isArray(params.coords) || params.coords.length !== 3) {
+      throw new Error('座標は [x, y, z] の形式で指定してください')
+    }
+
+    const [x, y, z] = params.coords
+
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+      throw new Error('座標は数値である必要があります')
+    }
+
+    console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] へ移動開始`)
 
     await primitives.moveTo(bot, {
       position: { x, y, z },
       range: 3.0
     })
 
-    console.log(`[NAVIGATION] 座標に到達しました`)
+    console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] に到達しました`)
 
     return {
       success: true,
-      message: `(${x}, ${y}, ${z})に到着しました`,
+      message: `[${x}, ${y}, ${z}]に到着しました`,
       location: { x, y, z }
     }
   },
@@ -381,6 +390,170 @@ module.exports = {
         y: Math.floor(finalPos.y),
         z: Math.floor(finalPos.z)
       }
+    }
+  },
+
+  /**
+   * プレイヤーの近くに移動してアイテムをドロップ
+   * @param {Object} bot - Mineflayerボット
+   * @param {Object} stateManager - 状態マネージャー
+   * @param {Object} params - {targetPlayer: string, itemName: string, count?: number, maxDistance?: number}
+   */
+  async dropItem(bot, stateManager, params) {
+    const { targetPlayer, itemName, count = 1, maxDistance = 100 } = params
+
+    if (!targetPlayer) {
+      throw new Error('対象プレイヤー名（targetPlayer）が必要です')
+    }
+
+    if (!itemName) {
+      throw new Error('アイテム名（itemName）が必要です')
+    }
+
+    // プレイヤーの存在確認
+    const player = bot.players[targetPlayer]
+    if (!player || !player.entity) {
+      throw new Error(`プレイヤー「${targetPlayer}」が見つかりません`)
+    }
+
+    // 距離チェック
+    const distance = bot.entity.position.distanceTo(player.entity.position)
+    if (distance > maxDistance) {
+      throw new Error(
+        `プレイヤー「${targetPlayer}」が遠すぎます（距離: ${Math.floor(distance)}ブロック、最大: ${maxDistance}ブロック）`
+      )
+    }
+
+    console.log(`[NAVIGATION] ${targetPlayer} の近くに移動してアイテムをドロップします（現在距離: ${Math.floor(distance)}ブロック）`)
+
+    // インベントリにアイテムがあるか確認（移動前にチェック）
+    const item = bot.inventory.items().find(i => i.name === itemName)
+    if (!item) {
+      throw new Error(`アイテム「${itemName}」がインベントリにありません`)
+    }
+
+    const availableCount = item.count
+    const dropCount = Math.min(count, availableCount)
+
+    // GoalFollowで追跡しながら近づく（プレイヤーが移動しても追いかける）
+    const { GoalFollow } = require('mineflayer-pathfinder').goals
+    const goal = new GoalFollow(player.entity, 2) // 2ブロック以内まで近づく
+
+    bot.pathfinder.setGoal(goal, true)
+    console.log(`[NAVIGATION] ${targetPlayer} を追跡開始（移動しても追いかけます）`)
+
+    // 2.5ブロック以内に入るまで待つ（最大30秒）
+    await new Promise((resolve, reject) => {
+      const startTime = Date.now()
+      const timeout = 30000 // 30秒
+
+      const checkInterval = setInterval(() => {
+        const currentDistance = bot.entity.position.distanceTo(player.entity.position)
+
+        if (currentDistance <= 2.5) { // 2.5ブロック以内に入ったら成功
+          clearInterval(checkInterval)
+          console.log(`[NAVIGATION] ${targetPlayer} の近くに到着しました（距離: ${Math.floor(currentDistance * 10) / 10}ブロック）`)
+          resolve()
+        } else if (Date.now() - startTime > timeout) {
+          clearInterval(checkInterval)
+          reject(new Error(`タイムアウト: ${targetPlayer} に近づけませんでした（30秒経過）`))
+        }
+      }, 100) // 100msごとにチェック
+    })
+
+    // 追跡停止
+    bot.pathfinder.setGoal(null)
+
+    // プレイヤーの方を向く（目の高さ）
+    const targetPosition = player.entity.position.offset(0, player.entity.height, 0)
+    await bot.lookAt(targetPosition)
+    console.log(`[NAVIGATION] ${targetPlayer} の方を向きました`)
+
+    console.log(`[NAVIGATION] ${itemName} を ${dropCount}個ドロップします`)
+
+    // アイテムをドロップ
+    await bot.toss(item.type, null, dropCount)
+
+    console.log(`[NAVIGATION] ${targetPlayer} の近くに ${itemName} を ${dropCount}個ドロップしました`)
+
+    return {
+      success: true,
+      message: `${targetPlayer} の近くに ${itemName} を ${dropCount}個ドロップしました`,
+      targetPlayer: targetPlayer,
+      itemName: itemName,
+      droppedCount: dropCount,
+      availableCount: availableCount
+    }
+  },
+
+  /**
+   * 周囲のドロップアイテムを拾う
+   * @param {Object} bot - Mineflayerボット
+   * @param {Object} stateManager - 状態マネージャー
+   * @param {Object} params - {range?: number, itemName?: string}
+   */
+  async pickupItems(bot, stateManager, params) {
+    const { range = 5, itemName = null } = params
+
+    console.log(`[NAVIGATION] 周囲${range}ブロック以内のアイテムを拾います${itemName ? `（対象: ${itemName}）` : ''}`)
+
+    // 周囲のドロップアイテムを検索
+    const droppedItems = Object.values(bot.entities)
+      .filter(entity => {
+        if (entity.name !== 'item') return false
+        const distance = bot.entity.position.distanceTo(entity.position)
+        if (distance > range) return false
+
+        // itemName指定がある場合はフィルタ
+        if (itemName && entity.metadata && entity.metadata[8]) {
+          const item = entity.metadata[8]
+          if (item && item.itemId) {
+            const itemType = bot.registry.items[item.itemId]
+            if (itemType && itemType.name !== itemName) return false
+          }
+        }
+
+        return true
+      })
+
+    if (droppedItems.length === 0) {
+      console.log(`[NAVIGATION] 拾うアイテムが見つかりませんでした`)
+      return {
+        success: true,
+        message: '拾うアイテムが見つかりませんでした',
+        pickedUpCount: 0,
+        items: []
+      }
+    }
+
+    console.log(`[NAVIGATION] ${droppedItems.length}個のアイテムが見つかりました`)
+
+    // 最も近いアイテムの位置に移動（近づけば自動的に拾われる）
+    const closestItem = droppedItems.reduce((closest, item) => {
+      const distClosest = bot.entity.position.distanceTo(closest.position)
+      const distItem = bot.entity.position.distanceTo(item.position)
+      return distItem < distClosest ? item : closest
+    })
+
+    try {
+      // 最も近いアイテムに移動すれば、範囲内の全アイテムが自動的に拾われる
+      await primitives.moveTo(bot, {
+        position: closestItem.position,
+        range: 1.0
+      })
+
+      // 少し待機（アイテムが自動的に拾われるのを待つ）
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      console.log(`[NAVIGATION] アイテムを拾いました`)
+    } catch (error) {
+      console.log(`[NAVIGATION] 移動に失敗しました: ${error.message}`)
+    }
+
+    return {
+      success: true,
+      message: `アイテムを拾いました`,
+      foundCount: droppedItems.length
     }
   }
 }
