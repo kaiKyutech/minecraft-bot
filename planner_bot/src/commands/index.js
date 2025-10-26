@@ -36,8 +36,21 @@ async function handleChatCommand(bot, username, message, stateManager) {
 
   if (trimmed.startsWith('!goal ')) {
     const goalName = trimmed.replace('!goal ', '').trim()
-    await handleGoalCommand(bot, username, goalName, stateManager)
-    return
+    try {
+      await handleGoalCommand(bot, username, goalName, stateManager)
+      return {
+        success: true,
+        goal: goalName,
+        message: `目標「${goalName}」を完了しました`
+      }
+    } catch (error) {
+      return {
+        success: false,
+        goal: goalName,
+        error: error.message,
+        diagnosis: error.diagnosis || null
+      }
+    }
   }
 
   if (trimmed.startsWith('!creative ')) {

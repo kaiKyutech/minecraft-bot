@@ -21,46 +21,24 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
   if (!plan || !Array.isArray(plan)) {
     bot.systemLog('目標を実行できません')
-    bot.addMessage(bot.username, '目標を実行できません', 'system_info')
 
-    // 詳細なエラーメッセージを構築
-    let errorMessage = '目標を実行できません。'
-    let diagnosisMessages = []
+    // 構造化された診断情報を構築
+    const structuredDiagnosis = buildStructuredDiagnosis(diagnosis, goalName)
 
-    // 診断情報をチャットに表示
-    if (diagnosis) {
-      diagnosisMessages = await sendDiagnosisToChat(bot, username, diagnosis)
-      // コンソールには詳細ログ
-      logDiagnosisDetails(diagnosis)
+    // コンソールに構造化されたデータを整形出力
+    console.log('\n=== 構造化された診断情報 ===')
+    console.log(JSON.stringify(structuredDiagnosis, null, 2))
+    console.log('============================\n')
 
-      // アクションが見つからない場合（作成できないアイテム）
-      if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
-        const firstSuggestion = diagnosis.suggestions[0]
+    // 会話履歴に構造化されたデータを記録
+    bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
 
-        // アクションが存在しない場合
-        if (firstSuggestion.message && firstSuggestion.message.includes('アクションが見つかりません')) {
-          errorMessage += ` このアイテムは作成できません。使用可能なアイテム一覧を確認してください。`
-        }
-        // 材料不足の場合
-        else if (firstSuggestion.preconditions && firstSuggestion.preconditions.length > 0) {
-          const unsatisfied = firstSuggestion.preconditions.filter(p => !p.satisfied)
-          if (unsatisfied.length > 0) {
-            const missing = unsatisfied
-              .map(p => {
-                const current = p.current || 'なし'
-                const required = p.required
-                return `${p.key}(現在:${current}, 必要:${required})`
-              })
-              .join(', ')
-            errorMessage += ` 材料不足: ${missing}`
-          }
-        }
-      }
-    }
+    // コンソールには詳細ログ（開発者向け）
+    logDiagnosisDetails(diagnosis)
 
-    // エラーオブジェクトに診断メッセージを添付
-    const error = new Error(errorMessage)
-    error.diagnosisMessages = diagnosisMessages
+    // エラーオブジェクトに構造化された診断情報を添付
+    const error = new Error(`目標「${goalName}」を実行できません`)
+    error.diagnosis = structuredDiagnosis
     throw error
   }
 
@@ -83,43 +61,39 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 }
 
 /**
- * 診断情報をコンソールと会話履歴に追加（1つのメッセージにまとめる）
- * @param {Object} bot - Mineflayerボット
- * @param {string} username - 送信先ユーザー名
- * @param {Object} diagnosis - 診断結果
- * @returns {Array<string>} 送信したメッセージのリスト
+ * 構造化された診断情報を構築
+ * @param {Object} diagnosis - GOAP診断結果
+ * @param {string} goalName - 目標名
+ * @returns {Object} 構造化された診断情報
  */
-async function sendDiagnosisToChat(bot, username, diagnosis) {
-  const lines = []
+function buildStructuredDiagnosis(diagnosis, goalName) {
+  const result = {
+    goal: goalName,
+    success: false,
+    reason: 'planning_failed',
+    missingRequirements: [],
+    unsatisfiedPreconditions: []
+  }
 
   if (diagnosis.error) {
-    lines.push(`エラー: ${diagnosis.error}`)
-    const fullMessage = lines.join('\n')
-    bot.systemLog(fullMessage)
-    bot.addMessage(bot.username, fullMessage, 'system_info')
-    return [fullMessage]
+    result.reason = 'error'
+    result.error = diagnosis.error
+    return result
   }
 
-  if (!diagnosis.missingRequirements || diagnosis.missingRequirements.length === 0) {
-    return []
+  // 不足している要件
+  if (diagnosis.missingRequirements && diagnosis.missingRequirements.length > 0) {
+    for (const req of diagnosis.missingRequirements) {
+      result.missingRequirements.push({
+        key: req.key,
+        current: req.current,
+        required: req.target
+      })
+    }
   }
 
-  lines.push('=== GOAP診断: 目標を実行できません ===')
-  lines.push('')
-
-  // 不足している要件を簡潔に表示
-  lines.push('【不足している要件】')
-  for (const req of diagnosis.missingRequirements) {
-    const current = typeof req.current === 'boolean' ? (req.current ? 'true' : 'false') : req.current
-    const target = typeof req.target === 'boolean' ? (req.target ? 'true' : 'false') : req.target
-    lines.push(`  ${req.key}: 現在=${current}, 必要=${target}`)
-  }
-  lines.push('')
-
-  // 前提条件の詳細を追加
+  // 満たされていない前提条件
   if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
-    lines.push('【満たされていない前提条件】')
-
     // 目標ごとにグループ化して最も低コストのオプションを表示
     const groupedByTarget = {}
     for (const suggestion of diagnosis.suggestions) {
@@ -130,37 +104,34 @@ async function sendDiagnosisToChat(bot, username, diagnosis) {
     }
 
     for (const [target, suggestions] of Object.entries(groupedByTarget)) {
-      // 最も低コストで前提条件が最も少ないものを選択
+      // 最も低コストの提案を選択
       const bestSuggestion = suggestions
         .filter(s => s.preconditions && s.preconditions.length > 0)
         .sort((a, b) => (a.cost || 999) - (b.cost || 999))[0]
 
       if (bestSuggestion && bestSuggestion.preconditions) {
-        lines.push(`  ${target} を作成するには:`)
+        // 満たされていない前提条件のみ抽出
+        const unsatisfied = bestSuggestion.preconditions
+          .filter(p => !p.satisfied)
+          .map(p => ({
+            key: p.key,
+            current: p.current,
+            required: p.required
+          }))
 
-        // 満たされていない前提条件のみ表示
-        const unsatisfied = bestSuggestion.preconditions.filter(p => !p.satisfied)
         if (unsatisfied.length > 0) {
-          for (const precond of unsatisfied) {
-            const formatValue = (val) => typeof val === 'boolean' ? (val ? 'true' : 'false') : val
-            lines.push(`    - ${precond.key}: 現在=${formatValue(precond.current)}, 必要=${precond.required}`)
-          }
-        } else {
-          lines.push(`    (全ての前提条件を満たしていますが、ルートが見つかりませんでした)`)
+          result.unsatisfiedPreconditions.push({
+            target: target,
+            action: bestSuggestion.action,
+            cost: bestSuggestion.cost,
+            missing: unsatisfied
+          })
         }
       }
     }
-    lines.push('')
   }
 
-  lines.push('→ 上記の材料や道具を先に入手してください')
-
-  // 1つのメッセージにまとめてコンソールと会話履歴に追加
-  const fullMessage = lines.join('\n')
-  bot.systemLog(fullMessage)
-  bot.addMessage(bot.username, fullMessage, 'system_info')
-
-  return [fullMessage]
+  return result
 }
 
 /**
