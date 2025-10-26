@@ -75,13 +75,13 @@ function printCompletionBanner(aiCount) {
   console.log('    !status');
   console.log('');
   console.log('  Conversation (会話):');
+  console.log('    !chat ' + chalk.yellow('PlayerName Hello!') + chalk.gray('  # 指定プレイヤーにwhisper送信'));
   console.log('    !history  ' + chalk.gray('# 全会話履歴を表示'));
   console.log('    !history ' + chalk.yellow('PlayerName') + chalk.gray('  # 特定プレイヤーの履歴のみ'));
   console.log('    !history ' + chalk.yellow('Player1,Player2') + chalk.gray('  # 複数プレイヤー指定'));
-  console.log('    !echo ' + chalk.yellow('Hello!') + chalk.gray('  # 発話シミュレーション（テスト用）'));
   console.log('');
   console.log('  Information (情報取得):');
-  console.log('    !info all  ' + chalk.gray('# inventory + position + locations'));
+  console.log('    !info all  ' + chalk.gray('# inventory + position + locations + nearbyPlayers'));
   console.log('    !info vision ' + chalk.gray('{"yaw": (current), "pitch": (current), "renderWait": (10000)}'));
   console.log('    !info scanBlocks ' + chalk.gray('{"range": (32), "type": "diamond_ore", "maxChecks": (25000), "minYOffset": (-32), "maxYOffset": (32), "yaw": (current), "coneAngle": (360)}'));
   console.log('                  ' + chalk.gray('# type(s) / maxChecks / min|maxYOffset / yaw / coneAngle を調整可能 (type 省略時は全て)'));

@@ -74,7 +74,23 @@ async function handleChatCommand(bot, username, message, stateManager) {
     return
   }
 
-  // 実験用: オウム返し（LLM発話のシミュレーション）
+  // チャット送信（whisper）
+  if (trimmed.startsWith('!chat ')) {
+    const parts = trimmed.replace('!chat ', '').trim().split(' ')
+    const targetUsername = parts[0]
+    const message = parts.slice(1).join(' ')
+
+    if (!targetUsername || !message) {
+      throw new Error('使用方法: !chat <username> <message>')
+    }
+
+    bot.systemLog(`[CHAT] Sending to ${targetUsername}: ${message}`)
+    await bot.speak(targetUsername, message)
+    bot.addMessage(bot.username, message, 'bot_response')
+    return
+  }
+
+  // 実験用: オウム返し（LLM発話のシミュレーション）- 後方互換性のため残す
   if (trimmed.startsWith('!echo ')) {
     const echoMessage = trimmed.replace('!echo ', '').trim()
     bot.systemLog(`Echo: ${echoMessage}`)
