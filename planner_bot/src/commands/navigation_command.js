@@ -53,7 +53,7 @@ async function handleNavigationCommand(bot, username, message, stateManager) {
   if (result.message) {
     bot.systemLog(result.message)
     // await bot.speak(username, result.message)  // LLMプロジェクトで使用時にアンコメント
-    // bot.addMessage(bot.username, result.message, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+    // bot.addMessage(bot.username, result.message, 'conversation')  // LLMプロジェクトで使用時にアンコメント
   }
 
   return result

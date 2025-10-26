@@ -138,7 +138,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
         reason: 'player_not_found',
         targetUsername: targetUsername,
         maxDistance: maxDistance
-      }, 'bot_response')
+      }, 'conversation')
 
       return {
         success: false,
@@ -158,7 +158,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
         reason: 'entity_not_available',
         targetUsername: targetUsername,
         maxDistance: maxDistance
-      }, 'bot_response')
+      }, 'conversation')
 
       return {
         success: false,
@@ -182,7 +182,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
         targetUsername: targetUsername,
         distance: distanceRounded,
         maxDistance: maxDistance
-      }, 'bot_response')
+      }, 'conversation')
 
       return {
         success: false,
@@ -204,7 +204,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
       targetUsername: targetUsername,
       distance: distanceRounded,
       maxDistance: maxDistance
-    }, 'bot_response')
+    }, 'conversation')
 
     return {
       success: true,
@@ -220,7 +220,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
     const echoMessage = trimmed.replace('!echo ', '').trim()
     bot.systemLog(`Echo: ${echoMessage}`)
     await bot.speak(username, echoMessage)
-    bot.addMessage(bot.username, echoMessage, 'bot_response')
+    bot.addMessage(bot.username, echoMessage, 'conversation')
     return
   }
 }

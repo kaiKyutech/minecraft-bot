@@ -48,7 +48,7 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   const completeMsg = 'スキルが完了しました'
   bot.systemLog(completeMsg)
   // await bot.speak(username, completeMsg)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, completeMsg, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, completeMsg, 'conversation')  // LLMプロジェクトで使用時にアンコメント
 }
 
 module.exports = handleSkillCommand

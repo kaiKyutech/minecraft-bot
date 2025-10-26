@@ -46,8 +46,8 @@ function addLoggingSystem(bot) {
   /**
    * 3. 会話履歴への追加（唯一の履歴追加ポイント）
    * @param {string} speaker - 発言者の実名（Bot1, Bot2, player など）
-   * @param {string} content - メッセージ内容
-   * @param {string} type - メッセージタイプ（'natural_language', 'bot_response', 'system_info' など）
+   * @param {string|Object} content - メッセージ内容（文字列 or 構造化データ）
+   * @param {string} type - メッセージタイプ（'conversation' | 'system_info'）
    */
   bot.addMessage = (speaker, content, type) => {
     // role: このボット視点での役割
@@ -58,8 +58,8 @@ function addLoggingSystem(bot) {
     const messageObj = {
       speaker,     // 発言者の実名（Bot1, Bot2, player など）
       role,        // このボット視点での役割（assistant=self, user=others）
-      content,     // メッセージ内容
-      type,        // 'natural_language' | 'bot_response' | 'system_info' など
+      content,     // メッセージ内容（文字列 or 構造化データ）
+      type,        // 'conversation' | 'system_info'
       timestamp: Date.now()
     }
 
@@ -81,7 +81,7 @@ function addLoggingSystem(bot) {
    * @param {Object} options - フィルタオプション
    * @param {string} options.username - 特定ユーザーの発言のみ取得
    * @param {Array<string>} options.usernames - 複数ユーザーの発言のみ取得
-   * @param {string} options.type - 特定タイプのメッセージのみ取得
+   * @param {string} options.type - 特定タイプのメッセージのみ取得（'conversation' | 'system_info'）
    * @returns {Array} 会話履歴
    */
   bot.getConversationHistory = (options = {}) => {
@@ -97,7 +97,7 @@ function addLoggingSystem(bot) {
       history = history.filter(msg => options.usernames.includes(msg.speaker))
     }
 
-    // type指定（natural_language, bot_response, system_infoなど）
+    // type指定（'conversation' | 'system_info'）
     if (options.type) {
       history = history.filter(msg => msg.type === options.type)
     }
@@ -167,7 +167,7 @@ function createAIBot(id, config) {
     }
 
     // 自然言語メッセージ: 会話履歴に追加
-    bot.addMessage(username, message, 'natural_language')
+    bot.addMessage(username, message, 'conversation')
     bot.systemLog(`Natural language message added to conversation history`)
   })
 

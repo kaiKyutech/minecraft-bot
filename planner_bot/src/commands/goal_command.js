@@ -48,7 +48,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const startMessage = `目標「${goalName}」を開始します`
   bot.systemLog(startMessage)
   // await bot.speak(username, startMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, startMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, startMessage, 'conversation')  // LLMプロジェクトで使用時にアンコメント
 
   // signalをexecutorに渡す
   await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
@@ -57,7 +57,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const completeMessage = `目標「${goalName}」を完了しました`
   bot.systemLog(completeMessage)
   // await bot.speak(username, completeMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, completeMessage, 'bot_response')  // LLMプロジェクトで使用時にアンコメント
+  // bot.addMessage(bot.username, completeMessage, 'conversation')  // LLMプロジェクトで使用時にアンコメント
 }
 
 /**
