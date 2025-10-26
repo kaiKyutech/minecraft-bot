@@ -161,7 +161,10 @@ async function getVisionInfo(bot, stateManager, params) {
 async function getScanBlocksInfo(bot, stateManager, params) {
   const range = params.range !== undefined ? params.range : 32;
   let filterTypes = params.types !== undefined ? params.types : params.type;
-  const maxChecks = params.maxChecks !== undefined ? params.maxChecks : 25000;
+  const rawMaxChecks = params.maxChecks !== undefined ? Number(params.maxChecks) : 25000;
+  const limitEnabled = rawMaxChecks > 0 && Number.isFinite(rawMaxChecks);
+  const maxChecks = limitEnabled ? rawMaxChecks : Infinity;
+  const maxChecksLabel = limitEnabled ? rawMaxChecks : 'unlimited';
   const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
   const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
   const yawDegrees = params.yaw !== undefined
@@ -175,7 +178,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     filterTypes = [filterTypes];
   }
 
-  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks (maxChecks=${maxChecks})...`);
+  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks (maxChecks=${maxChecksLabel})...`);
   if (filterTypes) {
     bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
   }
@@ -260,7 +263,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
         }
 
         eligibleTotal++;
-        if (checkedCount >= maxChecks) {
+        if (limitEnabled && checkedCount >= maxChecks) {
           limitReached = true;
           break outer;
         }
@@ -297,7 +300,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
   const estimatedEligible = estimateEligiblePositions(range, minYOffset, maxYOffset, coneAngleDegrees);
   const estimatedCoverage = estimatedEligible > 0 ? Math.min(checkedCount / estimatedEligible, 1) : 1;
   const estimatedCoveragePercent = Number((estimatedCoverage * 100).toFixed(2));
-  const statusSuffix = limitReached ? ' (maxChecks reached)' : '';
+  const statusSuffix = limitEnabled && limitReached ? ' (maxChecks reached)' : '';
   const farthestDistance = Math.floor(farthestCheckedDistance);
   bot.systemLog(`[INFO] Found ${blocks.length} blocks (checked ${checkedCount}/${eligibleTotal} positions, estCoverage ${estimatedCoveragePercent}%)${statusSuffix}`);
 
@@ -309,7 +312,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     uniqueTypes: Object.keys(typeCounts).length,
     typeCounts: typeCounts,
     checksUsed: checkedCount,
-    maxChecks: maxChecks,
+    maxChecks: limitEnabled ? rawMaxChecks : null,
     eligiblePositions: eligibleTotal,
     estimatedPositions: estimatedEligible,
     estimatedCoveragePercent: estimatedCoveragePercent,
