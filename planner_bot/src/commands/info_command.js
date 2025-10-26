@@ -13,8 +13,8 @@
  *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
  */
 
-const { Vec3 } = require("vec3");
 const vision = require('../vision/capture')
+const { scanBlocks } = require('../utils/block_scanner')
 
 /**
  * インベントリ情報を取得
@@ -159,175 +159,39 @@ async function getVisionInfo(bot, stateManager, params) {
  * 周辺ブロック情報を取得（スキャン）
  */
 async function getScanBlocksInfo(bot, stateManager, params) {
-  const range = params.range !== undefined ? params.range : 32;
-  let filterTypes = params.types !== undefined ? params.types : params.type;
-  const rawMaxChecks = params.maxChecks !== undefined ? Number(params.maxChecks) : 25000;
-  const limitEnabled = rawMaxChecks > 0 && Number.isFinite(rawMaxChecks);
-  const maxChecks = limitEnabled ? rawMaxChecks : Infinity;
-  const maxChecksLabel = limitEnabled ? rawMaxChecks : 'unlimited';
-  const minYOffset = params.minYOffset !== undefined ? params.minYOffset : -range;
-  const maxYOffset = params.maxYOffset !== undefined ? params.maxYOffset : range;
-  const yawDegrees = params.yaw !== undefined
-    ? params.yaw
-    : params.directionYaw !== undefined
-      ? params.directionYaw
-      : null;
-  const coneAngleDegrees = params.coneAngle !== undefined ? params.coneAngle : null;
+  let range = params.range !== undefined ? Number(params.range) : 32;
+  if (!Number.isFinite(range) || range <= 0) range = 32;
 
+  let filterTypes = params.types !== undefined ? params.types : params.type;
   if (typeof filterTypes === "string") {
     filterTypes = [filterTypes];
   }
+  if (Array.isArray(filterTypes) && filterTypes.length === 0) {
+    filterTypes = null;
+  }
+
+  const rawMaxChecks = params.maxChecks !== undefined ? Number(params.maxChecks) : 25000;
+  const limitEnabled = rawMaxChecks > 0 && Number.isFinite(rawMaxChecks);
+  const maxChecksLabel = limitEnabled ? rawMaxChecks : 'unlimited';
 
   bot.systemLog(`[INFO] Scanning blocks within ${range} blocks (maxChecks=${maxChecksLabel})...`);
   if (filterTypes) {
     bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
   }
 
-  const typeFilterSet = (() => {
-    if (!filterTypes || filterTypes.length === 0) return null;
+  const result = scanBlocks(bot, {
+    ...params,
+    range,
+    types: filterTypes
+  });
 
-    const set = new Set();
-    for (const typeName of filterTypes) {
-      const blockDef = bot.registry.blocksByName[typeName];
-      if (!blockDef) {
-        throw new Error(`指定されたブロックタイプが見つかりません: ${typeName}`);
-      }
-      set.add(typeName);
-    }
-    return set;
-  })();
-
-  const centerPos = bot.entity.position;
-  const centerFloor = new Vec3(
-    Math.floor(centerPos.x),
-    Math.floor(centerPos.y),
-    Math.floor(centerPos.z)
-  );
-
-  const gameMinY = typeof bot.game?.minY === "number" ? bot.game.minY : centerFloor.y - range;
-  const gameMaxY = typeof bot.game?.height === "number"
-    ? gameMinY + bot.game.height - 1
-    : centerFloor.y + range;
-
-  const minX = centerFloor.x - range;
-  const maxX = centerFloor.x + range;
-  const minY = Math.max(centerFloor.y + minYOffset, gameMinY);
-  const maxY = Math.min(centerFloor.y + maxYOffset, gameMaxY);
-  const minZ = centerFloor.z - range;
-  const maxZ = centerFloor.z + range;
-
-  const xOrder = buildAxisOrder(minX, maxX, centerFloor.x);
-  const yOrder = buildAxisOrder(minY, maxY, centerFloor.y);
-  const zOrder = buildAxisOrder(minZ, maxZ, centerFloor.z);
-
-  const blocks = [];
-  const typeCounts = {};
-  let checkedCount = 0;
-  let eligibleTotal = 0;
-  let limitReached = false;
-  let farthestCheckedDistance = 0;
-
-  const directionYawRad = yawDegrees !== null
-    ? degreesToRadians(yawDegrees)
-    : bot.entity?.yaw ?? 0;
-  const coneHalfAngleRad = coneAngleDegrees !== null
-    ? Math.max(0, degreesToRadians(coneAngleDegrees) / 2)
-    : null;
-  const forward2D = new Vec3(
-    -Math.sin(directionYawRad),
-    0,
-    -Math.cos(directionYawRad)
-  );
-  const forwardLen = Math.hypot(forward2D.x, forward2D.z) || 1;
-  forward2D.x /= forwardLen;
-  forward2D.z /= forwardLen;
-
-  outer: for (const x of xOrder) {
-    for (const y of yOrder) {
-      for (const z of zOrder) {
-        const pos = new Vec3(x, y, z);
-        const distance = centerPos.distanceTo(pos);
-        if (distance > range) continue;
-
-        const offsetX = pos.x - centerFloor.x;
-        const offsetZ = pos.z - centerFloor.z;
-        if (coneHalfAngleRad !== null) {
-          const horizontalDist = Math.hypot(offsetX, offsetZ);
-          if (horizontalDist !== 0) {
-            const dirX = offsetX / horizontalDist;
-            const dirZ = offsetZ / horizontalDist;
-            const dot = clampDot(forward2D.x * dirX + forward2D.z * dirZ);
-            const angle = Math.acos(dot);
-            if (angle > coneHalfAngleRad) continue;
-          }
-        }
-
-        eligibleTotal++;
-        if (limitEnabled && checkedCount >= maxChecks) {
-          limitReached = true;
-          break outer;
-        }
-
-        checkedCount++;
-        if (distance > farthestCheckedDistance) {
-          farthestCheckedDistance = distance;
-        }
-
-        const block = bot.blockAt(pos, false);
-        if (!block) continue;
-        if (block.name.includes("air")) continue;
-        if (typeFilterSet && !typeFilterSet.has(block.name)) continue;
-
-        const distanceInt = Math.floor(distance);
-        const relativePos = {
-          x: offsetX,
-          y: pos.y - centerFloor.y,
-          z: offsetZ
-        };
-
-        blocks.push({
-          name: block.name,
-          position: { x: pos.x, y: pos.y, z: pos.z },
-          relativePosition: relativePos,
-          distance: distanceInt
-        });
-
-        typeCounts[block.name] = (typeCounts[block.name] || 0) + 1;
-      }
-    }
-  }
-
-  const estimatedEligible = estimateEligiblePositions(range, minYOffset, maxYOffset, coneAngleDegrees);
-  const estimatedCoverage = estimatedEligible > 0 ? Math.min(checkedCount / estimatedEligible, 1) : 1;
-  const estimatedCoveragePercent = Number((estimatedCoverage * 100).toFixed(2));
-  const statusSuffix = limitEnabled && limitReached ? ' (maxChecks reached)' : '';
-  const farthestDistance = Math.floor(farthestCheckedDistance);
-  bot.systemLog(`[INFO] Found ${blocks.length} blocks (checked ${checkedCount}/${eligibleTotal} positions, estCoverage ${estimatedCoveragePercent}%)${statusSuffix}`);
-
-  blocks.sort((a, b) => a.distance - b.distance);
-
-  // サマリー情報
-  const summary = {
-    totalBlocks: blocks.length,
-    uniqueTypes: Object.keys(typeCounts).length,
-    typeCounts: typeCounts,
-    checksUsed: checkedCount,
-    maxChecks: limitEnabled ? rawMaxChecks : null,
-    eligiblePositions: eligibleTotal,
-    estimatedPositions: estimatedEligible,
-    estimatedCoveragePercent: estimatedCoveragePercent,
-    farthestDistance: farthestDistance,
-    scanRange: range,
-    scanCenter: {
-      x: centerFloor.x,
-      y: centerFloor.y,
-      z: centerFloor.z
-    }
-  }
+  const summary = result.summary;
+  const statusSuffix = summary.limitReached ? ' (maxChecks reached)' : '';
+  bot.systemLog(`[INFO] Found ${summary.totalBlocks} blocks (checked ${summary.checksUsed}/${summary.eligiblePositions} positions, estCoverage ${summary.estimatedCoveragePercent}%)${statusSuffix}`);
 
   return {
-    blocks: blocks,
-    summary: summary
+    blocks: result.blocks,
+    summary
   }
 }
 
@@ -472,60 +336,3 @@ async function handleInfoCommand(bot, username, message, stateManager) {
 }
 
 module.exports = handleInfoCommand
-
-function buildAxisOrder(min, max, center) {
-  const order = []
-  const lowerSteps = center - min
-  const upperSteps = max - center
-
-  if (center >= min && center <= max) {
-    order.push(center)
-  }
-
-  const maxStep = Math.max(lowerSteps, upperSteps)
-  for (let step = 1; step <= maxStep; step++) {
-    const below = center - step
-    const above = center + step
-
-    if (below >= min) {
-      order.push(below)
-    }
-    if (above <= max) {
-      order.push(above)
-    }
-  }
-
-  return order
-}
-
-function degreesToRadians(deg) {
-  return (deg * Math.PI) / 180
-}
-
-function clampDot(value) {
-  if (value > 1) return 1
-  if (value < -1) return -1
-  return value
-}
-
-function estimateEligiblePositions(range, minYOffset, maxYOffset, coneAngleDegrees) {
-  if (maxYOffset < minYOffset) return 0
-
-  const angle = coneAngleDegrees !== null ? Math.abs(coneAngleDegrees) : 360
-  const normalizedAngle = Math.min(angle % 360 || angle, 360)
-  const coneFraction = normalizedAngle / 360
-  if (coneFraction === 0) return 0
-
-  const minY = Math.ceil(Math.max(-range, minYOffset))
-  const maxY = Math.floor(Math.min(range, maxYOffset))
-  if (maxY < minY) return 0
-
-  let total = 0
-  for (let dy = minY; dy <= maxY; dy++) {
-    const layerRadiusSquared = range * range - dy * dy
-    if (layerRadiusSquared <= 0) continue
-    total += Math.PI * layerRadiusSquared * coneFraction
-  }
-
-  return Math.max(0, Math.round(total))
-}

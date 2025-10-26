@@ -1,4 +1,13 @@
 const { loadStateSchema, loadBlockCategories } = require('./state_builder')
+const { scanBlocks } = require('../utils/block_scanner')
+
+const SCAN_RANGE = process.env.STATE_SCAN_RANGE ? Number(process.env.STATE_SCAN_RANGE) : 100
+const parsedMaxChecks = process.env.STATE_SCAN_MAX_CHECKS
+  ? Number(process.env.STATE_SCAN_MAX_CHECKS)
+  : Infinity
+const SCAN_MAX_CHECKS = Number.isFinite(parsedMaxChecks) && parsedMaxChecks > 0
+  ? parsedMaxChecks
+  : Infinity
 
 /**
  * ボットの状態を取得・更新するためのヘルパー
@@ -101,39 +110,63 @@ class StateManager {
 
     if (!schema.environment_states) return nearbyBlocks
 
-    for (const [stateName, config] of Object.entries(schema.environment_states)) {
-      if (config.detection_method === 'findBlock') {
-        // 個別ブロック検索
-        try {
-          const block = bot.findBlock({
-            matching: (block) => block && block.name === config.block_name,
-            maxDistance: config.max_distance || 32,
-            count: 1
-          })
-          nearbyBlocks[stateName] = !!block
+    const environmentStates = Object.entries(schema.environment_states)
+      .map(([stateName, config]) => buildEnvironmentDefinition(stateName, config, categories))
+      .filter(Boolean)
 
-          // 作業台の場合、詳細情報をログ出力
-          if (config.block_name === 'crafting_table' && block) {
-            const distance = bot.entity.position.distanceTo(block.position)
-            console.log(`[STATE] ${stateName}: found crafting_table at ${JSON.stringify(block.position)} (distance: ${distance.toFixed(2)})`)
+    for (const state of environmentStates) {
+      nearbyBlocks[state.stateName] = state.defaultValue
+    }
+
+    if (environmentStates.length === 0) {
+      return nearbyBlocks
+    }
+
+    let remaining = environmentStates.filter(state => !nearbyBlocks[state.stateName]).length
+
+    if (remaining <= 0) {
+      return nearbyBlocks
+    }
+
+    const maxRequiredDistance = environmentStates.reduce(
+      (acc, state) => Math.max(acc, state.maxDistance || 0),
+      0
+    )
+    const scanRange = Math.min(Math.max(maxRequiredDistance, 1), SCAN_RANGE)
+
+    const scanMaxChecks = SCAN_MAX_CHECKS === Infinity ? -1 : SCAN_MAX_CHECKS
+
+    const { summary } = scanBlocks(bot, {
+      range: scanRange,
+      maxChecks: scanMaxChecks,
+      collectBlocks: false,
+      onBlock: ({ name, rawDistance }) => {
+        for (const state of environmentStates) {
+          if (nearbyBlocks[state.stateName]) continue
+          if (rawDistance > state.maxDistance) continue
+
+          if (state.type === 'single') {
+            if (name === state.blockName) {
+              nearbyBlocks[state.stateName] = true
+              remaining--
+            }
+          } else if (state.type === 'category') {
+            if (state.blockSet.has(name)) {
+              nearbyBlocks[state.stateName] = true
+              remaining--
+            }
           }
-        } catch (error) {
-          nearbyBlocks[stateName] = false
         }
-      } else if (config.detection_method === 'findBlockCategory') {
-        // カテゴリベースブロック検索
-        try {
-          const categoryBlocks = categories?.categories?.[config.category]?.blocks || []
-          const block = bot.findBlock({
-            matching: (block) => block && categoryBlocks.includes(block.name),
-            maxDistance: config.max_distance || 32,
-            count: 1
-          })
-          nearbyBlocks[stateName] = !!block
-        } catch (error) {
-          nearbyBlocks[stateName] = false
-        }
+        return remaining <= 0
       }
+    })
+
+    if (process.env.STATE_SCAN_DEBUG === '1') {
+      console.log(
+        `[STATE_SCAN] range=${summary.scanRange} checks=${summary.checksUsed} ` +
+        `remaining=${remaining} limit=${summary.maxChecks ?? 'unlimited'} ` +
+        `limitReached=${summary.limitReached ? 1 : 0} callbackStop=${summary.stoppedByCallback ? 1 : 0}`
+      )
     }
 
     return nearbyBlocks
@@ -214,6 +247,37 @@ class StateManager {
   getLocations() {
     return { ...this.namedLocations }
   }
+}
+
+function buildEnvironmentDefinition(stateName, config, categories) {
+  const detectionMethod = config.detection_method
+  const maxDistance = config.max_distance || SCAN_RANGE
+  const defaultValue = config.default !== undefined ? config.default : false
+
+  if (detectionMethod === 'findBlock') {
+    if (!config.block_name) return null
+    return {
+      stateName,
+      type: 'single',
+      blockName: config.block_name,
+      maxDistance,
+      defaultValue
+    }
+  }
+
+  if (detectionMethod === 'findBlockCategory') {
+    const blocks = categories?.categories?.[config.category]?.blocks || []
+    if (blocks.length === 0) return null
+    return {
+      stateName,
+      type: 'category',
+      blockSet: new Set(blocks),
+      maxDistance,
+      defaultValue
+    }
+  }
+
+  return null
 }
 
 function createStateManager() {
