@@ -124,10 +124,10 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
 
 module.exports = {
   /**
-   * 現在地を名前付きで登録
+   * 現在地または指定座標を名前付きで登録
    * @param {Object} bot - Mineflayerボット
    * @param {Object} stateManager - 状態マネージャー
-   * @param {Object} params - {name: string, blockType?: string}
+   * @param {Object} params - {name: string, coords?: [x, y, z], blockType?: string}
    */
   async register(bot, stateManager, params) {
     if (!params.name) {
@@ -136,8 +136,20 @@ module.exports = {
 
     let position = bot.entity.position
 
+    // coords指定があれば、その座標を登録
+    if (params.coords) {
+      if (!Array.isArray(params.coords) || params.coords.length !== 3) {
+        throw new Error('座標は [x, y, z] の形式で指定してください')
+      }
+      const [x, y, z] = params.coords
+      if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+        throw new Error('座標は数値である必要があります')
+      }
+      position = { x, y, z }
+      console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] を「${params.name}」として登録`)
+    }
     // blockType指定があれば、そのブロックの位置を登録
-    if (params.blockType) {
+    else if (params.blockType) {
       const block = bot.findBlock({
         matching: (b) => b && b.name === params.blockType,
         maxDistance: 100
@@ -147,7 +159,9 @@ module.exports = {
       }
       position = block.position
       console.log(`[NAVIGATION] ${params.blockType} の位置を「${params.name}」として登録`)
-    } else {
+    }
+    // どちらも指定されていない場合は現在地
+    else {
       console.log(`[NAVIGATION] 現在地を「${params.name}」として登録`)
     }
 

@@ -76,10 +76,8 @@ function printCompletionBanner(aiCount) {
   console.log('');
   console.log('  Conversation (会話):');
   console.log('    !chat ' + chalk.yellow('PlayerName Hello!') + chalk.gray('  # 距離内ならwhisper送信 (デフォルト15ブロック)'));
-  console.log('    !chat ' + chalk.yellow('{\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 30}'));
-  console.log('    !history  ' + chalk.gray('# 全会話履歴を表示'));
-  console.log('    !history ' + chalk.yellow('PlayerName') + chalk.gray('  # 特定プレイヤーの履歴のみ'));
-  console.log('    !history ' + chalk.yellow('Player1,Player2') + chalk.gray('  # 複数プレイヤー指定'));
+  console.log('    !chat {' + chalk.yellow('"username": "PlayerName", "message": "Hello!"') + chalk.gray(', "maxDistance": (30)') + '}');
+  console.log('    !history ' + chalk.gray('(Player1,Player2)') + chalk.gray('  # 会話履歴を表示 (プレイヤー名指定可)'));
   console.log('');
   console.log('  Information (情報取得):');
   console.log('    !info all  ' + chalk.gray('# inventory + position + locations + nearbyPlayers'));
@@ -88,7 +86,7 @@ function printCompletionBanner(aiCount) {
   console.log('                  ' + chalk.gray('# type(s) / maxChecks / min|maxYOffset / yaw / coneAngle を調整可能 (type 省略時は全て)'));
   console.log('');
   console.log('  Navigation (移動):');
-  console.log('    !navigation register ' + chalk.yellow('{"name": "home"}'));
+  console.log('    !navigation register {' + chalk.yellow('"name": "home"') + chalk.gray(', "coords": ([100, 64, 200])') + '}');
   console.log('    !navigation goto ' + chalk.yellow('{"name": "home"}'));
   console.log('    !navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": (current), "verticalMode": ("nearest")') + '}');
   console.log('    !navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
