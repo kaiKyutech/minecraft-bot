@@ -36,20 +36,60 @@ async function handleChatCommand(bot, username, message, stateManager) {
 
   if (trimmed.startsWith('!goal ')) {
     const goalName = trimmed.replace('!goal ', '').trim()
+
+    // AbortController を作成して保持
+    const abortController = new AbortController()
+    bot.currentAbortController = abortController
+
     try {
-      await handleGoalCommand(bot, username, goalName, stateManager)
+      await handleGoalCommand(bot, username, goalName, stateManager, abortController.signal)
       return {
         success: true,
         goal: goalName,
         message: `目標「${goalName}」を完了しました`
       }
     } catch (error) {
+      // 中断エラーかどうかを判定
+      if (error.name === 'AbortError') {
+        return {
+          success: false,
+          goal: goalName,
+          aborted: true,
+          error: error.message
+        }
+      }
+
       return {
         success: false,
         goal: goalName,
         error: error.message,
         diagnosis: error.diagnosis || null
       }
+    } finally {
+      // 完了・失敗・中断いずれの場合もクリア
+      bot.currentAbortController = null
+    }
+  }
+
+  if (trimmed === '!stop') {
+    if (bot.currentAbortController) {
+      bot.systemLog('[STOP] Aborting current GOAP task...')
+      bot.currentAbortController.abort()
+
+      const result = {
+        success: true,
+        message: 'タスクを中断しました'
+      }
+      console.log(`[${bot.username}] [STOP_RESULT] ${JSON.stringify(result)}`)
+      return result
+    } else {
+      bot.systemLog('[STOP] No task running')
+      const result = {
+        success: false,
+        message: '実行中のタスクがありません'
+      }
+      console.log(`[${bot.username}] [STOP_RESULT] ${JSON.stringify(result)}`)
+      return result
     }
   }
 

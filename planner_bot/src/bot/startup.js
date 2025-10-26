@@ -71,6 +71,7 @@ function printCompletionBanner(aiCount) {
   console.log('');
   console.log('  GOAP System:');
   console.log('    !goal ' + chalk.yellow('inventory.stick:4'));
+  console.log('    !stop  ' + chalk.gray('# GOAP実行中のタスクを中断'));
   console.log('    !skill ' + chalk.yellow('gather') + ' ' + chalk.gray('{"itemName": "oak_log", "count": (1), "maxDistance": (100)}'));
   console.log('    !status');
   console.log('');

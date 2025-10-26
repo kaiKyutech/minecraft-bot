@@ -25,6 +25,9 @@ function addLoggingSystem(bot) {
   // 会話履歴を管理（全員の発言を時系列に保存）
   bot.conversationHistory = []
 
+  // GOAP実行中の中断用AbortController
+  bot.currentAbortController = null
+
   /**
    * 1. システムログ（コンソール出力専用）
    * @param {string} message - ログメッセージ
