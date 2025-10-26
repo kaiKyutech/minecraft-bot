@@ -169,6 +169,13 @@ function createAIBot(id, config) {
     // 自然言語メッセージ: 会話履歴に追加
     bot.addMessage(username, message, 'conversation')
     bot.systemLog(`Natural language message added to conversation history`)
+
+    // 即時通知イベントを発火（LLMプロジェクトで使用）
+    bot.emit('newNaturalMessage', {
+      from: username,
+      content: message,
+      timestamp: Date.now()
+    })
   })
 
   // 公開チャット無視
