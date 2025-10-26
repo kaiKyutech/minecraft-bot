@@ -77,22 +77,32 @@ await bot.speak('player1', 'こんにちは！木材を集めましょうか？'
 
 **引数**:
 - `speaker` (string): 発言者の実名（Bot1, Bot2, player など）
-- `content` (string): メッセージ内容
+- `content` (string | Object): メッセージ内容（文字列 or 構造化データ）
 - `type` (string): メッセージタイプ
-  - `'natural_language'` - 人間の自然言語メッセージ
-  - `'bot_response'` - ボットの発話（LLMが生成した応答）
-  - `'system_info'` - システム情報（GOAPエラー診断など）
+  - `'conversation'` - 会話メッセージ（自然言語・発話試行）
+  - `'system_info'` - システム情報（GOAP診断など）
 
 **例**:
 ```javascript
-// ユーザーの発言を記録
-bot.addMessage('player1', 'こんにちは', 'natural_language')
+// ユーザーの発言を記録（文字列）
+bot.addMessage('player1', 'こんにちは', 'conversation')
 
-// ボットの発話を記録
-bot.addMessage(bot.username, 'こんにちは！', 'bot_response')
+// ボットの発話を記録（構造化データ）
+bot.addMessage(bot.username, {
+  message: 'こんにちは！',
+  delivered: true,
+  targetUsername: 'player1',
+  distance: 5,
+  maxDistance: 15
+}, 'conversation')
 
-// システム情報を記録
-bot.addMessage(bot.username, 'GOAP診断: 材料不足', 'system_info')
+// システム情報を記録（構造化データ）
+bot.addMessage(bot.username, {
+  goal: 'inventory.diamond_pickaxe:1',
+  success: false,
+  reason: 'planning_failed',
+  missingRequirements: [...]
+}, 'system_info')
 ```
 
 **出力先**:
@@ -105,8 +115,8 @@ bot.addMessage(bot.username, 'GOAP診断: 材料不足', 'system_info')
 {
   speaker: "player1",           // 発言者の実名
   role: "user",                 // このボット視点での役割（assistant=自分, user=それ以外）
-  content: "こんにちは",         // メッセージ内容
-  type: "natural_language",     // メッセージタイプ
+  content: "こんにちは",         // メッセージ内容（文字列 or オブジェクト）
+  type: "conversation",         // メッセージタイプ
   timestamp: 1234567890         // タイムスタンプ（ミリ秒）
 }
 ```
@@ -142,14 +152,18 @@ const groupHistory = bot.getConversationHistory({
 })
 
 // 特定タイプのメッセージのみ
-const naturalMessages = bot.getConversationHistory({
-  type: 'natural_language'
+const conversationOnly = bot.getConversationHistory({
+  type: 'conversation'
+})
+
+const systemInfoOnly = bot.getConversationHistory({
+  type: 'system_info'
 })
 
 // 組み合わせ
-const player1Natural = bot.getConversationHistory({
+const player1Conversation = bot.getConversationHistory({
   username: 'player1',
-  type: 'natural_language'
+  type: 'conversation'
 })
 ```
 
@@ -160,26 +174,21 @@ const player1Natural = bot.getConversationHistory({
 ### パターン1: ボットが発話する（LLMプロジェクト）
 
 ```javascript
-const message = 'こんにちは！木材を集めましょうか？'
+// !chat コマンドを使用（推奨）
+const result = await handleChatCommand(bot, 'system', '!chat player1 こんにちは！木材を集めましょうか？', stateManager)
 
-// 1. コンソールにログ出力
-bot.systemLog(`-> player1: ${message}`)
-
-// 2. Minecraftチャットに送信
-await bot.speak('player1', message)
-
-// 3. 会話履歴に記録
-bot.addMessage(bot.username, message, 'bot_response')
+// result.success で送信成功/失敗を確認
+// 会話履歴には自動的に構造化データとして記録される
 ```
 
 ### パターン2: ユーザーの発言を記録
 
 ```javascript
-// whisperイベントハンドラ内で
+// whisperイベントハンドラ内で（ai_bot.js で既に実装済み）
 bot.on('whisper', (username, message) => {
   if (!message.startsWith('!')) {
     // 自然言語メッセージとして記録
-    bot.addMessage(username, message, 'natural_language')
+    bot.addMessage(username, message, 'conversation')
   }
 })
 ```
@@ -187,23 +196,27 @@ bot.on('whisper', (username, message) => {
 ### パターン3: システム情報を記録
 
 ```javascript
-// GOAPエラーなど
-const errorMsg = 'GOAP診断: 材料不足\n必要: ダイヤモンド x2'
+// GOAP診断など（!goal コマンドで自動記録される）
+const diagnosis = {
+  goal: 'inventory.diamond_pickaxe:1',
+  success: false,
+  reason: 'planning_failed',
+  missingRequirements: [
+    { key: 'inventory.diamond', current: 0, required: 3 }
+  ]
+}
 
-bot.systemLog(errorMsg)  // コンソール出力
-bot.addMessage(bot.username, errorMsg, 'system_info')  // 履歴に記録
+bot.addMessage(bot.username, diagnosis, 'system_info')  // 構造化データとして履歴に記録
 ```
 
 ### パターン4: LLM用に会話履歴を取得
 
 ```javascript
-// 自然言語メッセージとボット応答のみを取得
-const naturalHistory = bot.getConversationHistory({ type: 'natural_language' })
-const botResponses = bot.getConversationHistory({ type: 'bot_response' })
+// 会話メッセージのみを取得（システム情報を除外）
+const conversationHistory = bot.getConversationHistory({ type: 'conversation' })
 
-// 両方を結合して時系列順にソート
-const llmHistory = [...naturalHistory, ...botResponses]
-  .sort((a, b) => a.timestamp - b.timestamp)
+// システム情報のみを取得
+const systemInfo = bot.getConversationHistory({ type: 'system_info' })
 
 // または、システム情報を除外
 const allExceptSystem = bot.getConversationHistory()
@@ -226,8 +239,8 @@ const allExceptSystem = bot.getConversationHistory()
 interface Message {
   speaker: string        // 発言者の実名（Bot1, Bot2, player など）
   role: string          // このボット視点での役割（"assistant" | "user"）
-  content: string       // メッセージ内容
-  type: string          // メッセージタイプ（"natural_language" | "bot_response" | "system_info"）
+  content: string | Object  // メッセージ内容（文字列 or 構造化データ）
+  type: string          // メッセージタイプ（"conversation" | "system_info"）
   timestamp: number     // タイムスタンプ（ミリ秒）
 }
 ```
@@ -243,8 +256,7 @@ interface Message {
 
 | type | 説明 | 使用例 |
 |------|------|--------|
-| `natural_language` | 人間の自然言語メッセージ | プレイヤーの発言 |
-| `bot_response` | ボットの発話（LLM生成） | ボットの返答 |
+| `conversation` | 会話メッセージ | プレイヤーの発言、ボットの発話試行 |
 | `system_info` | システム診断情報 | GOAPエラー、デバッグ情報 |
 
 ---
@@ -848,6 +860,40 @@ const directions = {
 
 ---
 
+### `!chat` - メッセージ送信
+
+指定したプレイヤーにwhisperでメッセージを送信します（距離チェック付き）。
+
+**コマンド形式**:
+```
+# 簡易形式（デフォルト距離15ブロック）
+!chat <username> <message>
+
+# JSON形式（距離カスタマイズ可能、最大100ブロック）
+!chat {"username": "PlayerName", "message": "Hello!", "maxDistance": 30}
+```
+
+**使用例**:
+```
+/w Bot1 !chat Steve Hello!
+/w Bot1 !chat {"username": "Alice", "message": "I found diamonds!", "maxDistance": 50}
+```
+
+**返却値**:
+- 成功時: `{success: true, targetUsername, distance, maxDistance, message}`
+- 失敗時: `{success: false, reason, targetUsername, distance, maxDistance}`
+
+**会話履歴への記録**:
+送信成功・失敗に関わらず、発話試行の事実が構造化データとして `type: 'conversation'` で記録されます。
+
+**失敗理由**:
+- `out_of_range`: 距離外
+- `player_not_found`: プレイヤーが見つからない
+- `entity_not_available`: エンティティ情報が取得できない
+- `invalid_format`: 入力形式が不正
+
+---
+
 ### その他のコマンド
 
 以下のコマンドも利用可能ですが、通常は内部的に使用されます：
@@ -887,13 +933,17 @@ const directions = {
 `createAIBot()`で作成されたボットは、以下の処理が自動的に行われます：
 
 - `!`で始まるメッセージ → コマンドとして実行（会話履歴に入らない）
-- それ以外のメッセージ → `natural_language`として会話履歴に自動追加
+- それ以外のメッセージ → `type: 'conversation'`として会話履歴に自動追加
 
-### 2. `bot.speak()`と`bot.addMessage()`の関係
+### 2. `!chat`コマンドを使用すれば自動的に記録される
 
-`bot.speak()`はMinecraftチャットへの送信のみを行います。会話履歴には自動的に追加**されません**。
+`!chat`コマンドを使用すれば、以下が自動的に行われます：
 
-ボットが発話した内容を会話履歴に残したい場合は、必ず`bot.addMessage()`も呼んでください。
+- 距離チェック
+- whisper送信（範囲内の場合）
+- 会話履歴への記録（構造化データとして）
+
+直接 `bot.speak()` を呼ぶ場合は、`bot.addMessage()` も手動で呼ぶ必要があります。
 
 ### 3. 会話履歴は揮発性
 
@@ -1107,17 +1157,22 @@ await openai.chat.completions.create({
 ### パターン4: 会話履歴をLLMに渡す
 
 ```javascript
-async function chatWithLLM(bot, username, userMessage) {
-  // 1. ユーザーメッセージを会話履歴に追加
-  bot.addMessage(username, userMessage, 'natural_language');
+async function chatWithLLM(bot, username, userMessage, stateManager) {
+  // 1. ユーザーメッセージは既に会話履歴に追加されている（whisperイベントで自動）
 
-  // 2. 会話履歴を取得（システム情報を除外）
-  const history = bot.getConversationHistory()
-    .filter(msg => msg.type !== 'system_info')
-    .map(msg => ({
-      role: msg.role,      // "assistant" or "user"
-      content: msg.content
-    }));
+  // 2. 会話履歴を取得（会話のみ、システム情報を除外）
+  const history = bot.getConversationHistory({ type: 'conversation' })
+    .map(msg => {
+      // 構造化データの場合はメッセージ本文を抽出
+      const content = typeof msg.content === 'object' && msg.content.message
+        ? msg.content.message
+        : msg.content;
+
+      return {
+        role: msg.role,      // "assistant" or "user"
+        content: content     // 文字列のみ
+      };
+    });
 
   // 3. LLM APIに送信
   const response = await anthropic.messages.create({
@@ -1129,10 +1184,19 @@ async function chatWithLLM(bot, username, userMessage) {
 
   const reply = response.content[0].text;
 
-  // 4. ボットの応答を送信＆記録
+  // 4. ボットの応答を送信（!chat コマンドを使用）
   bot.systemLog(`-> ${username}: ${reply}`);
-  await bot.speak(username, reply);
-  bot.addMessage(bot.username, reply, 'bot_response');
+  const result = await handleChatCommand(
+    bot,
+    'system',
+    `!chat ${username} ${reply}`,
+    stateManager
+  );
+
+  // result.success で送信成功/失敗を確認可能
+  if (!result.success) {
+    bot.systemLog(`Failed to send message: ${result.reason}`);
+  }
 
   return reply;
 }

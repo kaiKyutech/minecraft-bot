@@ -369,21 +369,32 @@ bot.conversationHistory = [
     speaker: "PlayerA",
     role: "user",
     content: "木を切ってきて",
-    type: "natural_language",
+    type: "conversation",
     timestamp: 1609459200000
   },
   {
     speaker: "AI_Bot_1",
     role: "assistant",
-    content: "目標を実行できません",
+    content: {
+      goal: "inventory.oak_log:10",
+      success: false,
+      reason: "planning_failed",
+      missingRequirements: [...]
+    },
     type: "system_info",
     timestamp: 1609459201000
   },
   {
-    speaker: "PlayerB",
-    role: "user",
-    content: "石を集めて",
-    type: "natural_language",
+    speaker: "AI_Bot_1",
+    role: "assistant",
+    content: {
+      message: "木が近くに見つかりませんでした",
+      delivered: true,
+      targetUsername: "PlayerA",
+      distance: 5,
+      maxDistance: 15
+    },
+    type: "conversation",
     timestamp: 1609459202000
   }
 ]
@@ -391,9 +402,10 @@ bot.conversationHistory = [
 
 ### メッセージタイプ
 
-- **natural_language**: 自然言語メッセージ (! で始まらない)
-- **bot_response**: ボットの発話 (LLM 応答)
-- **system_info**: システム情報 (GOAP エラー、診断情報)
+- **conversation**: 会話メッセージ（自然言語・発話試行）
+  - content: 文字列 or 構造化データ（`{message, delivered, targetUsername, distance, ...}`）
+- **system_info**: システム情報（GOAP診断など）
+  - content: 構造化データ（`{goal, success, reason, missingRequirements, ...}`）
 
 ### Role の決定
 
@@ -424,7 +436,8 @@ bot.getConversationHistory({ username: "PlayerA" })
 bot.getConversationHistory({ usernames: ["PlayerA", "PlayerB"] })
 
 // 特定タイプの発言
-bot.getConversationHistory({ type: "natural_language" })
+bot.getConversationHistory({ type: "conversation" })
+bot.getConversationHistory({ type: "system_info" })
 ```
 
 ### whisper イベントフロー
