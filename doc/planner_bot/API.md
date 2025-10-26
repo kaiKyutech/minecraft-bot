@@ -261,6 +261,65 @@ interface Message {
 
 ---
 
+## イベントシステム
+
+### `bot.on('newNaturalMessage', callback)` - 自然言語メッセージの即時通知
+
+LLMプロジェクトで使用する、自然言語メッセージの即時通知イベント。
+
+**概要**:
+- whisperで受信したメッセージのうち、`!`で始まらないもの（自然言語）のみを通知
+- GOAP実行中でも並行して動作（非ブロッキング）
+- ポーリング不要で即座に反応可能
+
+**イベントデータ**:
+```javascript
+{
+  from: string,        // 発言者のユーザー名
+  content: string,     // メッセージ内容
+  timestamp: number    // タイムスタンプ（ミリ秒）
+}
+```
+
+**使用例（LLMプロジェクト）**:
+```javascript
+const { createAIBot } = require('./planner_bot/src/bot/ai_bot');
+const { handleChatCommand } = require('./planner_bot/src/commands');
+const createStateManager = require('./planner_bot/src/planner/state_manager');
+
+const bot = createAIBot(1, config);
+const stateManager = createStateManager();
+
+// メッセージ受信時に即座に反応
+bot.on('newNaturalMessage', async (data) => {
+  console.log(`[NEW MESSAGE] ${data.from}: ${data.content}`);
+
+  // LLMで処理（GOAP実行中でも並行して動作）
+  const response = await processWithLLM(data.content, bot);
+
+  // 返答を送信
+  await handleChatCommand(
+    bot,
+    'system',
+    `!chat ${data.from} ${response}`,
+    stateManager
+  );
+});
+```
+
+**メリット**:
+- ✅ GOAP実行中でもメッセージに即座に反応
+- ✅ ポーリング不要（効率的）
+- ✅ 同一Nodeプロセス内で完結（HTTP不要）
+- ✅ 既存の会話履歴システムと両立
+
+**注意**:
+- whisperイベントとは別に発火します（whisperは全メッセージ、newNaturalMessageは自然言語のみ）
+- コマンド（`!`始まり）は会話履歴に入らず、このイベントも発火しません
+- 会話履歴には自動的に追加されるため、手動で `bot.addMessage()` を呼ぶ必要はありません
+
+---
+
 ## コマンドシステム
 
 Planner Botは`!`で始まるコマンドを受け付けます。whisperでボットにコマンドを送信してください。
@@ -307,26 +366,127 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
 
 **エラー時**: 材料不足などの診断情報が`system_info`として会話履歴に記録されます
 
+**返却値**:
+```javascript
+// 成功時
+{
+  success: true,
+  goal: "inventory.diamond_pickaxe:1",
+  message: "目標「inventory.diamond_pickaxe:1」を完了しました"
+}
+
+// 失敗時
+{
+  success: false,
+  goal: "inventory.diamond_pickaxe:1",
+  error: "Planning failed: ...",
+  diagnosis: { ... }
+}
+
+// 中断時
+{
+  success: false,
+  goal: "inventory.diamond_pickaxe:1",
+  aborted: true,
+  error: "Cancelled"
+}
+```
+
 ---
 
-### `!creative <category> <action> [json_params]` - クリエイティブアクション
+### `!stop` - GOAP実行の中断
 
-GOAPで扱えない創造的な行動を実行します。
+実行中のGOAPタスクを中断します。
+
+**使用例**:
+```
+# GOAP実行中に
+/w Bot1 !goal inventory.diamond_pickaxe:1
+
+# 別のwhisperで中断
+/w Bot1 !stop
+```
+
+**返却値**:
+```javascript
+// 中断成功
+{
+  success: true,
+  message: "タスクを中断しました"
+}
+
+// 実行中のタスクがない場合
+{
+  success: false,
+  message: "実行中のタスクがありません"
+}
+```
+
+**動作**:
+- 現在実行中のGOAPタスクを即座に中断
+- 各アクション実行前にキャンセルシグナルをチェック
+- 中断された場合、`!goal`コマンドは`aborted: true`を返す
+
+**用途**:
+- 緊急時の停止
+- プランが間違っていた場合の修正
+- 優先度の高いタスクへの切り替え
+
+**注意**:
+- `!stop`は汎用的な中断コマンドとして設計されています
+- 将来的にはvisionの停止など、他の処理の中断にも使用可能
+
+**LLMプロジェクトでの使用例**:
+```javascript
+// GOAP実行中に新しいメッセージが来た場合
+bot.on('newNaturalMessage', async (data) => {
+  // 優先度判断
+  if (isUrgent(data.content)) {
+    // 現在のタスクを中断
+    await handleChatCommand(bot, 'system', '!stop', stateManager);
+
+    // 新しいタスクを実行
+    await handleGoalCommand(bot, 'system', newGoal, stateManager);
+  }
+});
+```
 
 ---
 
-#### Navigation (`nav`) - 場所の登録と移動
+### `!navigation <action> [json_params]` - 移動・場所管理
 
-##### `register` - 現在地を名前付きで登録
+場所の登録と移動を管理します。
+
+**コマンド形式**:
+```
+!navigation <action> [json_params]
+```
+
+**利用可能なアクション**: `register`, `goto`, `gotoCoords`, `moveInDirection`, `follow`, `stopFollow`
+
+---
+
+#### Navigation Actions
+
+##### `register` - 場所を名前付きで登録
+
+現在地、指定座標、または特定ブロックの位置を名前付きで登録します。
 
 **パラメータ**:
 - `name` (string, 必須): 場所の名前
+- `coords` (array[x, y, z], 省略可): 登録する座標（配列形式）
 - `blockType` (string, 省略可): 特定ブロックの位置を登録（例: "crafting_table"）
 
 **使用例**:
 ```
-/w Bot1 !creative navigation register {"name": "home"}
-/w Bot1 !creative navigation register {"name": "workbench", "blockType": "crafting_table"}
+# 現在地を登録
+/w Bot1 !navigation register {"name": "home"}
+
+# 座標を指定して登録
+/w Bot1 !navigation register {"name": "mine_entrance", "coords": [100, 64, 200]}
+
+# 特定ブロックの位置を登録
+/w Bot1 !navigation register {"name": "workbench", "blockType": "crafting_table"}
 ```
 
 **戻り値**:
@@ -338,6 +498,17 @@ GOAPで扱えない創造的な行動を実行します。
 }
 ```
 
+**座標指定について**:
+- `coords`パラメータは `[x, y, z]` の配列形式で指定
+- 3つの数値すべてが必須（省略不可）
+- 座標を指定した場合、その場所に移動せずに登録のみ可能
+- マップやスクリーンショットから座標を読み取って登録する際に便利
+
+**優先順位**:
+1. `coords` が指定されている → その座標を登録
+2. `blockType` が指定されている → そのブロックの位置を登録
+3. どちらも指定されていない → 現在地を登録
+
 ---
 
 ##### `goto` - 登録済みの場所に移動
@@ -347,7 +518,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative navigation goto {"name": "home"}
+/w Bot1 !navigation goto {"name": "home"}
 ```
 
 **戻り値**:
@@ -372,7 +543,7 @@ GOAPで扱えない創造的な行動を実行します。
 
 **使用例**:
 ```
-/w Bot1 !creative navigation gotoCoords {"x": 250, "y": 64, "z": -100}
+/w Bot1 !navigation gotoCoords {"x": 250, "y": 64, "z": -100}
 ```
 
 **戻り値**:
@@ -403,19 +574,19 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
 **使用例**:
 ```
 # 現在向いている方向に進む
-/w Bot1 !creative navigation moveInDirection {"distance": 10}
+/w Bot1 !navigation moveInDirection {"distance": 10}
 
 # 方向を指定して移動
-/w Bot1 !creative navigation moveInDirection {"yaw": 90, "distance": 10}
+/w Bot1 !navigation moveInDirection {"yaw": 90, "distance": 10}
 
 # 洞窟の床を目指す
-/w Bot1 !creative navigation moveInDirection {"yaw": 0, "distance": 15, "verticalMode": "below"}
+/w Bot1 !navigation moveInDirection {"yaw": 0, "distance": 15, "verticalMode": "below"}
 
 # 洞窟から地上へ
-/w Bot1 !creative navigation moveInDirection {"yaw": 180, "distance": 5, "verticalMode": "above"}
+/w Bot1 !navigation moveInDirection {"yaw": 180, "distance": 5, "verticalMode": "above"}
 
 # 地表を歩く（洞窟に潜らない）
-/w Bot1 !creative navigation moveInDirection {"yaw": 90, "distance": 20, "verticalMode": "surface"}
+/w Bot1 !navigation moveInDirection {"yaw": 90, "distance": 20, "verticalMode": "surface"}
 ```
 
 **戻り値**:
@@ -453,7 +624,7 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
 
 **使用例**:
 ```
-/w Bot1 !creative navigation follow {"username": "RitsukaAlice"}
+/w Bot1 !navigation follow {"username": "RitsukaAlice"}
 ```
 
 **戻り値**:
@@ -475,7 +646,7 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
 
 **使用例**:
 ```
-/w Bot1 !creative navigation stopFollow {}
+/w Bot1 !navigation stopFollow {}
 ```
 
 **戻り値**:
@@ -489,33 +660,15 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
 
 ---
 
-##### `list` - 登録済み場所の一覧
+### `!info <type> [json_params]` - 情報取得
 
-**パラメータ**: なし
+現在の状況やブロック情報を取得します。
 
-**使用例**:
-```
-/w Bot1 !creative navigation list {}
-```
-
-**戻り値**:
-```javascript
-{
-  success: true,
-  message: "3個の場所が登録されています",
-  locations: {
-    "home": { x: 100, y: 64, z: 200 },
-    "mine": { x: 50, y: 12, z: -30 },
-    "workbench": { x: 102, y: 64, z: 198 }
-  }
-}
-```
+**利用可能なタイプ**: `all`, `vision`, `scanBlocks`
 
 ---
 
-#### Vision (`vis` / `vision`) - 視覚システム
-
-##### `capture` - 現在の視界のスクリーンショット
+#### `!info vision` - スクリーンショット取得
 
 AI Botが自分自身の視界のスクリーンショットを撮影します。画像には以下のオーバーレイ情報が含まれます：
 
@@ -535,16 +688,16 @@ AI Botが自分自身の視界のスクリーンショットを撮影します�
 **使用例**:
 ```
 # デフォルト（10秒待機）
-/w Bot1 !creative vision capture {}
+/w Bot1 !info vision {}
 
 # 視線方向指定
-/w Bot1 !creative vision capture {"yaw": 0, "pitch": 0}
+/w Bot1 !info vision {"yaw": 0, "pitch": 0}
 
 # 短距離用（5秒待機）
-/w Bot1 !creative vision capture {"yaw": 90, "renderWait": 5000}
+/w Bot1 !info vision {"yaw": 90, "renderWait": 5000}
 
 # 超遠距離用（15秒待機）
-/w Bot1 !creative vision capture {"yaw": 0, "renderWait": 15000}
+/w Bot1 !info vision {"yaw": 0, "renderWait": 15000}
 ```
 
 **戻り値**:
@@ -621,74 +774,7 @@ const directions = {
 
 ---
 
-#### Chat (`chat`) - チャット・発話システム
-
-##### `broadcast` - 範囲内プレイヤーへ発話（実装予定）
-
-指定範囲内のプレイヤー全員にメッセージを送信します（`/w @a[distance=..N]`を使用）。
-
-**パラメータ**:
-- `message` (string, 必須): 発話内容
-- `range` (number, オプション): 範囲（ブロック、デフォルト: 100）
-
-**使用例**:
-```
-# 100ブロック内の全員に発話
-/w Bot1 !creative chat broadcast {"message": "ダイアモンドを見つけました！"}
-
-# 50ブロック内の全員に発話
-/w Bot1 !creative chat broadcast {"message": "助けが必要です", "range": 50}
-```
-
-**戻り値**:
-```javascript
-{
-  success: true,
-  message: "範囲100ブロック内のプレイヤーに発話しました",
-  broadcast: {
-    content: "ダイアモンドを見つけました！",
-    range: 100
-  }
-}
-```
-
-**用途**:
-- LLMの出力をゲーム内で発話
-- 発見した情報を周囲に共有
-- マルチプレイヤーとの協調
-
----
-
-##### `say` - 公開チャット発話（実装予定）
-
-サーバー全体の公開チャットにメッセージを送信します。
-
-**パラメータ**:
-- `message` (string, 必須): 発話内容
-
-**使用例**:
-```
-/w Bot1 !creative chat say {"message": "探索を開始します"}
-```
-
-**戻り値**:
-```javascript
-{
-  success: true,
-  message: "公開チャットに発話しました",
-  content: "探索を開始します"
-}
-```
-
-**注意**:
-- サーバー全員に見えるため、スパム防止に注意
-- 重要な通知のみに使用推奨
-
----
-
-#### Exploration (`exploration`) - 探索システム
-
-##### `scanBlocks` - 周辺ブロック情報取得
+#### `!info scanBlocks` - 周辺ブロック情報取得
 
 `!info scanBlocks` で利用する周辺環境スキャン。ボットを中心とした立方体範囲を走査し、指定条件に合致したブロック情報を JSON で返します。Mineflayer の `bot.findBlocks` を多重呼び出しするのではなく、チャンクキャッシュを直接走査するため広範囲でも高速です。
 
@@ -775,62 +861,6 @@ const directions = {
 - `maxChecks` を増やすほど広範囲を探索できますが、処理時間も比例して伸びます。用途に応じて調整してください。
 - サマリーの `checksUsed` / `eligiblePositions` / `farthestDistance` / `estimatedCoveragePercent` で走査状況と探索範囲の広がりを把握できます。
 - `estimatedPositions` / `estimatedCoveragePercent` は幾何学的な近似値で、探索条件が広い場合の目安になります。
-
----
-
-##### `topDownMap` - 俯瞰ヒートマップ生成（実装予定）
-
-周囲の地形を俯瞰視点でヒートマップ画像として生成します。
-
-**パラメータ**:
-- `range` (number, オプション): スキャン半径（デフォルト: 50ブロック）
-- `resolution` (number, オプション): 解像度（1=全ブロック、2=2ブロック間隔、デフォルト: 1）
-
-**画像の構成**:
-1. **ヒートマップ**: 相対高度を色で表現（自分の位置を基準）
-   - 赤/黄 = 高い（+10〜+20ブロック）
-   - 緑 = 同じ高さ（±5ブロック）
-   - 青 = 低い（-10〜-20ブロック）
-
-2. **オブジェクトマーク**: 重要な物体を絵文字/ラベルで表示
-   - 木の塊 → 🌲 "Oak"
-   - 石エリア → "Stone"
-   - 建材 → ⚙️ "Table"
-   - 範囲を白枠で囲む
-
-3. **座標系**: 常に北（Z-）が上
-   - グリッド線 + 座標表示
-   - ボット位置 = 中央の×印
-   - 方位（N/E/S/W）表示
-
-**戻り値**:
-```javascript
-{
-  success: true,
-  message: "俯瞰マップを生成しました",
-  data: {
-    image: "base64string...",
-    metadata: {
-      botPosition: { x: 100, y: 64, z: 200 },
-      range: 50,
-      resolution: 1,
-      scannedBlocks: 10000
-    }
-  }
-}
-```
-
-**LLMでの使い方**:
-画像から視覚的に地形を把握し、座標を特定して移動コマンドを実行：
-```javascript
-// 画像を見て「北東（右上）に木の塊がある。座標は (125, -45) あたり」
-!creative navigation gotoCoords {"x": 125, "y": 70, "z": -45}
-```
-
-**技術的課題**:
-- ブロックのクラスタリング（近接ブロックのグループ化）
-- Canvas での絵文字/テキスト描画
-- パフォーマンス最適化（resolution で間引き）
 
 ---
 
@@ -1011,10 +1041,10 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 async function analyzeAndAct(bot, stateManager) {
   // 1. スクリーンショット撮影
-  const visionResult = await handleCreativeCommand(
+  const visionResult = await handleChatCommand(
     bot,
     'llm_agent',
-    'vision capture',
+    '!info vision {}',
     stateManager
   );
 
@@ -1086,10 +1116,14 @@ await handleGoalCommand(bot, 'llm', 'inventory.wooden_pickaxe:1', stateManager);
 // スキル直接実行
 await handleSkillCommand(bot, 'llm', 'skill gatherWood {"count": 10}', stateManager);
 
-// クリエイティブアクション
-const screenshot = await handleCreativeCommand(bot, 'llm', 'vision capture', stateManager);
-await handleCreativeCommand(bot, 'llm', 'navigation register {"name": "home"}', stateManager);
-await handleCreativeCommand(bot, 'llm', 'navigation goto {"name": "home"}', stateManager);
+// Navigation（ナビゲーション）
+await handleChatCommand(bot, 'llm', '!navigation register {"name": "home"}', stateManager);
+await handleChatCommand(bot, 'llm', '!navigation register {"name": "mine", "coords": [100, 12, 200]}', stateManager);
+await handleChatCommand(bot, 'llm', '!navigation goto {"name": "home"}', stateManager);
+
+// Info（情報取得）
+const screenshot = await handleChatCommand(bot, 'llm', '!info vision {}', stateManager);
+const blocks = await handleChatCommand(bot, 'llm', '!info scanBlocks {"range": 32}', stateManager);
 
 // ステータス確認
 await handleStatusCommand(bot, 'llm', stateManager);
@@ -1105,7 +1139,7 @@ await handleChatCommand(bot, 'llm', '!creative vision capture', stateManager);
 
 ```javascript
 // Vision capture の結果構造
-const result = await handleCreativeCommand(bot, 'llm', 'vision capture', stateManager);
+const result = await handleChatCommand(bot, 'llm', '!info vision {}', stateManager);
 
 console.log(result);
 // {
@@ -1264,10 +1298,10 @@ bot.once('spawn', async () => {
   setInterval(async () => {
     try {
       // 1. スクリーンショット撮影
-      const screenshot = await handleCreativeCommand(
+      const screenshot = await handleChatCommand(
         bot,
         'system',
-        'vision capture',
+        '!info vision {}',
         stateManager
       );
 
