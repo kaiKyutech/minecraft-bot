@@ -53,7 +53,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const avoidedPositionKeys = new Set()
   const avoidedPositionOrder = []
   const maxAvoidListSize = params.maxAvoidListSize ?? 32
-  const searchSampleSize = params.searchSampleSize ?? 5  // デフォルト候補数をさらに削減して探索負荷を軽減
+  const searchSampleSize = params.searchSampleSize ?? 1  // デフォルト候補数をさらに削減して探索負荷を軽減
 
   const rememberFailedTarget = (position) => {
     if (!position) return

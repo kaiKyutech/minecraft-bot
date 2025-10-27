@@ -196,10 +196,10 @@ async function getScanBlocksInfo(bot, stateManager, params) {
 }
 
 /**
- * 近くのプレイヤー情報を取得
+ * 全プレイヤー情報を取得
  * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
  */
-async function getNearbyPlayersInfo(bot, stateManager, worldState = null) {
+async function getAllPlayersInfo(bot, stateManager, worldState = null) {
   if (!worldState) {
     await stateManager.refresh(bot)
     worldState = await stateManager.getState(bot)
@@ -213,32 +213,45 @@ async function getNearbyPlayersInfo(bot, stateManager, worldState = null) {
     // 自分自身は除外
     if (username === bot.username) continue
 
-    // エンティティ情報が取得できない場合はスキップ
-    if (!player.entity) continue
+    // エンティティ情報が取得できる場合のみ追加
+    if (player.entity) {
+      const playerPosition = player.entity.position
+      const distance = Math.floor(botPosition.distanceTo(playerPosition))
 
-    const playerPosition = player.entity.position
-    const distance = Math.floor(botPosition.distanceTo(playerPosition))
-
-    players.push({
-      username: username,
-      position: {
-        x: Math.floor(playerPosition.x),
-        y: Math.floor(playerPosition.y),
-        z: Math.floor(playerPosition.z)
-      },
-      distance: distance,
-      health: player.entity.health || null
-    })
+      players.push({
+        username: username,
+        position: {
+          x: Math.floor(playerPosition.x),
+          y: Math.floor(playerPosition.y),
+          z: Math.floor(playerPosition.z)
+        },
+        distance: distance,
+        health: player.entity.health || null
+      })
+    } else {
+      // エンティティ情報がない場合でもプレイヤー名だけ記録
+      players.push({
+        username: username,
+        position: null,
+        distance: null,
+        health: null
+      })
+    }
   }
 
-  // 距離順にソート
-  players.sort((a, b) => a.distance - b.distance)
+  // 距離順にソート（距離がnullのものは最後）
+  players.sort((a, b) => {
+    if (a.distance === null && b.distance === null) return 0
+    if (a.distance === null) return 1
+    if (b.distance === null) return -1
+    return a.distance - b.distance
+  })
 
   // サマリー情報
   const summary = {
     totalPlayers: players.length,
-    nearestPlayer: players.length > 0 ? players[0].username : null,
-    nearestDistance: players.length > 0 ? players[0].distance : null
+    nearestPlayer: players.length > 0 && players[0].distance !== null ? players[0].username : null,
+    nearestDistance: players.length > 0 && players[0].distance !== null ? players[0].distance : null
   }
 
   return {
@@ -248,7 +261,7 @@ async function getNearbyPlayersInfo(bot, stateManager, worldState = null) {
 }
 
 /**
- * すべての基本情報を取得（inventory, position, locations, nearbyPlayers）
+ * すべての基本情報を取得（inventory, position, locations, players）
  */
 async function getAllInfo(bot, stateManager) {
   // 一度だけrefreshを呼ぶ
@@ -259,13 +272,13 @@ async function getAllInfo(bot, stateManager) {
   const inventory = await getInventoryInfo(bot, stateManager, worldState)
   const position = await getPositionInfo(bot, stateManager, worldState)
   const locations = await getLocationsInfo(bot, stateManager)
-  const nearbyPlayers = await getNearbyPlayersInfo(bot, stateManager, worldState)
+  const players = await getAllPlayersInfo(bot, stateManager, worldState)
 
   return {
     inventory: inventory,
     position: position,
     locations: locations,
-    nearbyPlayers: nearbyPlayers
+    players: players  // nearbyPlayers から players に変更
   }
 }
 

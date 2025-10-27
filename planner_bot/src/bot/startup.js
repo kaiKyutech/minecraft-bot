@@ -81,7 +81,7 @@ function printCompletionBanner(aiCount) {
   console.log('    !history ' + chalk.gray('(Player1,Player2)') + chalk.gray('  # 会話履歴を表示 (プレイヤー名指定可)'));
   console.log('');
   console.log('  Information (情報取得):');
-  console.log('    !info all  ' + chalk.gray('# inventory + position + locations + nearbyPlayers'));
+  console.log('    !info all  ' + chalk.gray('# inventory + position + locations + players (全プレイヤー)'));
   console.log('    !info vision ' + chalk.gray('{"yaw": (current), "pitch": (current), "renderWait": (10000)}'));
   console.log('    !info scanBlocks ' + chalk.gray('{"range": (32), "type": "diamond_ore", "maxChecks": (25000), "minYOffset": (-32), "maxYOffset": (32), "yaw": (current), "coneAngle": (360)}'));
   console.log('                  ' + chalk.gray('# type(s) / maxChecks / min|maxYOffset / yaw / coneAngle を調整可能 (type 省略時は全て)'));
