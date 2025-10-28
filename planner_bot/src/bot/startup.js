@@ -96,8 +96,8 @@ function printCompletionBanner(aiCount) {
   console.log('    !navigation dropItem {' + chalk.yellow('"targetPlayer": "PlayerName", "itemName": "iron_ingot"') + chalk.gray(', "count": (1), "maxDistance": (100)') + '}');
   console.log('    !navigation pickupItems ' + chalk.gray('{"range": (5)}  # itemName 省略時は全アイテム'));
   console.log('    !navigation chestOpen {' + chalk.gray('"coords": [100, 64, 200]') + '}  ' + chalk.gray('# チェストを開いて中身を確認'));
-  console.log('    !navigation chestDeposit {' + chalk.yellow('"item": "cobblestone"') + chalk.gray(', "count": (10)') + '}  ' + chalk.gray('# count 省略時は全て'));
-  console.log('    !navigation chestWithdraw {' + chalk.yellow('"item": "iron_ingot"') + chalk.gray(', "count": (5)') + '}  ' + chalk.gray('# count 省略時は全て'));
+  console.log('    !navigation chestDeposit {' + chalk.yellow('"item": "cobblestone"') + chalk.gray(', "count": (1|-1)') + '}  ' + chalk.gray('# count省略時は1、-1で全て預ける'));
+  console.log('    !navigation chestWithdraw {' + chalk.yellow('"item": "iron_ingot"') + chalk.gray(', "count": (1|-1)') + '}  ' + chalk.gray('# count省略時は1、-1で全て取り出す'));
   console.log('    !navigation chestClose {}  ' + chalk.gray('# チェストを閉じる'));
   console.log('');
   console.log('  Creative (建築など):');

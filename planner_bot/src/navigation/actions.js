@@ -739,11 +739,35 @@ module.exports = {
       }
     }
 
-    const depositCount = count || null // nullは全て預ける
+    let depositCount
+    if (typeof count === 'number') {
+      if (count === -1) {
+        const inventoryItem = bot.inventory.items().find(i => i.name === item)
+        depositCount = inventoryItem ? inventoryItem.count : 0
+      } else if (count < 0) {
+        return {
+          success: false,
+          error: 'count は正の数または -1（全て）で指定してください'
+        }
+      } else if (count === 0) {
+        return {
+          success: false,
+          error: 'count は 1 以上の数値で指定してください'
+        }
+      } else {
+        depositCount = count
+      }
+    } else {
+      depositCount = 1
+    }
 
-    console.log(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount || '全て'}`)
+    if (depositCount <= 0) {
+      return {
+        success: false,
+        error: '預けられるアイテムがありません'
+      }
+    }
 
-    // インベントリにアイテムがあるか確認
     const inventoryItem = bot.inventory.items().find(i => i.name === item)
     if (!inventoryItem) {
       return {
@@ -753,18 +777,23 @@ module.exports = {
       }
     }
 
-    // アイテムを預ける
+    const availableCount = inventoryItem.count
+    if (depositCount > availableCount) {
+      depositCount = availableCount
+    }
+
+    console.log(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount}`)
+
     try {
       await bot.currentChest.deposit(inventoryItem.type, null, depositCount)
-      const actualCount = depositCount || inventoryItem.count
-      console.log(`[NAVIGATION] ${item} x ${actualCount} を預けました`)
+      console.log(`[NAVIGATION] ${item} x ${depositCount} を預けました`)
 
       return {
         success: true,
-        message: `${item} x ${actualCount} をチェストに預けました`,
+        message: `${item} x ${depositCount} をチェストに預けました`,
         position: bot.currentChestPosition,
         item: item,
-        count: actualCount
+        count: depositCount
       }
     } catch (error) {
       return {
@@ -799,11 +828,37 @@ module.exports = {
       }
     }
 
-    const withdrawCount = count || null // nullは全て取り出す
+    let withdrawCount
+    if (typeof count === 'number') {
+      if (count === -1) {
+        const chestItem = bot.currentChest.items().find(i => i.name === item)
+        withdrawCount = chestItem ? chestItem.count : 0
+      } else if (count < 0) {
+        return {
+          success: false,
+          error: 'count は正の数または -1（全て）で指定してください'
+        }
+      } else if (count === 0) {
+        return {
+          success: false,
+          error: 'count は 1 以上の数値で指定してください'
+        }
+      } else {
+        withdrawCount = count
+      }
+    } else {
+      withdrawCount = 1
+    }
 
-    console.log(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount || '全て'}`)
+    if (withdrawCount <= 0) {
+      return {
+        success: false,
+        error: '取り出せるアイテムがありません'
+      }
+    }
 
-    // チェスト内にアイテムがあるか確認
+    console.log(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount}`)
+
     const chestItem = bot.currentChest.items().find(i => i.name === item)
     if (!chestItem) {
       return {
@@ -816,16 +871,20 @@ module.exports = {
 
     // アイテムを取り出す
     try {
+      const availableCount = chestItem.count
+      if (withdrawCount > availableCount) {
+        withdrawCount = availableCount
+      }
+
       await bot.currentChest.withdraw(chestItem.type, null, withdrawCount)
-      const actualCount = withdrawCount || chestItem.count
-      console.log(`[NAVIGATION] ${item} x ${actualCount} を取り出しました`)
+      console.log(`[NAVIGATION] ${item} x ${withdrawCount} を取り出しました`)
 
       return {
         success: true,
-        message: `${item} x ${actualCount} をチェストから取り出しました`,
+        message: `${item} x ${withdrawCount} をチェストから取り出しました`,
         position: bot.currentChestPosition,
         item: item,
-        count: actualCount
+        count: withdrawCount
       }
     } catch (error) {
       return {
