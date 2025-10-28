@@ -1,6 +1,7 @@
 const primitives = require('../primitives')
 const minecraftData = require('minecraft-data')
 const { loadBlockCategories } = require('../planner/state_builder')
+const { scanBlocks } = require('../utils/block_scanner')
 
 /**
  * 中位スキル: gather
@@ -15,7 +16,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const loopCount = Number.isFinite(params.count) ? params.count : 1
   if (loopCount <= 0) return
 
-  const itemName = resolveItemName(params, bot)
+  const itemName = await resolveItemName(params, bot)
   const matchCondition = itemName
   const collectName = params.collectItem === false ? null : itemName
 
@@ -191,7 +192,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
  * 呼び出し元から渡された素材名（itemName）を検証して返します。
  * Minecraftに存在しないアイテム名の場合はエラーを投げます。
  */
-function resolveItemName(params, bot) {
+async function resolveItemName(params, bot) {
   if (!params.itemName || typeof params.itemName !== 'string' || params.itemName.length === 0) {
     throw new Error('収集対象の素材名 (itemName) が指定されていません')
   }
@@ -206,7 +207,7 @@ function resolveItemName(params, bot) {
   // カテゴリ名の場合は近くで最適なブロックを選択
   const categories = loadBlockCategories()
   if (categories?.categories?.[itemName]) {
-    return selectBestBlockFromCategory(bot, itemName, categories, mcData, params)
+    return await selectBestBlockFromCategory(bot, itemName, categories, mcData, params)
   }
 
   // 個別ブロック名として存在するかチェック
@@ -228,7 +229,7 @@ function resolveItemName(params, bot) {
 // カテゴリ選択のキャッシュ（botごと、カテゴリごと）
 const blockSelectionCache = new Map()
 
-function selectBestBlockFromCategory(bot, categoryName, categories, mcData, params = {}) {
+async function selectBestBlockFromCategory(bot, categoryName, categories, mcData, params = {}) {
   const categoryBlocks = categories.categories[categoryName].blocks
   const maxDistance = typeof params.maxDistance === 'number' ? params.maxDistance : 100
   const cacheKey = `${bot.username}_${categoryName}_${Math.round(maxDistance)}`
@@ -256,43 +257,27 @@ function selectBestBlockFromCategory(bot, categoryName, categories, mcData, para
     }
   }
 
-  // キャッシュがないか、キャッシュが使えない場合は全探索
+  // キャッシュがないか、キャッシュが使えない場合は scanBlocks で全探索（1回だけ）
   console.log(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
 
-  let closestBlock = null
-  let closestDistance = Infinity
+  const result = await scanBlocks(bot, {
+    range: maxDistance,
+    types: categoryBlocks,
+    maxChecks: -1,  // 無制限（全範囲を探索）
+    collectBlocks: true
+  })
 
-  // すべてのブロック種類を試して、最も近いものを選択
-  for (const blockName of categoryBlocks) {
-    try {
-      const block = bot.findBlock({
-        matching: (block) => block && block.name === blockName,
-        maxDistance,
-        count: 1
-      })
-
-      if (block) {
-        const distance = bot.entity.position.distanceTo(block.position)
-        if (distance < closestDistance) {
-          closestBlock = blockName
-          closestDistance = distance
-        }
-      }
-    } catch (error) {
-      // この種類は見つからない、次を試す
-      continue
-    }
+  if (result.blocks.length === 0) {
+    throw new Error(`カテゴリ「${categoryName}」のブロックが範囲内に見つかりません: ${categoryBlocks.join(', ')}`)
   }
 
-  if (closestBlock) {
-    console.log(`[GATHER] カテゴリ「${categoryName}」から「${closestBlock}」を選択（距離: ${closestDistance.toFixed(2)}）`)
-    // キャッシュに保存
-    blockSelectionCache.set(cacheKey, closestBlock)
-    return closestBlock
-  }
+  // scanBlocks は距離順にソート済み
+  const closest = result.blocks[0]
+  console.log(`[GATHER] カテゴリ「${categoryName}」から「${closest.name}」を選択（距離: ${closest.distance}）`)
 
-  // どの種類も見つからない場合
-  throw new Error(`カテゴリ「${categoryName}」のブロックが近くに見つかりません: ${categoryBlocks.join(', ')}`)
+  // キャッシュに保存
+  blockSelectionCache.set(cacheKey, closest.name)
+  return closest.name
 }
 
 function delay(ms) {

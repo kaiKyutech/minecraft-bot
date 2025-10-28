@@ -179,7 +179,7 @@ async function getScanBlocksInfo(bot, stateManager, params) {
     bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
   }
 
-  const result = scanBlocks(bot, {
+  const result = await scanBlocks(bot, {
     ...params,
     range,
     types: filterTypes

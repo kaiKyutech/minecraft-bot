@@ -105,11 +105,12 @@ async function handleChatCommand(bot, username, message, stateManager) {
     bot.currentAbortController = abortController
 
     try {
-      await handleGoalCommand(bot, username, goalName, stateManager, abortController.signal)
+      const result = await handleGoalCommand(bot, username, goalName, stateManager, abortController.signal)
       return {
         success: true,
         goal: goalName,
-        message: `目標「${goalName}」を完了しました`
+        message: `目標「${goalName}」を完了しました`,
+        executionHistory: result?.executionHistory || []
       }
     } catch (error) {
       // 中断エラーかどうかを判定
@@ -118,7 +119,8 @@ async function handleChatCommand(bot, username, message, stateManager) {
           success: false,
           goal: goalName,
           aborted: true,
-          error: error.message
+          error: error.message,
+          executionHistory: error.executionHistory || []
         }
       }
 
@@ -126,7 +128,8 @@ async function handleChatCommand(bot, username, message, stateManager) {
         success: false,
         goal: goalName,
         error: error.message,
-        diagnosis: error.diagnosis || null
+        diagnosis: error.diagnosis || null,
+        executionHistory: error.executionHistory || []
       }
     } finally {
       // 完了・失敗・中断いずれの場合もクリア

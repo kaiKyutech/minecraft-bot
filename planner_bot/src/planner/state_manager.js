@@ -32,7 +32,7 @@ class StateManager {
       equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
-      nearby_blocks: this.extractNearbyBlocks(bot) // 周辺ブロック検索
+      nearby_blocks: await this.extractNearbyBlocks(bot) // 周辺ブロック検索
     }
 
     // デバッグ用: GOAP状態をログ出力
@@ -101,7 +101,7 @@ class StateManager {
     return equipment
   }
 
-  extractNearbyBlocks(bot) {
+  async extractNearbyBlocks(bot) {
     // state_schema.yamlの環境設定を読み込み
     // 状態スキーマに基づいて動的にブロック検索
     const schema = loadStateSchema()
@@ -136,7 +136,7 @@ class StateManager {
 
     const scanMaxChecks = SCAN_MAX_CHECKS === Infinity ? -1 : SCAN_MAX_CHECKS
 
-    const { summary } = scanBlocks(bot, {
+    const { summary } = await scanBlocks(bot, {
       range: scanRange,
       maxChecks: scanMaxChecks,
       collectBlocks: false,

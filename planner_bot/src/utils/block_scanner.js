@@ -1,6 +1,11 @@
 const { Vec3 } = require('vec3');
 
-function scanBlocks(bot, params = {}) {
+// イベントループに制御を返す（I/Oフェーズまで到達させる）
+function yieldToEventLoop() {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+async function scanBlocks(bot, params = {}) {
   if (!bot || !bot.entity || !bot.entity.position) {
     throw new Error('Bot position is not available for block scanning');
   }
@@ -42,7 +47,8 @@ function scanBlocks(bot, params = {}) {
       if (typeof typeName !== 'string') continue;
       const blockDef = bot.registry?.blocksByName?.[typeName];
       if (!blockDef) {
-        throw new Error(`指定されたブロックタイプが見つかりません: ${typeName}`);
+        // このバージョンに存在しないブロックはスキップ（エラーにしない）
+        continue;
       }
       typeFilterSet.add(typeName);
       normalizedFilterTypes.push(typeName);
@@ -99,6 +105,7 @@ function scanBlocks(bot, params = {}) {
   forward2D.z /= forwardLen;
 
   let shouldStop = false;
+  const YIELD_INTERVAL = 500; // 500ブロックごとにyield
 
   outer: for (const x of xOrder) {
     for (const y of yOrder) {
@@ -127,6 +134,11 @@ function scanBlocks(bot, params = {}) {
         }
 
         checkedCount++;
+
+        // 定期的にイベントループに制御を返す（keep-alive処理のため）
+        if (checkedCount % YIELD_INTERVAL === 0) {
+          await yieldToEventLoop();
+        }
         if (distance > farthestCheckedDistance) {
           farthestCheckedDistance = distance;
         }
