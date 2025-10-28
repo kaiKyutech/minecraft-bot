@@ -97,7 +97,7 @@ function printCompletionBanner(aiCount) {
   console.log('    !navigation pickupItems ' + chalk.gray('{"range": (5)}  # itemName 省略時は全アイテム'));
   console.log('');
   console.log('  Creative (建築など):');
-  console.log(chalk.gray('    !creative  # 未実装（将来の拡張用）'));
+  console.log('    !creative placeBlock {' + chalk.yellow('"name": "chest"') + chalk.gray(', "coords": ([100, 64, 200]), "allowSelfPosition": (false)') + '}');
   console.log('');
   console.log('='.repeat(60));
 }
