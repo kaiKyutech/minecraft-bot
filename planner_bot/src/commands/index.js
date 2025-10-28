@@ -7,6 +7,47 @@ const handleStatusCommand = require('./status_command')
 const handleInfoCommand = require('./info_command')
 const handleNavigationCommand = require('./navigation_command')
 
+/**
+ * すべての実行中操作を停止
+ * @param {Object} bot - Mineflayerボット
+ * @returns {Object} 停止した操作のリスト
+ */
+function stopAll(bot) {
+  const stoppedActions = []
+
+  // 1. GOAP実行を中断
+  if (bot.currentAbortController) {
+    bot.systemLog('[STOP] Aborting GOAP task...')
+    bot.currentAbortController.abort()
+    bot.currentAbortController = null
+    stoppedActions.push('GOAP task')
+  }
+
+  // 2. 開いているチェストを閉じる
+  if (bot.currentChest) {
+    bot.systemLog('[STOP] Closing chest...')
+    bot.currentChest.close()
+    bot.currentChest = null
+    bot.currentChestPosition = null
+    stoppedActions.push('chest')
+  }
+
+  // 3. follow状態を停止
+  if (bot.isFollowing) {
+    bot.systemLog('[STOP] Stopping follow...')
+    bot.isFollowing = false
+    stoppedActions.push('follow')
+  }
+
+  return {
+    success: true,
+    stoppedActions: stoppedActions,
+    message: stoppedActions.length > 0
+      ? `停止しました: ${stoppedActions.join(', ')}`
+      : '停止する操作がありませんでした'
+  }
+}
+
 async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
 
@@ -26,22 +67,37 @@ async function handleChatCommand(bot, username, message, stateManager) {
   }
 
   if (/^!info(\s|$)/.test(trimmed)) {
+    // 情報取得は停止不要
     return await handleInfoCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!navigation(\s|$)/.test(trimmed)) {
+    // チェスト操作の続きコマンドかチェック
+    const parts = trimmed.split(' ')
+    const action = parts[1]
+    const chestContinuationActions = ['chestDeposit', 'chestWithdraw', 'chestClose']
+
+    // チェスト操作の続きでなければ自動停止
+    if (!chestContinuationActions.includes(action)) {
+      stopAll(bot)
+    }
+
     return await handleNavigationCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!primitive(\s|$)/.test(trimmed)) {
+    stopAll(bot)
     return await handlePrimitiveCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!skill(\s|$)/.test(trimmed)) {
+    stopAll(bot)
     return await handleSkillCommand(bot, username, trimmed, stateManager)
   }
 
   if (trimmed.startsWith('!goal ')) {
+    stopAll(bot)
+
     const goalName = trimmed.replace('!goal ', '').trim()
 
     // AbortController を作成して保持
@@ -79,24 +135,11 @@ async function handleChatCommand(bot, username, message, stateManager) {
   }
 
   if (trimmed === '!stop') {
-    if (bot.currentAbortController) {
-      bot.systemLog('[STOP] Aborting current GOAP task...')
-      bot.currentAbortController.abort()
-
-      return {
-        success: true,
-        message: 'タスクを中断しました'
-      }
-    } else {
-      bot.systemLog('[STOP] No task running')
-      return {
-        success: false,
-        message: '実行中のタスクがありません'
-      }
-    }
+    return stopAll(bot)
   }
 
   if (trimmed.startsWith('!creative ')) {
+    stopAll(bot)
     const commandStr = trimmed.replace('!creative ', '').trim()
     return await handleCreativeCommand(bot, username, commandStr, stateManager)
   }
@@ -135,6 +178,13 @@ async function handleChatCommand(bot, username, message, stateManager) {
 
   // チャット送信（whisper with distance check）
   if (trimmed.startsWith('!chat ')) {
+    // チャット送信前にチェストが開いていれば閉じる（会話履歴との一貫性のため）
+    if (bot.currentChest) {
+      bot.currentChest.close()
+      bot.currentChest = null
+      bot.currentChestPosition = null
+    }
+
     const args = trimmed.replace('!chat ', '').trim()
 
     // JSON形式のパラメータをパース
