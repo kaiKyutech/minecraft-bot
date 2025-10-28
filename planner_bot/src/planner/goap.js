@@ -83,8 +83,8 @@ class MinHeap {
 }
 
 function yieldToEventLoop() {
-  // process.nextTick()を使用してI/Oフェーズの前に制御を返す
-  return new Promise((resolve) => process.nextTick(resolve))
+  // setImmediate()を使用してI/Oフェーズまで到達させる
+  return new Promise((resolve) => setImmediate(resolve))
 }
 
 function loadDomain() {
