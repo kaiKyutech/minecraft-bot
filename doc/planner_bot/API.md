@@ -537,20 +537,18 @@ bot.on('newNaturalMessage', async (data) => {
 ##### `gotoCoords` - 座標指定で移動
 
 **パラメータ**:
-- `x` (number, 必須): X座標
-- `y` (number, 必須): Y座標
-- `z` (number, 必須): Z座標
+- `coords` (array[x, y, z], 必須): 移動先の座標（配列形式）
 
 **使用例**:
 ```
-/w Bot1 !navigation gotoCoords {"x": 250, "y": 64, "z": -100}
+/w Bot1 !navigation gotoCoords {"coords": [250, 64, -100]}
 ```
 
 **戻り値**:
 ```javascript
 {
   success: true,
-  message: "(250, 64, -100)に到着しました",
+  message: "[250, 64, -100]に到着しました",
   location: { x: 250, y: 64, z: -100 }
 }
 ```
@@ -655,6 +653,233 @@ Yaw角度と距離を指定して移動します。目標地点のY座標は自�
   success: true,
   message: "RitsukaAlice の追跡を停止しました",
   previousTarget: "RitsukaAlice"
+}
+```
+
+---
+
+##### `dropItem` - プレイヤーの近くでアイテムをドロップ
+
+対象プレイヤーの近くに移動して、指定したアイテムをドロップします。ボット間でのアイテム受け渡しに使用します。
+
+**パラメータ**:
+- `targetPlayer` (string, 必須): アイテムを渡す対象プレイヤー名
+- `itemName` (string, 必須): ドロップするアイテム名
+- `count` (number, オプション): ドロップする個数（デフォルト: 1）
+- `maxDistance` (number, オプション): 最大移動距離（ブロック、デフォルト: 100）
+
+**使用例**:
+```
+# 鉄インゴットを3個渡す（デフォルト100ブロック以内）
+/w Bot1 !navigation dropItem {"targetPlayer": "Alice", "itemName": "iron_ingot", "count": 3}
+
+# ダイヤモンドを1個渡す
+/w Bot1 !navigation dropItem {"targetPlayer": "Bob", "itemName": "diamond"}
+
+# 最大距離を200ブロックに設定
+/w Bot1 !navigation dropItem {"targetPlayer": "Charlie", "itemName": "iron_ingot", "count": 5, "maxDistance": 200}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "Alice の近くに iron_ingot を 3個ドロップしました",
+  targetPlayer: "Alice",
+  itemName: "iron_ingot",
+  droppedCount: 3,
+  availableCount: 10
+}
+```
+
+**動作**:
+1. 距離チェック（`maxDistance`以内か確認）
+2. インベントリから指定アイテムを確認
+3. `GoalFollow` で追跡開始（プレイヤーが移動しても追いかける、2ブロック以内まで接近）
+4. 2.5ブロック以内に入るまで待機（最大30秒）
+5. 追跡停止
+6. プレイヤーの方を向く（目の高さ）
+7. 指定個数（または利用可能な最大個数）をドロップ
+
+**エラー**:
+- プレイヤーが見つからない場合
+- プレイヤーが `maxDistance` より遠い場合
+- アイテムがインベントリにない場合
+- 30秒以内にプレイヤーに近づけなかった場合（タイムアウト）
+
+**特徴**:
+- ✅ プレイヤーが移動していても自動的に追いかける（`GoalFollow` 使用）
+- ✅ 2ブロック以内まで近づく（確実にアイテムを渡せる距離）
+- ✅ プレイヤーの方を向いてから渡すので、視覚的に分かりやすい
+
+**用途**:
+- ボット間でのアイテム受け渡し
+- プレイヤーへのアイテム提供
+- 協調作業での資源共有
+
+**LLMプロジェクトでの使用例**:
+```javascript
+// Bot1が採掘、Bot2がクラフト担当
+// Bot1: 鉄鉱石を採掘して精錬
+await handleGoalCommand(bot1, 'system', 'inventory.iron_ingot:10', stateManager);
+
+// Bot1: Bot2にアイテムを渡す
+await handleChatCommand(bot1, 'system',
+  '!navigation dropItem {"targetPlayer": "Bot2", "itemName": "iron_ingot", "count": 3}',
+  stateManager
+);
+
+// Bot2: Bot1が近くに来るまで待つ
+// Bot2: 地面のアイテムを自動的に拾う（Mineflayerのデフォルト動作）
+// Bot2: 鉄のピッケルをクラフト
+await handleGoalCommand(bot2, 'system', 'inventory.iron_pickaxe:1', stateManager);
+```
+
+---
+
+##### `pickupItems` - 周囲のドロップアイテムを拾う
+
+周囲に落ちているアイテムを自動的に拾います。ボット間でのアイテム受け渡し後や、採掘後の回収に使用します。
+
+**パラメータ**:
+- `range` (number, オプション): 拾う範囲（ブロック、デフォルト: 5）
+- `itemName` (string, オプション): 特定のアイテムのみ拾う（省略時は全て）
+
+**使用例**:
+```
+# 周囲5ブロック以内の全アイテムを拾う
+/w Bot1 !navigation pickupItems {}
+
+# 周囲10ブロック以内の全アイテムを拾う
+/w Bot1 !navigation pickupItems {"range": 10}
+
+# 周囲5ブロック以内の鉄インゴットのみ拾う
+/w Bot1 !navigation pickupItems {"itemName": "iron_ingot"}
+
+# 周囲15ブロック以内のダイヤモンドのみ拾う
+/w Bot1 !navigation pickupItems {"range": 15, "itemName": "diamond"}
+```
+
+**戻り値**:
+```javascript
+{
+  success: true,
+  message: "アイテムを拾いました",
+  foundCount: 5  // 見つかったアイテム数
+}
+
+// アイテムが見つからない場合
+{
+  success: true,
+  message: "拾うアイテムが見つかりませんでした",
+  pickedUpCount: 0,
+  items: []
+}
+```
+
+**動作**:
+1. 指定範囲内のドロップアイテムを検索
+2. `itemName` 指定がある場合はフィルタリング
+3. 最も近いアイテムに移動
+4. 範囲内のアイテムが自動的に拾われる（500ms待機）
+
+**注意**:
+- Minecraftは近くのアイテムを自動的に吸い込むため、1つの位置に移動すれば周囲のアイテムも拾われます
+
+**用途**:
+- `dropItem` 後のアイテム回収
+- 採掘後の鉱石回収
+- 戦闘後のドロップアイテム回収
+
+**LLMプロジェクトでの使用例**:
+```javascript
+// Bot1がBot2にアイテムを渡す
+await handleChatCommand(bot1, 'system',
+  '!navigation dropItem {"targetPlayer": "Bot2", "itemName": "iron_ingot", "count": 10}',
+  stateManager
+);
+
+// Bot2が受け取る
+await handleChatCommand(bot2, 'system',
+  '!navigation pickupItems {"itemName": "iron_ingot"}',
+  stateManager
+);
+```
+
+---
+
+### `!creative <action> [json_params]` - 建築・ブロック操作
+
+ブロックの設置など、建築関連の操作を行います。
+
+**利用可能なアクション**: `placeBlock`
+
+---
+
+#### `placeBlock` - ブロックを設置
+
+指定した座標、または周囲の空いている場所にブロックを設置します。
+
+**パラメータ**:
+- `name` (string, **必須**): 設置するブロック名（例: `"chest"`, `"cobblestone"`, `"crafting_table"`）
+- `coords` (array, オプション): 設置座標 `[x, y, z]`。省略時は周囲5ブロック以内で最も近い設置可能な場所を自動選択
+- `allowSelfPosition` (boolean, オプション): 自分の位置（XZ座標が同じ場所）への設置を許可するか（デフォルト: `false`）
+
+**使用例**:
+
+```javascript
+// 座標指定でチェストを設置
+!creative placeBlock {"name": "chest", "coords": [100, 64, 200]}
+
+// 座標省略（周囲で最も近い場所に自動設置）
+!creative placeBlock {"name": "cobblestone"}
+
+// 自分の位置への設置を許可
+!creative placeBlock {"name": "cobblestone", "allowSelfPosition": true}
+```
+
+**成功時の戻り値**:
+```json
+{
+  "success": true,
+  "message": "cobblestone を [100, 64, 200] に設置しました",
+  "block": "cobblestone",
+  "position": { "x": 100, "y": 64, "z": 200 }
+}
+```
+
+**エラー時の戻り値**:
+```json
+{
+  "success": false,
+  "error": "設置できません: 既にブロック（stone）が存在します",
+  "position": { "x": 100, "y": 64, "z": 200 }
+}
+```
+
+**設置条件**:
+- インベントリに指定したブロックが存在する
+- 設置先の座標が空気ブロック（`air`）である
+- 設置先の上下左右前後いずれかに隣接する固体ブロックが存在する
+- ボットから設置先まで4.5ブロック以内（自動で移動）
+
+**エラーの種類**:
+- `インベントリに <ブロック名> がありません` - 指定したブロックを所持していない
+- `座標が範囲外です（チャンクが読み込まれていません）` - 指定座標がロード範囲外
+- `既にブロック（<ブロック名>）が存在します` - 設置先に既にブロックがある
+- `周囲に設置可能なブロックがありません（空中の座標です）` - 隣接する固体ブロックがない
+- `周囲5ブロック以内に設置可能な場所が見つかりませんでした` - 座標省略時、近くに設置可能な場所がない
+- `移動に失敗しました: <理由>` - 設置位置への移動中にエラー
+
+**LLMプロジェクトでの使用例**:
+
+```javascript
+const result = await handleCreativeCommand(bot, 'llm', 'placeBlock {"name": "chest"}', stateManager);
+
+if (result.data.success) {
+  console.log(`ブロック設置成功: ${result.data.position.x}, ${result.data.position.y}, ${result.data.position.z}`);
+} else {
+  console.log(`ブロック設置失敗: ${result.data.error}`);
 }
 ```
 
@@ -806,6 +1031,12 @@ const directions = {
 # 北(0°)方向の狭い扇形で鉱石を探索
 /w Bot1 !info scanBlocks {"range": 64, "yaw": 0, "coneAngle": 45, "types": ["iron_ore", "coal_ore"]}
 ```
+
+##### 備考: `!info all` とインベントリ同期
+
+- `!info all` 実行時は `stateManager.refresh(bot)` を通じてプレイヤーインベントリを取得しているが、チェストなどのコンテナを開いたままの状態では Mineflayer の仕様により `bot.inventory.items()` が即時更新されないことがある。
+- そのためチェスト操作中に `!info all` を呼ぶと、預け入れ／取り出し前の在庫数が表示される場合がある。
+- 最新のインベントリを確認したい場合は、`!navigation chestClose {}`（または手動でGUIを閉じる）→ `!info all` の順で実行すると確実。
 
 **戻り値**:
 ```javascript
