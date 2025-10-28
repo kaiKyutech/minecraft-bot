@@ -5,266 +5,327 @@
 - **このファイル (TODO.md)**: 必須実装項目（優先度: 高）
 - **ISSUES.md**: 気が向いたら実装する項目（優先度順）
 
+---
+
+## 設計哲学
+
+**情報のフィルタリングではなく、情報の量（解像度）を調整する**
+
+このプロジェクトの役割:
+- システムが取得できる**最大解像度の情報**を提供
+- 解像度調整に必要な**メタデータ**を豊富に用意（距離、カテゴリ、型定義など）
+- LLMプロジェクトが解像度を調整しやすい**データ構造**を設計
+
+LLMプロジェクトの役割:
+- 提供された情報から**どの解像度を使うか**を決定
+- LLMの性能に応じて**情報を取捨選択**
+- プロンプトに含める情報量を**動的に調整**
 
 ---
 
-## 2. GOAP実行中の中断機能
+## 1. チェスト操作機能（GOAP外コマンド）
 
-**目的**: GOAP (`!goal`) 実行中にタスクを中断できるようにする
+**目的**: チェストの作成・整理・アイテム出し入れをコマンドで行えるようにする
 
-**現状**:
-- GOAP実行中は完了するまで止められない
-- プレイヤーが話しかけても応答できない
-- 緊急時に止める手段がない
+**設計方針**:
+- GOAPには含めない（LLMが明示的に制御）
+- `!navigation` 配下のコマンドとして実装
+- チェスト操作は汎用的なブロックインタラクトとして設計
 
 **実装内容**:
+
+### 5-1. ブロック設置コマンド
 ```javascript
-// GOAP実行を中断
-!stop
+!navigation placeBlock {"name": "chest", "coords": [100, 64, 200]}
+!navigation placeBlock {"name": "crafting_table", "coords": [100, 64, 201]}
 ```
 
-**実装箇所**:
-- `planner_bot/src/executor/goap_executor.js` - AbortController/AbortSignal 対応
-- `planner_bot/src/commands/index.js` - `!stop` コマンド追加
-- `planner_bot/src/bot/ai_bot.js` - 実行中のAbortControllerを保持
+**機能**:
+- インベントリに指定ブロックがあるか確認
+- 指定座標に移動
+- ブロックを設置（`bot.placeBlock()`）
 
-**技術的アプローチ**:
+**パラメータ**:
+- `name` (string): ブロック名（例: "chest", "crafting_table"）
+- `coords` (array): 設置座標 `[x, y, z]`
 
-### Option 1: AbortController (推奨)
+### 5-2. チェスト操作コマンド
+
+#### チェストにアイテムを預ける
 ```javascript
-// bot に AbortController を保持
-bot.currentAbortController = null
-
-// !goal 実行時
-if (trimmed.startsWith('!goal ')) {
-  const abortController = new AbortController()
-  bot.currentAbortController = abortController
-
-  try {
-    await handleGoalCommand(bot, username, goalName, stateManager, abortController.signal)
-  } finally {
-    bot.currentAbortController = null
-  }
-}
-
-// !stop 実行時
-if (trimmed === '!stop') {
-  if (bot.currentAbortController) {
-    bot.currentAbortController.abort()
-    bot.systemLog('GOAP execution aborted')
-    return { success: true, message: 'Task cancelled' }
-  } else {
-    return { success: false, message: 'No task running' }
-  }
-}
+!navigation chestDeposit {"coords": [100, 64, 200], "item": "iron_ingot", "count": 5}
 ```
 
-### executor での対応
+**機能**:
+- 指定座標のチェストに近づく
+- チェストを開く（`bot.openChest()`）
+- インベントリから指定アイテムを指定個数入れる
+- チェストを閉じる
+
+**パラメータ**:
+- `coords` (array): チェスト座標 `[x, y, z]`
+- `item` (string): アイテム名
+- `count` (number, optional): 個数（デフォルト: 全て）
+
+#### チェストからアイテムを取り出す
 ```javascript
-async function executePlanWithReplanning(bot, goalName, plan, stateManager, signal) {
-  for (const step of plan) {
-    // シグナルチェック
-    if (signal && signal.aborted) {
-      throw new Error('Task cancelled by user')
-    }
-
-    await executeStep(bot, step, stateManager)
-
-    // 各ステップ後もチェック
-    if (signal && signal.aborted) {
-      throw new Error('Task cancelled by user')
-    }
-  }
-}
+!navigation chestWithdraw {"coords": [100, 64, 200], "item": "oak_log", "count": 10}
 ```
 
-**必要な変更**:
-1. `ai_bot.js` に `bot.currentAbortController` プロパティ追加
-2. `!goal` 実行時に AbortController 作成・保持
-3. `!stop` コマンド追加
-4. `goap_executor.js` で signal.aborted をチェック
-5. スキル実行中も定期的に signal チェック
-6. 中断時のクリーンアップ処理
+**機能**:
+- 指定座標のチェストに近づく
+- チェストを開く
+- チェストから指定アイテムを指定個数取り出す
+- チェストを閉じる
 
-**返却値**:
+**パラメータ**:
+- `coords` (array): チェスト座標
+- `item` (string): アイテム名
+- `count` (number, optional): 個数（デフォルト: 全て）
+
+#### チェストの中身を確認
+```javascript
+!navigation chestList {"coords": [100, 64, 200]}
+```
+
+**機能**:
+- 指定座標のチェストに近づく
+- チェストを開く
+- 中身を取得
+- チェストを閉じる
+
+**戻り値**:
 ```json
 {
   "success": true,
-  "message": "Task 'inventory.diamond_pickaxe:1' cancelled"
+  "items": [
+    { "name": "iron_ingot", "count": 15 },
+    { "name": "oak_log", "count": 32 },
+    { "name": "coal", "count": 8 }
+  ],
+  "totalSlots": 27,
+  "usedSlots": 3,
+  "emptySlots": 24
 }
 ```
 
-**実装状況**: ✅ 完了
+### 5-3. 実装ファイル
+- `planner_bot/src/navigation/actions.js` - 主要な実装
+- `planner_bot/src/bot/startup.js` - コマンド例追加
+- `doc/planner_bot/API.md` - ドキュメント更新
 
-**実装内容**:
-1. ✅ `ai_bot.js` に `bot.currentAbortController` プロパティ追加
-2. ✅ `!goal` 実行時に AbortController 作成・保持
-3. ✅ `!stop` コマンド追加
-4. ✅ `goap_executor.js` で各アクション実行前に signal.aborted チェック（既存実装を確認）
-5. ✅ 中断時のエラーハンドリング（AbortError）
-6. ✅ startup.js のコマンド例を更新
+### 5-4. LLMプロジェクトでの使用例
 
-**使用例**:
-```javascript
-// GOAP実行
-!goal inventory.diamond_pickaxe:1
-
-// 別のwhisperで中断
-!stop
+```
+LLMの判断フロー:
+1. "鉄のピッケルを作りたい"
+2. インベントリ確認 → 材料不足
+3. !navigation chestList {"coords": [100, 64, 200]}
+4. チェストに iron_ingot が 10個ある
+5. !navigation chestWithdraw {"coords": [100, 64, 200], "item": "iron_ingot", "count": 3}
+6. 棒がない → !goal inventory.stick:2（GOAP実行）
+7. 材料が揃った → !goal inventory.iron_pickaxe:1（GOAP実行）
+8. 完成したピッケルをチェストに保管
+9. !navigation chestDeposit {"coords": [100, 64, 200], "item": "iron_pickaxe", "count": 1}
 ```
 
-**返却値**:
-```json
-// 中断成功
-{ "success": true, "message": "タスクを中断しました" }
-
-// タスクなし
-{ "success": false, "message": "実行中のタスクがありません" }
-
-// GOAP側の返却値（中断された場合）
-{ "success": false, "goal": "...", "aborted": true, "error": "Cancelled" }
-```
+**実装状況**: 🔴 未実装
 
 ---
 
-## 3. メッセージ受信の即時通知（イベント駆動）
+## 2. 情報提供システムの拡充（解像度調整対応）
 
-**目的**: GOAP実行中でもプレイヤーからのメッセージに即座に反応できるようにする
+**目的**: LLMプロジェクトが解像度を調整しやすいように、最大解像度の情報とメタデータを提供
 
-**現状**:
-- whisperを受信すると会話履歴に自動追加される ✅
-- しかし、LLMプロジェクトは `!history` をポーリングしないと新着メッセージに気づけない
-- GOAP実行中は他の処理ができず、メッセージに反応できない
+**設計方針**:
+- このプロジェクトは**データ提供者**に徹する
+- フィルタリングはしない（全データ + メタデータを提供）
+- LLMプロジェクトが自由に解像度を調整できる構造
 
 **実装内容**:
 
-### Phase 3-1: イベント発火（ボット側）
+### 2-1. ブロック情報の拡充
 
-`planner_bot/src/bot/ai_bot.js` を修正:
+現在: `scanBlocks` で座標リストを返す
 
-```javascript
-bot.on('whisper', async (username, message) => {
-  if (username === bot.username) return
-
-  bot.systemLog(`Whisper from ${username}: ${message}`)
-
-  // コマンド処理
-  if (message.startsWith('!')) {
-    try {
-      await handleChatCommand(bot, username, message, stateManager)
-    } catch (error) {
-      bot.systemLog(`Command error: ${error.message}`)
+改善: より多くのメタデータを追加
+```json
+{
+  "blocks": [
+    {
+      "type": "diamond_ore",
+      "position": [100, 64, 200],
+      "distance": 15.3,
+      "direction": {"yaw": 45, "pitch": -10},
+      "accessible": true,
+      "metadata": {
+        "hardness": 3.0,
+        "requiresTool": "iron_pickaxe"
+      }
     }
-    return
+  ],
+  "summary": {
+    "byType": {
+      "diamond_ore": 5,
+      "iron_ore": 23
+    },
+    "byDistance": {
+      "0-10": 50,
+      "10-20": 120,
+      "20-50": 300
+    },
+    "byAccessibility": {
+      "accessible": 400,
+      "requiresDigging": 70
+    }
+  },
+  "metadata": {
+    "totalScanned": 1523,
+    "scanRange": 50,
+    "scanCenter": [100, 64, 200]
   }
-
-  // 自然言語メッセージ: 会話履歴に追加
-  bot.addMessage(username, message, 'conversation')
-  bot.systemLog(`Natural language message added to conversation history`)
-
-  // ★ 新規追加: 即時通知イベントを発火
-  bot.emit('newNaturalMessage', {
-    from: username,
-    content: message,
-    timestamp: Date.now()
-  })
-})
+}
 ```
 
-### Phase 3-2: LLMプロジェクト側での受信
+### 2-2. インベントリ情報の拡充
+
+現在: アイテムリストとカテゴリ
+
+改善: より詳細なメタデータ
+```json
+{
+  "items": [
+    {
+      "name": "iron_ingot",
+      "count": 15,
+      "category": "material",
+      "metadata": {
+        "stackable": true,
+        "maxStack": 64,
+        "durability": null,
+        "canCraft": ["iron_pickaxe", "iron_sword", ...],
+        "canSmelt": false
+      }
+    }
+  ],
+  "summary": {
+    "totalItems": 10,
+    "totalCount": 234,
+    "byCategory": {
+      "tool": 3,
+      "material": 5,
+      "other": 2
+    },
+    "byStackUsage": {
+      "almostFull": ["dirt", "cobblestone"],
+      "halfFull": ["iron_ingot"],
+      "almostEmpty": ["diamond"]
+    }
+  },
+  "capacity": {
+    "totalSlots": 36,
+    "usedSlots": 10,
+    "emptySlots": 26
+  }
+}
+```
+
+### 2-3. プレイヤー情報の拡充
+
+現在: username, position, distance
+
+改善: より多くのメタデータ
+```json
+{
+  "players": [
+    {
+      "username": "Player1",
+      "position": [110, 65, 210],
+      "distance": 15.3,
+      "direction": {"yaw": 45, "pitch": 0},
+      "health": 20,
+      "visible": true,
+      "lastSeen": 0,
+      "metadata": {
+        "inSameChunk": true,
+        "inRenderDistance": true,
+        "reachable": true
+      }
+    }
+  ],
+  "summary": {
+    "totalPlayers": 5,
+    "byDistance": {
+      "0-10": 1,
+      "10-50": 2,
+      "50-100": 2
+    },
+    "byVisibility": {
+      "visible": 3,
+      "invisible": 2
+    }
+  }
+}
+```
+
+### 2-4. エンティティ情報の追加
+
+新規: mobs, items, vehicles などの情報
+```json
+{
+  "entities": [
+    {
+      "type": "zombie",
+      "id": 12345,
+      "position": [105, 64, 195],
+      "distance": 8.2,
+      "health": 20,
+      "hostile": true,
+      "metadata": {
+        "mobType": "undead",
+        "canBurn": true,
+        "drops": ["rotten_flesh", "iron_ingot"]
+      }
+    }
+  ],
+  "summary": {
+    "totalEntities": 15,
+    "byType": {
+      "zombie": 3,
+      "skeleton": 2,
+      "item": 10
+    },
+    "byHostility": {
+      "hostile": 5,
+      "neutral": 0,
+      "passive": 10
+    }
+  }
+}
+```
+
+### 2-5. 実装ファイル
+- `planner_bot/src/commands/info_command.js` - 主要な拡充
+- `planner_bot/src/utils/metadata_builder.js` - メタデータ生成ユーティリティ（新規）
+- `doc/planner_bot/API.md` - ドキュメント更新
+
+### 2-6. LLMプロジェクトでの使用例
 
 ```javascript
-const { createAIBot } = require('./planner_bot/src/bot/ai_bot')
-const { handleChatCommand } = require('./planner_bot/src/commands')
-const stateManager = require('./planner_bot/src/planner/state_manager')()
+// 低性能LLM用: 近いものだけ使用
+const nearbyBlocks = infoData.blocks.filter(b => b.distance < 10)
+const blockSummary = infoData.summary.byDistance["0-10"]
 
-const bot = createAIBot(1, config)
-
-// メッセージ受信時に即座に反応
-bot.on('newNaturalMessage', async (data) => {
-  console.log(`[NEW MESSAGE] ${data.from}: ${data.content}`)
-
-  // LLMで処理（GOAP実行中でも並行して動作）
-  const response = await processWithLLM(data.content, bot)
-
-  // 返答を送信
-  await handleChatCommand(
-    bot,
-    'system',
-    `!chat ${data.from} ${response}`,
-    stateManager
-  )
-})
+// 高性能LLM用: 全データ使用
+const allBlocks = infoData.blocks
+const detailedSummary = infoData.summary
 ```
 
-**メリット**:
-- ✅ GOAP実行中でもメッセージに即座に反応
-- ✅ ポーリング不要（効率的）
-- ✅ 同一Nodeプロセス内で完結（HTTP不要）
-- ✅ 既存の会話履歴システムと両立
-
-**必要な変更**:
-1. `ai_bot.js` の whisperイベントハンドラに `bot.emit('newNaturalMessage', {...})` を追加
-2. API.md / CHAT_SYSTEM.md のドキュメント更新
-3. 外部LLMプロジェクトでの使用例を追加
-
-**実装箇所**: `planner_bot/src/bot/ai_bot.js` (5行追加のみ)
-
-**実装状況**: ✅ 完了
-
-**実装内容**:
-1. ✅ `ai_bot.js` の whisperイベントハンドラに `bot.emit('newNaturalMessage', {...})` を追加（5行のみ）
-
-**使用例（LLMプロジェクト側）**:
-```javascript
-const bot = createAIBot(1, config)
-
-// ★ イベントリスナーを登録
-bot.on('newNaturalMessage', async (data) => {
-  console.log(`[MESSAGE] ${data.from}: ${data.content}`)
-
-  // LLMで処理
-  const decision = await callLLM(data.content)
-
-  // 返答 or タスク実行
-  await handleChatCommand(bot, 'system', `!chat ${data.from} ${decision.reply}`, stateManager)
-})
-```
-
-**関連ドキュメント**: CHAT_SYSTEM.md に設計詳細あり
+**実装状況**: 🔴 未実装
 
 ---
 
 ## 実装優先順位
 
-1. ✅ **座標指定による場所登録** - 完了
-2. ✅ **メッセージ受信の即時通知** - 完了
-3. ✅ **GOAP中断機能** - 完了
-
----
-
-## 完了チェックリスト
-
-- [x] 座標指定による場所登録機能
-  - [x] navigation/actions.js 修正
-  - [x] startup.js 更新
-  - [x] TODO.md 更新
-
-- [x] メッセージ受信の即時通知
-  - [x] ai_bot.js に `bot.emit('newNaturalMessage')` 追加
-  - [x] TODO.md 更新
-
-- [x] GOAP実行中の中断機能
-  - [x] ai_bot.js に AbortController 保持機能追加
-  - [x] `!stop` / `!cancel` コマンド追加
-  - [x] goap_executor.js で signal チェック（既存実装を確認）
-  - [x] エラーハンドリング追加
-  - [x] startup.js 更新
-  - [x] TODO.md 更新
-
----
-
-## 🎉 全ての必須実装項目が完了しました！
-
-planner_bot プロジェクトの基本機能は全て実装されました。
-次のステップは LLMプロジェクトでの統合です。
+1. 🔴 **チェスト操作機能** - 未実装（機能追加）
+2. 🔴 **情報提供システムの拡充** - 未実装（解像度調整対応）

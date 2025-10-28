@@ -5,3 +5,4 @@ nul
 *.png
 .claude
 *.bat
+doc/design/GOAP_IMPLEMENTATION_GUIDE.md

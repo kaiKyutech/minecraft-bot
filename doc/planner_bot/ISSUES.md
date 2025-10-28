@@ -629,6 +629,192 @@ bot.getNearbyAudio({ radius: 20 })
 
 ---
 
+## 農業システムの実装方針（検討中）
+
+### 概要
+
+農業機能は**GOAP + スキル + プリミティブ**の3層構造で実装する。
+外部（LLM）からは `!goal` コマンドまたは `!skill` コマンドで農業タスクを実行できる。
+
+### 実装レイヤー
+
+#### 1. プリミティブ層（`src/primitives.js`）
+
+最小単位の操作を提供：
+
+```javascript
+// 耕地を作る
+await primitives.tillLand(bot, { position: Vec3 })
+
+// 種を植える
+await primitives.plantSeed(bot, { position: Vec3, seedType: 'wheat_seeds' })
+
+// 作物を収穫する
+await primitives.harvestCrop(bot, { position: Vec3 })
+
+// 骨粉を使う
+await primitives.useBoneMeal(bot, { position: Vec3 })
+```
+
+#### 2. スキル層（`src/skills/farming.js`）
+
+複数のプリミティブを組み合わせた農業タスク：
+
+```javascript
+// 農地を作成して種を植える
+await skills.farmingPlant(bot, stateManager, {
+  seedType: 'wheat_seeds',
+  area: { from: [x1, y, z1], to: [x2, y, z2] }
+})
+
+// 作物を収穫する
+await skills.farmingHarvest(bot, stateManager, {
+  cropType: 'wheat',
+  radius: 10
+})
+
+// 農地の自動メンテナンス（収穫→再植え付け）
+await skills.farmingMaintain(bot, stateManager, {
+  area: { from: [x1, y, z1], to: [x2, y, z2] },
+  cropType: 'wheat'
+})
+```
+
+#### 3. GOAP層（`config/actions/farming_actions.yaml`）
+
+目標達成のための自動プランニング：
+
+```yaml
+# 小麦の種を植える
+- name: plant_wheat
+  preconditions:
+    inventory.wheat_seeds: ">=1"
+    inventory.wooden_hoe: ">=1"  # または他のクワ
+    nearby_farmland: true
+  effects:
+    inventory.wheat_seeds: "-1"
+    planted_wheat: "+1"
+  cost: 5
+  skill: farmingPlant
+  params:
+    seedType: "wheat_seeds"
+
+# 小麦を収穫する
+- name: harvest_wheat
+  preconditions:
+    nearby_wheat: true
+  effects:
+    inventory.wheat: "+1"
+    inventory.wheat_seeds: "+1"
+    planted_wheat: "-1"
+  cost: 5
+  skill: farmingHarvest
+  params:
+    cropType: "wheat"
+```
+
+### 外部コマンド例
+
+```bash
+# GOAP経由（自動プランニング）
+!goal inventory.wheat:64
+
+# スキル直接実行
+!skill farmingPlant {"seedType": "wheat_seeds", "area": {"from": [100, 64, 200], "to": [110, 64, 210]}}
+!skill farmingHarvest {"cropType": "wheat", "radius": 20}
+```
+
+### 実装優先度
+
+1. **基本的な作物（小麦）** - 最優先
+   - プリミティブ: `tillLand`, `plantSeed`, `harvestCrop`
+   - スキル: `farmingPlant`, `farmingHarvest`
+   - GOAP: `plant_wheat`, `harvest_wheat`
+
+2. **他の作物（ニンジン、ジャガイモ、ビートルート）**
+   - 小麦と同じ仕組みで実装可能
+
+3. **骨粉による成長促進**
+   - プリミティブ: `useBoneMeal`
+   - スキル: 既存スキルに統合
+
+4. **自動農場システム**
+   - 収穫→再植え付けのループ
+   - チェストへの自動収納
+   - 種の補充
+
+5. **動物繁殖**
+   - より複雑なので後回し
+
+### 技術的検討事項
+
+#### 作物の成熟度判定
+
+Mineflayer API:
+```javascript
+const block = bot.blockAt(position)
+if (block.name === 'wheat' && block.metadata === 7) {
+  // 完全に成熟
+}
+```
+
+#### 水源の確保
+
+- 耕地は水源から4ブロック以内に配置する必要がある
+- プリミティブで水源チェック機能を実装
+- 必要に応じて水バケツで水源を作成
+
+#### エリア指定の実装
+
+```javascript
+// 範囲指定での一括操作
+for (let x = from[0]; x <= to[0]; x++) {
+  for (let z = from[2]; z <= to[2]; z++) {
+    const pos = new Vec3(x, from[1], z)
+    await primitives.tillLand(bot, { position: pos })
+    await primitives.plantSeed(bot, { position: pos, seedType: 'wheat_seeds' })
+  }
+}
+```
+
+#### 状態スキーマへの追加
+
+`config/state_schema.yaml`:
+```yaml
+# 環境状態
+environment:
+  nearby_farmland:
+    type: boolean
+    description: 近くに耕地があるか
+  nearby_wheat:
+    type: boolean
+    description: 近くに成熟した小麦があるか
+  # 他の作物も同様
+
+# インベントリ
+inventory:
+  wheat_seeds:
+    type: number
+    category: seeds
+  carrot:
+    type: number
+    category: seeds
+  # ...
+```
+
+### 関連ファイル
+
+**新規作成**:
+- `planner_bot/src/skills/farming.js`
+- `planner_bot/config/actions/farming_actions.yaml`
+
+**既存ファイルの更新**:
+- `planner_bot/src/primitives.js` - 農業プリミティブ追加
+- `planner_bot/config/state_schema.yaml` - 農業関連の状態変数追加
+- `planner_bot/config/block_categories.yaml` - 作物カテゴリ追加
+
+---
+
 ## 解決済み
 
 ### ~~会話履歴の設計~~ (✅ 2025-10-19 解決)
