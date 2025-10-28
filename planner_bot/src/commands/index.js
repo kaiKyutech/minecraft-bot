@@ -11,8 +11,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
 
   if (trimmed === '!status') {
-    await handleStatusCommand(bot, username, stateManager)
-    return
+    return await handleStatusCommand(bot, username, stateManager)
   }
 
   if (trimmed === '!refresh') {
@@ -27,23 +26,19 @@ async function handleChatCommand(bot, username, message, stateManager) {
   }
 
   if (/^!info(\s|$)/.test(trimmed)) {
-    await handleInfoCommand(bot, username, trimmed, stateManager)
-    return
+    return await handleInfoCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!navigation(\s|$)/.test(trimmed)) {
-    await handleNavigationCommand(bot, username, trimmed, stateManager)
-    return
+    return await handleNavigationCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!primitive(\s|$)/.test(trimmed)) {
-    await handlePrimitiveCommand(bot, username, trimmed, stateManager)
-    return
+    return await handlePrimitiveCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!skill(\s|$)/.test(trimmed)) {
-    await handleSkillCommand(bot, username, trimmed, stateManager)
-    return
+    return await handleSkillCommand(bot, username, trimmed, stateManager)
   }
 
   if (trimmed.startsWith('!goal ')) {
@@ -88,35 +83,32 @@ async function handleChatCommand(bot, username, message, stateManager) {
       bot.systemLog('[STOP] Aborting current GOAP task...')
       bot.currentAbortController.abort()
 
-      const result = {
+      return {
         success: true,
         message: 'タスクを中断しました'
       }
-      console.log(`[${bot.username}] [STOP_RESULT] ${JSON.stringify(result)}`)
-      return result
     } else {
       bot.systemLog('[STOP] No task running')
-      const result = {
+      return {
         success: false,
         message: '実行中のタスクがありません'
       }
-      console.log(`[${bot.username}] [STOP_RESULT] ${JSON.stringify(result)}`)
-      return result
     }
   }
 
   if (trimmed.startsWith('!creative ')) {
     const commandStr = trimmed.replace('!creative ', '').trim()
-    await handleCreativeCommand(bot, username, commandStr, stateManager)
-    return
+    return await handleCreativeCommand(bot, username, commandStr, stateManager)
   }
 
   // 実験用: 会話履歴の確認
   if (trimmed === '!history') {
     const history = bot.getConversationHistory()
-    console.log(`[${bot.username}] [HISTORY_DUMP] count=${history.length}`)
-    console.log(JSON.stringify(history, null, 2))
-    return
+    return {
+      success: true,
+      count: history.length,
+      history: history
+    }
   }
 
   // 実験用: 会話履歴の確認（特定ユーザーのみ）
@@ -128,15 +120,17 @@ async function handleChatCommand(bot, username, message, stateManager) {
     if (usernames.length === 1) {
       // 単一ユーザー指定
       history = bot.getConversationHistory({ username: usernames[0] })
-      console.log(`[${bot.username}] [HISTORY_DUMP] username=${usernames[0]}, count=${history.length}`)
     } else {
       // 複数ユーザー指定
       history = bot.getConversationHistory({ usernames: usernames })
-      console.log(`[${bot.username}] [HISTORY_DUMP] usernames=${usernames.join(',')}, count=${history.length}`)
     }
 
-    console.log(JSON.stringify(history, null, 2))
-    return
+    return {
+      success: true,
+      usernames: usernames,
+      count: history.length,
+      history: history
+    }
   }
 
   // チャット送信（whisper with distance check）
@@ -160,7 +154,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
           success: false,
           reason: 'invalid_format',
           error: 'JSON parse error',
-          usage: '!chat {\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 15}'
+          usage: '!chat {"username": "PlayerName", "message": "Hello!", "maxDistance": 15}'
         }
       }
     } else {
@@ -174,7 +168,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
       return {
         success: false,
         reason: 'invalid_format',
-        usage: '!chat <username> <message> or !chat {\"username\": \"PlayerName\", \"message\": \"Hello!\", \"maxDistance\": 15}'
+        usage: '!chat <username> <message> or !chat {"username": "PlayerName", "message": "Hello!", "maxDistance": 15}'
       }
     }
 
@@ -273,7 +267,10 @@ async function handleChatCommand(bot, username, message, stateManager) {
     bot.systemLog(`Echo: ${echoMessage}`)
     await bot.speak(username, echoMessage)
     bot.addMessage(bot.username, echoMessage, 'conversation')
-    return
+    return {
+      success: true,
+      message: echoMessage
+    }
   }
 }
 

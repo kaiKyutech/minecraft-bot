@@ -161,8 +161,26 @@ function createAIBot(id, config) {
     // !で始まるメッセージ: コマンド（会話履歴に入れない）
     if (message.startsWith('!')) {
       try {
-        await handleChatCommand(bot, username, message, stateManager)
+        const result = await handleChatCommand(bot, username, message, stateManager)
+
+        // コマンドの最終的な返り値をログ出力
+        if (result !== undefined) {
+          console.log('='.repeat(80))
+          console.log(`[${bot.username}] [COMMAND_RESULT] 最終的なコマンドの返り値:`)
+          console.log(JSON.stringify(result, null, 2))
+          console.log('='.repeat(80))
+        }
       } catch (error) {
+        // エラーをキャッチして統一的に出力
+        const errorResult = {
+          success: false,
+          error: error.message,
+          stack: error.stack
+        }
+        console.log('='.repeat(80))
+        console.log(`[${bot.username}] [COMMAND_ERROR] 最終的なコマンドの返り値:`)
+        console.log(JSON.stringify(errorResult, null, 2))
+        console.log('='.repeat(80))
         bot.systemLog(`Command error: ${error.message}`)
         bot.systemLog(`Stack trace: ${error.stack}`)
       }
