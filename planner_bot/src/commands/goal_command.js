@@ -2,14 +2,25 @@ const goapPlanner = require('../planner/goap')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
 
 /**
- * !goal コマンドのハンドラ
+ * !goal コマンドのハンドラ（再帰的サブゴール解決）
  * @param {Object} bot - Mineflayerボット
  * @param {string} username - コマンド送信者のユーザー名
  * @param {string} goalName - 目標名
  * @param {Object} stateManager - 状態マネージャー
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
+ * @param {number} depth - 再帰深度（内部使用）
+ * @param {number} maxDepth - 最大再帰深度
  */
-async function handleGoalCommand(bot, username, goalName, stateManager, signal = null) {
+async function handleGoalCommand(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10) {
+  // 最大深度チェック
+  if (depth >= maxDepth) {
+    const error = new Error(`最大深度${maxDepth}に到達しました。LLMの判断が必要です`)
+    error.needsLLM = true
+    error.reason = 'max_depth_reached'
+    error.goalChain = [goalName]
+    throw error
+  }
+
   // プランニング前に必ず最新の状態を取得
   await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
@@ -20,44 +31,298 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   const diagnosis = result.diagnosis
 
   if (!plan || !Array.isArray(plan)) {
-    bot.systemLog('目標を実行できません')
+    // プランニング失敗
+    bot.systemLog(`目標「${goalName}」のプランニング失敗 (深度: ${depth}/${maxDepth})`)
 
-    // 構造化された診断情報を構築
+    // まず、現在のゴールの数量を1に減らして試せるかチェック
+    const quantityRetry = tryReduceQuantityToOne(goalName)
+
+    if (quantityRetry) {
+      bot.systemLog(`数量を1に減らして再試行: 「${quantityRetry}」`)
+
+      try {
+        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth + 1, maxDepth)
+
+        // 数量1での取得に成功 → 元のゴールを再試行（まだ足りない可能性があるため）
+        bot.systemLog(`数量1での取得成功。目標「${goalName}」を再試行中...`)
+        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth)
+      } catch (error) {
+        // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
+        bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
+        // ここでエラーを握りつぶして、下の「サブゴール抽出」ロジックに進む
+      }
+    }
+
+    // 構造化された診断情報を先に構築（エラーログ用）
     const structuredDiagnosis = buildStructuredDiagnosis(diagnosis, goalName)
 
-    // コンソールに構造化されたデータを整形出力
-    console.log('\n=== 構造化された診断情報 ===')
-    console.log(JSON.stringify(structuredDiagnosis, null, 2))
-    console.log('============================\n')
+    // サブゴールを抽出（構造化された診断情報 + 生の診断情報から）
+    let subgoal
+    try {
+      subgoal = extractFirstSubgoal(structuredDiagnosis, diagnosis, worldState)
+    } catch (error) {
+      // 環境状態が満たされていない → LLMの判断が必要
+      bot.systemLog(`環境状態が満たされていません: ${error.missingEnvironment}`)
 
-    // 会話履歴に構造化されたデータを記録
-    bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
+      structuredDiagnosis.missingEnvironment = error.missingEnvironment
+      structuredDiagnosis.needsLLM = true
 
-    // コンソールには詳細ログ（開発者向け）
-    logDiagnosisDetails(diagnosis)
+      console.log('\n=== LLMの判断が必要 ===')
+      console.log(JSON.stringify(structuredDiagnosis, null, 2))
+      console.log('========================\n')
 
-    // エラーオブジェクトに構造化された診断情報を添付
-    const error = new Error(`目標「${goalName}」を実行できません`)
-    error.diagnosis = structuredDiagnosis
-    throw error
+      // 会話履歴に記録
+      bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
+
+      // エラーとして投げる
+      const finalError = new Error(`目標「${goalName}」を実行できません: ${error.missingEnvironment} が見つかりません`)
+      finalError.diagnosis = structuredDiagnosis
+      finalError.needsLLM = true
+      throw finalError
+    }
+
+    if (!subgoal) {
+      // サブゴールが抽出できない → LLMの判断が必要
+      bot.systemLog('サブゴールを抽出できませんでした')
+
+      structuredDiagnosis.needsLLM = true
+
+      console.log('\n=== 構造化された診断情報 ===')
+      console.log(JSON.stringify(structuredDiagnosis, null, 2))
+      console.log('============================\n')
+
+      bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
+      logDiagnosisDetails(diagnosis)
+
+      const error = new Error(`目標「${goalName}」を実行できません`)
+      error.diagnosis = structuredDiagnosis
+      error.needsLLM = true
+      throw error
+    }
+
+    // サブゴールを再帰的に実行
+    bot.systemLog(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
+
+    try {
+      await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth)
+    } catch (error) {
+      // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
+      if (error.goalChain) {
+        error.goalChain.unshift(goalName)
+      } else {
+        error.goalChain = [goalName, subgoal]
+      }
+      throw error
+    }
+
+    // サブゴール成功 → 元のゴールを再試行
+    bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
+    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth)
   }
 
-  logPlanDetails(goalName, plan)
+  // プランニング成功 → 実行
+  if (depth === 0) {
+    logPlanDetails(goalName, plan)
+    const startMessage = `目標「${goalName}」を開始します`
+    bot.systemLog(startMessage)
+  } else {
+    bot.systemLog(`サブゴール「${goalName}」を実行します (深度: ${depth})`)
+  }
 
-  // 開始通知（LLMプロジェクトで使用する場合は bot.speak() も呼ぶ）
-  const startMessage = `目標「${goalName}」を開始します`
-  bot.systemLog(startMessage)
-  // await bot.speak(username, startMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, startMessage, 'conversation')  // LLMプロジェクトで使用時にアンコメント
-
-  // signalをexecutorに渡す
   await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
 
-  // 成功通知（LLMプロジェクトで使用する場合は bot.speak() も呼ぶ）
-  const completeMessage = `目標「${goalName}」を完了しました`
-  bot.systemLog(completeMessage)
-  // await bot.speak(username, completeMessage)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, completeMessage, 'conversation')  // LLMプロジェクトで使用時にアンコメント
+  if (depth === 0) {
+    const completeMessage = `目標「${goalName}」を完了しました`
+    bot.systemLog(completeMessage)
+  } else {
+    bot.systemLog(`サブゴール「${goalName}」を完了しました (深度: ${depth})`)
+  }
+}
+
+/**
+ * 診断情報からサブゴールを抽出
+ * 環境状態（nearby_*, visible_*）がfalseの場合はエラーを投げる
+ * @param {Object} structuredDiagnosis - 構造化された診断結果
+ * @param {Object} rawDiagnosis - 生の診断結果（複合状態の情報を含む）
+ * @param {Object} worldState - 現在の世界状態
+ * @returns {string|null} サブゴール名（例: "inventory.iron_ingot:3"）
+ */
+function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
+  console.log('[DEBUG] extractFirstSubgoal called')
+  console.log('[DEBUG] structuredDiagnosis.unsatisfiedPreconditions:', JSON.stringify(structuredDiagnosis.unsatisfiedPreconditions, null, 2))
+
+  // ケース1: 通常の満たされていない前提条件がある場合
+  if (structuredDiagnosis.unsatisfiedPreconditions && structuredDiagnosis.unsatisfiedPreconditions.length > 0) {
+    const first = structuredDiagnosis.unsatisfiedPreconditions[0]
+    console.log('[DEBUG] first.missing:', JSON.stringify(first.missing, null, 2))
+
+    if (first.missing && first.missing.length > 0) {
+      // missing配列の中から、GOAPで解決可能な条件だけを探す
+      for (const missingItem of first.missing) {
+        const key = missingItem.key
+        console.log(`[DEBUG] Checking missingItem.key: ${key}`)
+
+        // 環境状態（nearby_*, visible_*）はGOAPで解決不可能
+        if (isEnvironmentalState(key)) {
+          console.log(`[DEBUG] ${key} is environmental state -> throw error`)
+          // これらがfalseの場合はLLMの判断が必要
+          const error = new Error(`環境状態「${key}」が満たされていません`)
+          error.needsLLM = true
+          error.missingEnvironment = key
+          throw error
+        }
+
+        // 複合状態かどうかをチェック（rawDiagnosisから）
+        const compositeSubgoal = checkCompositeState(key, rawDiagnosis)
+        if (compositeSubgoal) {
+          console.log(`[DEBUG] ${key} is composite state, resolved to: ${compositeSubgoal}`)
+          return compositeSubgoal
+        }
+
+        // それ以外（inventory.*, has_*, equipment.*）はサブゴールとして解決可能
+        const subgoal = createSubgoalFromMissing(missingItem)
+        console.log(`[DEBUG] Created subgoal: ${subgoal}`)
+        return subgoal
+      }
+    }
+  }
+
+  // ケース2: 複合状態（composite state）の場合
+  // unsatisfiedPreconditionsが空だが、missingRequirementsに複合状態がある
+  console.log('[DEBUG] Checking for composite states...')
+  console.log('[DEBUG] structuredDiagnosis.missingRequirements:', JSON.stringify(structuredDiagnosis.missingRequirements, null, 2))
+  console.log('[DEBUG] rawDiagnosis.suggestions:', JSON.stringify(rawDiagnosis.suggestions, null, 2))
+
+  if (structuredDiagnosis.missingRequirements && structuredDiagnosis.missingRequirements.length > 0) {
+    const firstMissing = structuredDiagnosis.missingRequirements[0]
+    const missingKey = firstMissing.key
+
+    console.log(`[DEBUG] Checking missing requirement: ${missingKey}`)
+
+    // rawDiagnosisのsuggestionsから対応する複合状態を探す
+    if (rawDiagnosis.suggestions && rawDiagnosis.suggestions.length > 0) {
+      for (const suggestion of rawDiagnosis.suggestions) {
+        if (suggestion.target === missingKey && suggestion.isComputedState && suggestion.dependencies) {
+          console.log(`[DEBUG] Found composite state: ${missingKey}`)
+          console.log(`[DEBUG] Dependencies:`, JSON.stringify(suggestion.dependencies, null, 2))
+
+          // 最初の（最も安価な）依存関係を選択
+          const cheapestDependency = suggestion.dependencies[0]
+          console.log(`[DEBUG] Selected cheapest dependency: ${cheapestDependency}`)
+
+          // "inventory.iron_pickaxe" -> "inventory.iron_pickaxe:1" の形式に変換
+          return `${cheapestDependency}:1`
+        }
+      }
+    }
+  }
+
+  console.log('[DEBUG] No valid subgoal found')
+  return null
+}
+
+/**
+ * キーが複合状態かどうかをチェックし、複合状態なら最安のサブゴールを返す
+ * @param {string} key - 状態キー（例: "has_iron_or_better_pickaxe"）
+ * @param {Object} rawDiagnosis - 生の診断結果
+ * @returns {string|null} 複合状態の最安サブゴール（例: "inventory.iron_pickaxe:1"）、または複合状態でない場合はnull
+ */
+function checkCompositeState(key, rawDiagnosis) {
+  if (!rawDiagnosis.suggestions || rawDiagnosis.suggestions.length === 0) {
+    return null
+  }
+
+  // rawDiagnosisのsuggestionsから対応する複合状態を探す
+  for (const suggestion of rawDiagnosis.suggestions) {
+    if (suggestion.target === key && suggestion.isComputedState && suggestion.dependencies) {
+      console.log(`[DEBUG] Found composite state in checkCompositeState: ${key}`)
+      console.log(`[DEBUG] Dependencies:`, JSON.stringify(suggestion.dependencies, null, 2))
+
+      // 最初の（最も安価な）依存関係を選択
+      const cheapestDependency = suggestion.dependencies[0]
+      console.log(`[DEBUG] Selected cheapest dependency: ${cheapestDependency}`)
+
+      // "inventory.iron_pickaxe" -> "inventory.iron_pickaxe:1" の形式に変換
+      return `${cheapestDependency}:1`
+    }
+  }
+
+  return null
+}
+
+/**
+ * ゴールの数量を1に減らして再試行用のゴールを生成
+ * @param {string} goalName - 元のゴール名（例: "inventory.diamond:3"）
+ * @returns {string|null} 数量1のゴール名（例: "inventory.diamond:1"）、または変換不可能な場合はnull
+ */
+function tryReduceQuantityToOne(goalName) {
+  // "inventory.diamond:3" のような形式をパース
+  const match = goalName.match(/^(.+):(\d+)$/)
+
+  if (!match) {
+    // 数量指定がない、またはbooleanの場合は変換不可能
+    return null
+  }
+
+  const baseName = match[1]
+  const quantity = parseInt(match[2])
+
+  // 既に数量が1以下なら変換不要
+  if (quantity <= 1) {
+    return null
+  }
+
+  // 数量を1に減らす
+  return `${baseName}:1`
+}
+
+/**
+ * キーが環境状態かどうかを判定
+ * @param {string} key - 状態キー
+ * @returns {boolean}
+ */
+function isEnvironmentalState(key) {
+  // 環境状態のパターン
+  return key.startsWith('nearby_') ||
+         key.startsWith('visible_') ||
+         key === 'is_day' ||
+         key === 'is_night'
+}
+
+/**
+ * missing情報からサブゴールを生成
+ * @param {Object} missingItem - { key, current, required }
+ * @returns {string} サブゴール名
+ */
+function createSubgoalFromMissing(missingItem) {
+  const key = missingItem.key
+
+  // currentを数値に変換（"なし"の場合は0）
+  let currentValue = 0
+  if (typeof missingItem.current === 'number') {
+    currentValue = missingItem.current
+  } else if (typeof missingItem.current === 'string') {
+    const parsed = parseInt(missingItem.current)
+    currentValue = isNaN(parsed) ? 0 : parsed
+  }
+
+  // ">=3" のような形式から数値を抽出
+  const requiredMatch = String(missingItem.required).match(/>=(\d+)/)
+
+  if (requiredMatch) {
+    const requiredValue = parseInt(requiredMatch[1])
+    const shortage = requiredValue - currentValue
+    console.log(`[DEBUG] Creating subgoal: ${key}, current=${currentValue}, required=${requiredValue}, shortage=${shortage}`)
+    return `${key}:${shortage}`
+  }
+
+  // boolean の場合
+  if (missingItem.required === true || missingItem.required === 'true') {
+    return `${key}:true`
+  }
+
+  // デフォルト
+  return `${key}:1`
 }
 
 /**
