@@ -156,6 +156,19 @@ actions:
     params:
       recipe: "furnace"
 
+  # チェスト（作業台が必要）
+  - name: craft_chest
+    preconditions:
+      has_plank: ">=8"
+      nearby_workbench: true
+    effects:
+      has_plank: "-8"
+      inventory.chest: "+1"
+    cost: 8
+    skill: workbench_craft
+    params:
+      recipe: "chest"
+
   # === 鉄のツール ===
   - name: craft_iron_pickaxe
     preconditions:
