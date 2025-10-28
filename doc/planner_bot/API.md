@@ -806,6 +806,29 @@ await handleChatCommand(bot2, 'system',
 );
 ```
 
+#### チェスト操作コマンド
+
+チェストの開閉や入出庫を管理します。`chestDeposit` / `chestWithdraw` を使う前に `chestOpen` で対象チェストを開いておく必要があります。
+
+##### `chestOpen`
+- パラメータ: `{ "coords": [x, y, z] }`（省略時は最寄りのチェストを自動検索）
+- チェストに近づいて開き、内容・空きスロット・プレイヤーインベントリ一覧を返します。
+- 成功時は `bot.currentChest` にハンドルを保持し、続く `chestDeposit` / `chestWithdraw` で利用できます。
+
+##### `chestDeposit`
+- パラメータ: `{ "item": "cobblestone", "count": 1 }`
+- `count` 省略時は **1 個**、`count: -1` を指定するとプレイヤーの在庫分を全て預けます。
+- その他の負数や 0 はエラー扱いです。`count` が在庫数を超える場合は在庫分だけ預けます。
+
+##### `chestWithdraw`
+- パラメータ: `{ "item": "cobblestone", "count": 1 }`
+- `count` の扱いは `chestDeposit` と同様で、`-1` 指定時はチェスト内の該当アイテムを全て取り出します。
+- 取り出し量がチェスト内在庫を超える場合は、在庫分だけ引き出します。
+
+##### `chestClose`
+- 開いているチェストを閉じ、`bot.currentChest` / `bot.currentChestPosition` をクリアします。
+- チェストを開いたままだと `!info all` のインベントリ情報が古いままになることがあるため、必要に応じて `chestClose` 後に `!info all` を呼ぶ運用がおすすめです。
+
 ---
 
 ### `!creative <action> [json_params]` - 建築・ブロック操作
