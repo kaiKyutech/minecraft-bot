@@ -555,5 +555,314 @@ module.exports = {
       message: `アイテムを拾いました`,
       foundCount: droppedItems.length
     }
+  },
+
+  /**
+   * チェストを開いて内容を確認
+   * @param {Object} params - { coords: [x, y, z] } - coords省略時は最も近いチェストを開く
+   */
+  async chestOpen(bot, stateManager, params) {
+    const { coords } = params || {}
+
+    let targetPos
+    let x, y, z
+
+    // 座標が指定されている場合
+    if (coords) {
+      // パラメータ検証
+      if (!Array.isArray(coords) || coords.length !== 3) {
+        return {
+          success: false,
+          error: '座標（coords）は [x, y, z] の形式で指定してください'
+        }
+      }
+
+      const [cx, cy, cz] = coords
+      if (typeof cx !== 'number' || typeof cy !== 'number' || typeof cz !== 'number') {
+        return {
+          success: false,
+          error: '座標は数値である必要があります'
+        }
+      }
+
+      x = cx
+      y = cy
+      z = cz
+      targetPos = new Vec3(x, y, z)
+      console.log(`[NAVIGATION] チェストを開く: [${x}, ${y}, ${z}]`)
+    } else {
+      // 座標が指定されていない場合、最も近いチェストを探す
+      console.log(`[NAVIGATION] 近くのチェストを探索中...`)
+
+      const chestBlock = bot.findBlock({
+        matching: (block) => block.name === 'chest',
+        maxDistance: 32
+      })
+
+      if (!chestBlock) {
+        return {
+          success: false,
+          error: '周囲32ブロック以内にチェストが見つかりませんでした'
+        }
+      }
+
+      targetPos = chestBlock.position
+      x = targetPos.x
+      y = targetPos.y
+      z = targetPos.z
+      const distance = bot.entity.position.distanceTo(targetPos)
+      console.log(`[NAVIGATION] チェストを発見: [${x}, ${y}, ${z}] (距離: ${distance.toFixed(1)} ブロック)`)
+    }
+
+    // ブロックが存在するか確認
+    const block = bot.blockAt(targetPos)
+    if (!block) {
+      return {
+        success: false,
+        error: '座標が範囲外です（チャンクが読み込まれていません）',
+        position: { x, y, z }
+      }
+    }
+
+    // チェストかどうか確認
+    if (block.name !== 'chest') {
+      return {
+        success: false,
+        error: `指定座標はチェストではありません（${block.name}）`,
+        position: { x, y, z },
+        blockName: block.name
+      }
+    }
+
+    // チェストまで移動
+    const distance = bot.entity.position.distanceTo(targetPos)
+    if (distance > 4.5) {
+      console.log(`[NAVIGATION] チェストまで移動中... (距離: ${Math.floor(distance)} ブロック)`)
+      try {
+        await primitives.moveTo(bot, { position: targetPos, range: 4.5 })
+        console.log(`[NAVIGATION] 移動完了`)
+      } catch (error) {
+        return {
+          success: false,
+          error: `移動に失敗しました: ${error.message}`,
+          position: { x, y, z }
+        }
+      }
+    }
+
+    // チェストを開く
+    let chest
+    try {
+      chest = await bot.openContainer(block)
+      console.log(`[NAVIGATION] チェストを開きました`)
+    } catch (error) {
+      return {
+        success: false,
+        error: `チェストを開けませんでした: ${error.message}`,
+        position: { x, y, z }
+      }
+    }
+
+    // チェストのスロットを直接参照
+    // chest.slots にはチェスト部分 + プレイヤーインベントリ（36スロット）が含まれる
+    // プレイヤーインベントリ = 27スロット（本体） + 9スロット（ホットバー）
+    const inventorySlots = 36
+    const chestSlotCount = chest.slots.length - inventorySlots
+
+    const chestSlots = chest.slots.slice(0, chestSlotCount)
+    const chestItemList = chestSlots
+      .filter(item => item !== null && item !== undefined)
+      .map(item => ({
+        name: item.name,
+        count: item.count,
+        slot: item.slot
+      }))
+
+    // ボットのインベントリ情報も取得
+    const botInventory = bot.inventory.items().map(item => ({
+      name: item.name,
+      count: item.count,
+      slot: item.slot
+    }))
+
+    // チェストの空きスロット数を計算（通常27、ラージチェストは54）
+    const totalSlots = chestSlotCount
+    const usedSlots = chestItemList.length
+    const emptySlots = totalSlots - usedSlots
+
+    // チェストは開いたまま（LLMが判断するため）
+    // bot.currentChestを保存してdeposit/withdrawで使用
+    bot.currentChest = chest
+    bot.currentChestPosition = { x, y, z }
+
+    console.log(`[NAVIGATION] チェストの内容を確認しました（開いたまま）`)
+    console.log(`[NAVIGATION] チェスト: ${chestItemList.length}種類のアイテム, 空きスロット: ${emptySlots}/${totalSlots}`)
+
+    return {
+      success: true,
+      message: `チェストを開きました`,
+      position: { x, y, z },
+      chest: {
+        itemCount: chestItemList.length,
+        items: chestItemList,
+        totalSlots: totalSlots,
+        usedSlots: usedSlots,
+        emptySlots: emptySlots
+      },
+      inventory: {
+        itemCount: botInventory.length,
+        items: botInventory
+      }
+    }
+  },
+
+  /**
+   * チェストにアイテムを預ける（事前にchestOpenが必要）
+   * @param {Object} params - { item: string, count: number }
+   */
+  async chestDeposit(bot, stateManager, params) {
+    const { item, count } = params
+
+    // パラメータ検証
+    if (!item) {
+      return {
+        success: false,
+        error: 'アイテム名（item）が必要です'
+      }
+    }
+
+    // チェストが開いているか確認
+    if (!bot.currentChest) {
+      return {
+        success: false,
+        error: '先に chestOpen コマンドでチェストを開いてください'
+      }
+    }
+
+    const depositCount = count || null // nullは全て預ける
+
+    console.log(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount || '全て'}`)
+
+    // インベントリにアイテムがあるか確認
+    const inventoryItem = bot.inventory.items().find(i => i.name === item)
+    if (!inventoryItem) {
+      return {
+        success: false,
+        error: `インベントリに ${item} がありません`,
+        inventory: bot.inventory.items().map(i => ({ name: i.name, count: i.count }))
+      }
+    }
+
+    // アイテムを預ける
+    try {
+      await bot.currentChest.deposit(inventoryItem.type, null, depositCount)
+      const actualCount = depositCount || inventoryItem.count
+      console.log(`[NAVIGATION] ${item} x ${actualCount} を預けました`)
+
+      return {
+        success: true,
+        message: `${item} x ${actualCount} をチェストに預けました`,
+        position: bot.currentChestPosition,
+        item: item,
+        count: actualCount
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `アイテムを預けられませんでした: ${error.message}`,
+        position: bot.currentChestPosition,
+        item: item
+      }
+    }
+  },
+
+  /**
+   * チェストからアイテムを取り出す（事前にchestOpenが必要）
+   * @param {Object} params - { item: string, count: number }
+   */
+  async chestWithdraw(bot, stateManager, params) {
+    const { item, count } = params
+
+    // パラメータ検証
+    if (!item) {
+      return {
+        success: false,
+        error: 'アイテム名（item）が必要です'
+      }
+    }
+
+    // チェストが開いているか確認
+    if (!bot.currentChest) {
+      return {
+        success: false,
+        error: '先に chestOpen コマンドでチェストを開いてください'
+      }
+    }
+
+    const withdrawCount = count || null // nullは全て取り出す
+
+    console.log(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount || '全て'}`)
+
+    // チェスト内にアイテムがあるか確認
+    const chestItem = bot.currentChest.items().find(i => i.name === item)
+    if (!chestItem) {
+      return {
+        success: false,
+        error: `チェストに ${item} がありません`,
+        position: bot.currentChestPosition,
+        chestItems: bot.currentChest.items().map(i => ({ name: i.name, count: i.count }))
+      }
+    }
+
+    // アイテムを取り出す
+    try {
+      await bot.currentChest.withdraw(chestItem.type, null, withdrawCount)
+      const actualCount = withdrawCount || chestItem.count
+      console.log(`[NAVIGATION] ${item} x ${actualCount} を取り出しました`)
+
+      return {
+        success: true,
+        message: `${item} x ${actualCount} をチェストから取り出しました`,
+        position: bot.currentChestPosition,
+        item: item,
+        count: actualCount
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `アイテムを取り出せませんでした: ${error.message}`,
+        position: bot.currentChestPosition,
+        item: item
+      }
+    }
+  },
+
+  /**
+   * チェストを閉じる
+   */
+  async chestClose(bot, stateManager, params) {
+    // チェストが開いているか確認
+    if (!bot.currentChest) {
+      return {
+        success: false,
+        error: '開いているチェストがありません'
+      }
+    }
+
+    const position = bot.currentChestPosition
+
+    // チェストを閉じる
+    bot.currentChest.close()
+    console.log(`[NAVIGATION] チェストを閉じました`)
+
+    // 状態をクリア
+    bot.currentChest = null
+    bot.currentChestPosition = null
+
+    return {
+      success: true,
+      message: `チェストを閉じました`,
+      position: position
+    }
   }
 }
