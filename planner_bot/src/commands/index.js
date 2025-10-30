@@ -33,10 +33,14 @@ function stopAll(bot) {
   }
 
   // 3. follow状態を停止
-  if (bot.isFollowing) {
+  if (bot.followTarget) {
     bot.systemLog('[STOP] Stopping follow...')
-    bot.isFollowing = false
-    stoppedActions.push('follow')
+    const target = bot.followTarget
+    bot.followTarget = null
+    if (bot.pathfinder) {
+      bot.pathfinder.setGoal(null)
+    }
+    stoppedActions.push(`follow (${target})`)
   }
 
   return {
