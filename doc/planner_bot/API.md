@@ -26,6 +26,108 @@ const bot = createAIBot(1, {
 
 ---
 
+## 最近の改善点（2025-10-30）
+
+### 1. 会話連番システム（Sequence Numbers）
+
+タイムスタンプだけでは衝突の可能性があったため、単調増加する連番システムを追加しました。
+
+**実装内容**:
+- `bot.conversationSequence` カウンターを追加
+- 各メッセージに `sequence` フィールドを追加
+- `!history` コマンドの返り値に `latestSequence` を含めるように変更
+- タイムスタンプをISO 8601形式に変更（より標準的で読みやすい）
+
+**利点**:
+- 重複や衝突が絶対に発生しない
+- LLMプロジェクトで「どこまで処理したか」を確実に追跡できる
+- オーバーフローの心配なし（`Number.MAX_SAFE_INTEGER` は約9京）
+
+**使用例**:
+```javascript
+// LLMプロジェクトでの使用
+let lastProcessedSequence = 0;
+
+setInterval(() => {
+  const history = bot.getConversationHistory();
+  const newMessages = history.filter(msg => msg.sequence > lastProcessedSequence);
+
+  if (newMessages.length > 0) {
+    // 新しいメッセージを処理
+    processMessages(newMessages);
+    lastProcessedSequence = bot.conversationSequence;
+  }
+}, 1000);
+```
+
+### 2. シンプルなエラー報告（missingPreconditions）
+
+従来の複雑な `executionHistory` を廃止し、シンプルな `missingPreconditions` 配列に置き換えました。
+
+**変更内容**:
+- `executionHistory` の複雑な構造（type, depth, reason など）を削除
+- 満たされていない前提条件の目標名のみを配列で返す
+- 3個以上の前提条件が満たされていない場合、自動的に分かりやすいエラーメッセージを生成
+
+**例**:
+```javascript
+// Before（複雑）
+{
+  executionHistory: [
+    { type: 'planning_failed', goal: '...', depth: 1, reason: 'no_plan_found' },
+    { type: 'subgoal_attempt', parentGoal: '...', subgoal: '...', depth: 2 },
+    ...
+  ]
+}
+
+// After（シンプル）
+{
+  missingPreconditions: [
+    "inventory.diamond:3",
+    "inventory.iron_pickaxe:1"
+  ]
+}
+```
+
+### 3. 循環参照検出
+
+GOAP プランニング中に同じ目標を繰り返し試行することを防止しました。
+
+**実装内容**:
+- `attemptedGoals` Set を追加して、試行済みの目標を追跡
+- 循環参照を検出すると、分かりやすいエラーメッセージを返す
+
+**効果**:
+- 無限ループの防止
+- プランニング失敗時のログが読みやすくなった
+- より早く失敗を検出できる
+
+### 4. 深度管理の最適化
+
+数量削減（例: `inventory.cobblestone:10` → `inventory.cobblestone:5`）が不要に深度を消費していた問題を修正しました。
+
+**変更内容**:
+- 数量削減時に同じ深度で再帰するように変更（`depth + 1` → `depth`）
+- 最大深度10が実質20になっていた問題を解決
+
+**効果**:
+- より複雑な目標でもプランニング可能に
+- ログがシンプルになった
+
+### 5. 統一された停止コマンド
+
+`!stop` コマンドですべての実行中操作（GOAP、チェスト、follow）を停止できるようになりました。
+
+**実装内容**:
+- `stopAll()` 関数で GOAP、チェスト、follow を一括停止
+- `bot.followTarget` フラグの修正（従来は `bot.isFollowing` を使用していたが、実際の実装と不一致）
+
+**効果**:
+- より直感的な操作
+- 緊急停止が確実に動作する
+
+---
+
 ## ログシステム API
 
 Planner Botは3つの独立したログ関数を提供します。
@@ -113,13 +215,28 @@ bot.addMessage(bot.username, {
 各メッセージは以下の形式で保存されます：
 ```javascript
 {
+  sequence: 42,                 // 会話連番（単調増加、重複なし）
   speaker: "player1",           // 発言者の実名
   role: "user",                 // このボット視点での役割（assistant=自分, user=それ以外）
   content: "こんにちは",         // メッセージ内容（文字列 or オブジェクト）
   type: "conversation",         // メッセージタイプ
-  timestamp: 1234567890         // タイムスタンプ（ミリ秒）
+  timestamp: "2025-10-30T12:34:56.789Z"  // ISO 8601形式のタイムスタンプ
 }
 ```
+
+**Sequence（会話連番）について**:
+- `bot.conversationSequence` カウンターで管理される単調増加の整数
+- メッセージが追加されるたびに1ずつ増加（`bot.addMessage()` 呼び出し時）
+- タイムスタンプと異なり、重複や衝突が発生しない
+- LLMプロジェクトで「どこまで処理したか」を追跡するのに最適
+- `!history` コマンドの返り値に `latestSequence` として含まれる
+- オーバーフローの心配なし（`Number.MAX_SAFE_INTEGER` は約9京で、100msg/秒でも2850年持つ）
+
+**Timestamp（タイムスタンプ）について**:
+- ISO 8601形式の文字列（例: `"2025-10-30T12:34:56.789Z"`）
+- UTC タイムゾーン（常に `Z` サフィックス）
+- 人間が読みやすく、標準的な形式
+- `new Date().toISOString()` で生成
 
 ---
 
@@ -237,11 +354,12 @@ const allExceptSystem = bot.getConversationHistory()
 
 ```typescript
 interface Message {
-  speaker: string        // 発言者の実名（Bot1, Bot2, player など）
+  sequence: number      // 会話連番（単調増加、重複なし）
+  speaker: string       // 発言者の実名（Bot1, Bot2, player など）
   role: string          // このボット視点での役割（"assistant" | "user"）
   content: string | Object  // メッセージ内容（文字列 or 構造化データ）
   type: string          // メッセージタイプ（"conversation" | "system_info"）
-  timestamp: number     // タイムスタンプ（ミリ秒）
+  timestamp: string     // ISO 8601形式のタイムスタンプ（例: "2025-10-30T12:34:56.789Z"）
 }
 ```
 
@@ -364,6 +482,12 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
 3. プランを実行（木を切る → 板を作る → 棒を作る → ピッケルを作る、など）
 4. 失敗時は自動で再プランニング
 
+**GOAP改善点**:
+- **循環参照検出**: 同じ目標を繰り返し試行することを防止（`attemptedGoals` Set で管理）
+- **深度管理の最適化**: 数量削減（例: `inventory.cobblestone:10` → `inventory.cobblestone:5`）は同じ深度で再帰するため、不要に深くならない
+- **最大深度**: デフォルト10階層まで再帰可能
+- **エラーメッセージ**: 3個以上の前提条件が満たされていない場合、自動的に分かりやすいメッセージを生成
+
 **エラー時**: 材料不足などの診断情報が`system_info`として会話履歴に記録されます
 
 **返却値**:
@@ -380,7 +504,24 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
   success: false,
   goal: "inventory.diamond_pickaxe:1",
   error: "Planning failed: ...",
-  diagnosis: { ... }
+  missingPreconditions: [
+    "inventory.diamond:3",
+    "inventory.iron_pickaxe:1",
+    "has_any_pickaxe:true"
+  ]
+}
+
+// 失敗時（3個以上の前提条件が満たされていない場合）
+{
+  success: false,
+  goal: "inventory.diamond_pickaxe:1",
+  error: "目標が複雑すぎるか、近くに必要な材料がない可能性があります。より簡単な目標を試すか、材料を集めてください。",
+  missingPreconditions: [
+    "inventory.diamond:3",
+    "inventory.iron_pickaxe:1",
+    "has_any_pickaxe:true",
+    "inventory.cobblestone:3"
+  ]
 }
 
 // 中断時
@@ -388,15 +529,22 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
   success: false,
   goal: "inventory.diamond_pickaxe:1",
   aborted: true,
-  error: "Cancelled"
+  error: "Cancelled",
+  missingPreconditions: [...]
 }
 ```
 
+**エラー報告について**:
+- `missingPreconditions`: 満たされていない前提条件の目標名を配列で返します
+- 3個以上の前提条件が満たされていない場合、より分かりやすいエラーメッセージを自動生成します
+- 循環参照が検出された場合も同様のメッセージを返します
+- LLMプロジェクトでは、このリストを使って「何が足りないか」を具体的に把握できます
+
 ---
 
-### `!stop` - GOAP実行の中断
+### `!stop` - すべての実行中操作を停止
 
-実行中のGOAPタスクを中断します。
+実行中のGOAPタスク、開いているチェスト、follow状態をすべて停止します。
 
 **使用例**:
 ```
@@ -409,32 +557,43 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
 
 **返却値**:
 ```javascript
-// 中断成功
+// 停止成功
 {
   success: true,
-  message: "タスクを中断しました"
+  stoppedActions: ["GOAP task", "chest", "follow (player1)"],
+  message: "停止しました: GOAP task, chest, follow (player1)"
 }
 
-// 実行中のタスクがない場合
+// 停止する操作がない場合
 {
-  success: false,
-  message: "実行中のタスクがありません"
+  success: true,
+  stoppedActions: [],
+  message: "停止する操作がありませんでした"
 }
 ```
 
+**停止される操作**:
+1. **GOAP実行**: `bot.currentAbortController.abort()` で実行中のタスクを中断
+2. **開いているチェスト**: `bot.currentChest.close()` でチェストを閉じる
+3. **Follow状態**: `bot.followTarget` をクリアし、`bot.pathfinder.setGoal(null)` で追跡を停止
+
 **動作**:
-- 現在実行中のGOAPタスクを即座に中断
-- 各アクション実行前にキャンセルシグナルをチェック
+- すべての停止処理を順番に実行
+- 停止した操作のリストを返却
+- 各アクション実行前にキャンセルシグナルをチェック（GOAP）
 - 中断された場合、`!goal`コマンドは`aborted: true`を返す
 
 **用途**:
 - 緊急時の停止
 - プランが間違っていた場合の修正
 - 優先度の高いタスクへの切り替え
+- チェスト操作の中断
+- プレイヤー追跡の停止
 
 **注意**:
 - `!stop`は汎用的な中断コマンドとして設計されています
-- 将来的にはvisionの停止など、他の処理の中断にも使用可能
+- チェスト操作コマンド（`chestDeposit`, `chestWithdraw`, `chestClose`）の前には自動停止しません（チェストを開いたまま連続操作するため）
+- それ以外のすべてのコマンド（`!goal`, `!skill`, `!primitive`, `!creative`, `!navigation`）の前には自動的に停止処理が実行されます
 
 **LLMプロジェクトでの使用例**:
 ```javascript

@@ -25,6 +25,9 @@ function addLoggingSystem(bot) {
   // 会話履歴を管理（全員の発言を時系列に保存）
   bot.conversationHistory = []
 
+  // 会話連番カウンター
+  bot.conversationSequence = 0
+
   // GOAP実行中の中断用AbortController
   bot.currentAbortController = null
 
@@ -58,12 +61,16 @@ function addLoggingSystem(bot) {
     // - user: それ以外の発言
     const role = speaker === bot.username ? 'assistant' : 'user'
 
+    // 連番をインクリメント
+    bot.conversationSequence++
+
     const messageObj = {
+      sequence: bot.conversationSequence,  // 会話連番（単調増加）
       speaker,     // 発言者の実名（Bot1, Bot2, player など）
       role,        // このボット視点での役割（assistant=self, user=others）
       content,     // メッセージ内容（文字列 or 構造化データ）
       type,        // 'conversation' | 'system_info'
-      timestamp: Date.now()
+      timestamp: new Date().toISOString()  // ISO 8601形式（例: "2025-10-30T12:34:56.789Z"）
     }
 
     bot.conversationHistory.push(messageObj)

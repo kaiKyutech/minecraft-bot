@@ -163,6 +163,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
     return {
       success: true,
       count: history.length,
+      latestSequence: bot.conversationSequence,  // 最新の会話連番
       history: history
     }
   }
@@ -185,6 +186,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
       success: true,
       usernames: usernames,
       count: history.length,
+      latestSequence: bot.conversationSequence,  // 最新の会話連番
       history: history
     }
   }
