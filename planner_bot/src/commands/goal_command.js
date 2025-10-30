@@ -10,20 +10,49 @@ const { executePlanWithReplanning } = require('../executor/goap_executor')
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  * @param {number} depth - 再帰深度（内部使用）
  * @param {number} maxDepth - 最大再帰深度
+ * @param {Array} executionHistory - 実行履歴（内部使用）
  */
-async function handleGoalCommand(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10) {
+async function handleGoalCommand(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null) {
+  // ルート呼び出しの場合のみ初期化
+  if (depth === 0 && !missingPreconditions) {
+    missingPreconditions = []
+  }
+  if (depth === 0 && !attemptedGoals) {
+    attemptedGoals = new Set()
+  }
+
+  // 循環参照チェック
+  if (attemptedGoals.has(goalName)) {
+    const error = new Error(`目標が複雑すぎるか、近くに必要な材料がない可能性があります`)
+    error.needsLLM = true
+    error.reason = 'circular_dependency'
+    error.missingPreconditions = missingPreconditions
+    throw error
+  }
+
+  attemptedGoals.add(goalName)
+
   // 最大深度チェック
   if (depth >= maxDepth) {
-    const error = new Error(`最大深度${maxDepth}に到達しました。LLMの判断が必要です`)
+    missingPreconditions.push(goalName)
+
+    const error = new Error(`目標が複雑すぎるか、近くに必要な材料がない可能性があります`)
     error.needsLLM = true
     error.reason = 'max_depth_reached'
     error.goalChain = [goalName]
+    error.missingPreconditions = missingPreconditions
     throw error
   }
 
   // プランニング前に必ず最新の状態を取得
   await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
+
+  // 連続プランニングの前にイベントループに制御を返す
+  if (depth > 0) {
+    await new Promise((resolve) => setImmediate(resolve))
+  }
+
   const result = await goapPlanner.plan(goalName, worldState)
 
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
@@ -34,18 +63,25 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     // プランニング失敗
     bot.systemLog(`目標「${goalName}」のプランニング失敗 (深度: ${depth}/${maxDepth})`)
 
+    // 前提条件を記録
+    missingPreconditions.push(goalName)
+
     // まず、現在のゴールの数量を1に減らして試せるかチェック
     const quantityRetry = tryReduceQuantityToOne(goalName)
 
-    if (quantityRetry) {
+    if (quantityRetry && !attemptedGoals.has(quantityRetry)) {
       bot.systemLog(`数量を1に減らして再試行: 「${quantityRetry}」`)
 
       try {
-        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth + 1, maxDepth)
+        // 数量削減は深度を消費しない（同じ深度で再試行）
+        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
 
         // 数量1での取得に成功 → 元のゴールを再試行（まだ足りない可能性があるため）
         bot.systemLog(`数量1での取得成功。目標「${goalName}」を再試行中...`)
-        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth)
+
+        // 元のゴールを再度試す前に、試行済みセットから削除
+        attemptedGoals.delete(goalName)
+        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
       } catch (error) {
         // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
         bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
@@ -64,6 +100,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       // 環境状態が満たされていない → LLMの判断が必要
       bot.systemLog(`環境状態が満たされていません: ${error.missingEnvironment}`)
 
+      missingPreconditions.push(error.missingEnvironment)
+
       structuredDiagnosis.missingEnvironment = error.missingEnvironment
       structuredDiagnosis.needsLLM = true
 
@@ -78,6 +116,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       const finalError = new Error(`目標「${goalName}」を実行できません: ${error.missingEnvironment} が見つかりません`)
       finalError.diagnosis = structuredDiagnosis
       finalError.needsLLM = true
+      finalError.missingPreconditions = missingPreconditions
       throw finalError
     }
 
@@ -97,6 +136,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       const error = new Error(`目標「${goalName}」を実行できません`)
       error.diagnosis = structuredDiagnosis
       error.needsLLM = true
+      error.missingPreconditions = missingPreconditions
       throw error
     }
 
@@ -104,7 +144,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     bot.systemLog(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
 
     try {
-      await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth)
+      await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals)
     } catch (error) {
       // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
       if (error.goalChain) {
@@ -112,12 +152,15 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       } else {
         error.goalChain = [goalName, subgoal]
       }
+      error.missingPreconditions = missingPreconditions
       throw error
     }
 
     // サブゴール成功 → 元のゴールを再試行
     bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
-    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth)
+    // 元のゴールを再度試す前に、試行済みセットから削除
+    attemptedGoals.delete(goalName)
+    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
   }
 
   // プランニング成功 → 実行
@@ -129,11 +172,14 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     bot.systemLog(`サブゴール「${goalName}」を実行します (深度: ${depth})`)
   }
 
-  await executePlanWithReplanning(bot, goalName, plan, stateManager, signal)
+  await executePlanWithReplanning(bot, goalName, plan, stateManager, signal, missingPreconditions)
 
   if (depth === 0) {
     const completeMessage = `目標「${goalName}」を完了しました`
     bot.systemLog(completeMessage)
+
+    // ルート呼び出しの場合のみ結果を返す（成功時はmissingPreconditionsは空）
+    return { missingPreconditions }
   } else {
     bot.systemLog(`サブゴール「${goalName}」を完了しました (深度: ${depth})`)
   }
@@ -148,23 +194,17 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
  * @returns {string|null} サブゴール名（例: "inventory.iron_ingot:3"）
  */
 function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
-  console.log('[DEBUG] extractFirstSubgoal called')
-  console.log('[DEBUG] structuredDiagnosis.unsatisfiedPreconditions:', JSON.stringify(structuredDiagnosis.unsatisfiedPreconditions, null, 2))
-
   // ケース1: 通常の満たされていない前提条件がある場合
   if (structuredDiagnosis.unsatisfiedPreconditions && structuredDiagnosis.unsatisfiedPreconditions.length > 0) {
     const first = structuredDiagnosis.unsatisfiedPreconditions[0]
-    console.log('[DEBUG] first.missing:', JSON.stringify(first.missing, null, 2))
 
     if (first.missing && first.missing.length > 0) {
       // missing配列の中から、GOAPで解決可能な条件だけを探す
       for (const missingItem of first.missing) {
         const key = missingItem.key
-        console.log(`[DEBUG] Checking missingItem.key: ${key}`)
 
         // 環境状態（nearby_*, visible_*）はGOAPで解決不可能
         if (isEnvironmentalState(key)) {
-          console.log(`[DEBUG] ${key} is environmental state -> throw error`)
           // これらがfalseの場合はLLMの判断が必要
           const error = new Error(`環境状態「${key}」が満たされていません`)
           error.needsLLM = true
@@ -175,13 +215,11 @@ function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
         // 複合状態かどうかをチェック（rawDiagnosisから）
         const compositeSubgoal = checkCompositeState(key, rawDiagnosis)
         if (compositeSubgoal) {
-          console.log(`[DEBUG] ${key} is composite state, resolved to: ${compositeSubgoal}`)
           return compositeSubgoal
         }
 
         // それ以外（inventory.*, has_*, equipment.*）はサブゴールとして解決可能
         const subgoal = createSubgoalFromMissing(missingItem)
-        console.log(`[DEBUG] Created subgoal: ${subgoal}`)
         return subgoal
       }
     }
@@ -189,26 +227,16 @@ function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
 
   // ケース2: 複合状態（composite state）の場合
   // unsatisfiedPreconditionsが空だが、missingRequirementsに複合状態がある
-  console.log('[DEBUG] Checking for composite states...')
-  console.log('[DEBUG] structuredDiagnosis.missingRequirements:', JSON.stringify(structuredDiagnosis.missingRequirements, null, 2))
-  console.log('[DEBUG] rawDiagnosis.suggestions:', JSON.stringify(rawDiagnosis.suggestions, null, 2))
-
   if (structuredDiagnosis.missingRequirements && structuredDiagnosis.missingRequirements.length > 0) {
     const firstMissing = structuredDiagnosis.missingRequirements[0]
     const missingKey = firstMissing.key
-
-    console.log(`[DEBUG] Checking missing requirement: ${missingKey}`)
 
     // rawDiagnosisのsuggestionsから対応する複合状態を探す
     if (rawDiagnosis.suggestions && rawDiagnosis.suggestions.length > 0) {
       for (const suggestion of rawDiagnosis.suggestions) {
         if (suggestion.target === missingKey && suggestion.isComputedState && suggestion.dependencies) {
-          console.log(`[DEBUG] Found composite state: ${missingKey}`)
-          console.log(`[DEBUG] Dependencies:`, JSON.stringify(suggestion.dependencies, null, 2))
-
           // 最初の（最も安価な）依存関係を選択
           const cheapestDependency = suggestion.dependencies[0]
-          console.log(`[DEBUG] Selected cheapest dependency: ${cheapestDependency}`)
 
           // "inventory.iron_pickaxe" -> "inventory.iron_pickaxe:1" の形式に変換
           return `${cheapestDependency}:1`
@@ -217,7 +245,6 @@ function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
     }
   }
 
-  console.log('[DEBUG] No valid subgoal found')
   return null
 }
 
@@ -525,3 +552,5 @@ function logPlanDetails(goalName, plan) {
 }
 
 module.exports = handleGoalCommand
+module.exports.checkCompositeState = checkCompositeState
+module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis

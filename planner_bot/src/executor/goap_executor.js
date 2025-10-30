@@ -1,6 +1,12 @@
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
+const { checkCompositeState, buildStructuredDiagnosis } = require('../commands/goal_command')
+
+// イベントループに制御を返す（I/Oフェーズまで到達させる）
+function yieldToEventLoop() {
+  return new Promise((resolve) => setImmediate(resolve))
+}
 
 /**
  * GOAPプランを実行（リプランニング対応）
@@ -9,8 +15,9 @@ const { analyseStepPreconditions, getStateValue } = require('./precondition_chec
  * @param {Array} initialPlan - 初期プラン
  * @param {Object} stateManager - 状態マネージャー
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
+ * @param {Array} missingPreconditions - 満たされていない前提条件のリスト（オプション）
  */
-async function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null) {
+async function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
   let currentPlan = [...initialPlan]
   let stepIndex = 0
 
@@ -51,7 +58,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
 
       await stateManager.refresh(bot)
-      const newPlan = await replan(bot, goalName, stateManager, signal)
+      const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -66,6 +73,9 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     try {
       await executeStep(bot, step, stateManager, signal)
       stepIndex++
+
+      // アクション間でイベントループに制御を返す（keep-alive処理のため）
+      await yieldToEventLoop()
     } catch (error) {
       // キャンセルエラーは再スロー
       if (error.name === 'AbortError') {
@@ -76,7 +86,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
       // 状態を更新してリプランニング
       await stateManager.refresh(bot)
-      const newPlan = await replan(bot, goalName, stateManager, signal)
+      const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
 
       console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -98,9 +108,10 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
  * @param {string} goalName - 目標名
  * @param {Object} stateManager - 状態マネージャー
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
+ * @param {Array} missingPreconditions - 満たされていない前提条件のリスト（オプション）
  * @returns {Promise<Array>} 新しいプラン
  */
-async function replan(bot, goalName, stateManager, signal = null) {
+async function replan(bot, goalName, stateManager, signal = null, missingPreconditions = null) {
   // キャンセルチェック
   if (signal && signal.aborted) {
     const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
@@ -159,6 +170,31 @@ async function replan(bot, goalName, stateManager, signal = null) {
           }
         }
         console.log('===========================\n')
+
+        // 複合状態を自動解決してみる
+        const structuredDiagnosis = buildStructuredDiagnosis(diagnosis, goalName)
+        if (structuredDiagnosis.missingRequirements && structuredDiagnosis.missingRequirements.length > 0) {
+          for (const req of structuredDiagnosis.missingRequirements) {
+            const compositeGoal = checkCompositeState(req.key, diagnosis)
+            if (compositeGoal) {
+              console.log(`[REPLAN] 複合状態 "${req.key}" を検出 → サブゴール "${compositeGoal}" を試行`)
+
+              // サブゴールのプランニングを試みる
+              const subResult = await goapPlanner.plan(compositeGoal, currentState)
+              const subPlan = subResult?.plan
+
+              if (subPlan && Array.isArray(subPlan) && subPlan.length > 0) {
+                console.log(`[REPLAN] サブゴール "${compositeGoal}" のプランを発見、返します`)
+                return subPlan
+              } else {
+                console.log(`[REPLAN] サブゴール "${compositeGoal}" のプランニングも失敗`)
+                if (missingPreconditions) {
+                  missingPreconditions.push(compositeGoal)
+                }
+              }
+            }
+          }
+        }
       }
     }
 

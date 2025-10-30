@@ -109,8 +109,7 @@ async function handleChatCommand(bot, username, message, stateManager) {
       return {
         success: true,
         goal: goalName,
-        message: `目標「${goalName}」を完了しました`,
-        executionHistory: result?.executionHistory || []
+        message: `目標「${goalName}」を完了しました`
       }
     } catch (error) {
       // 中断エラーかどうかを判定
@@ -120,16 +119,23 @@ async function handleChatCommand(bot, username, message, stateManager) {
           goal: goalName,
           aborted: true,
           error: error.message,
-          executionHistory: error.executionHistory || []
+          missingPreconditions: error.missingPreconditions || []
         }
+      }
+
+      // 3回以上の試行がある場合はメッセージを追加
+      const missingCount = (error.missingPreconditions || []).length
+      let errorMessage = error.message
+
+      if (missingCount >= 3) {
+        errorMessage = `目標が複雑すぎるか、近くに必要な材料がない可能性があります。より簡単な目標を試すか、材料を集めてください。`
       }
 
       return {
         success: false,
         goal: goalName,
-        error: error.message,
-        diagnosis: error.diagnosis || null,
-        executionHistory: error.executionHistory || []
+        error: errorMessage,
+        missingPreconditions: error.missingPreconditions || []
       }
     } finally {
       // 完了・失敗・中断いずれの場合もクリア
