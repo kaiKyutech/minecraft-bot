@@ -10,19 +10,39 @@ npm install /path/to/minecraft-bot/planner_bot
 
 ## 基本的な使い方
 
+### ライブラリとして使用（推奨）
+
+他のプロジェクトから直接インポートして使用できます。この場合、`.env` ファイルは不要です。
+
 ```javascript
 const { createAIBot } = require('planner_bot/src/bot/ai_bot')
-
-// Observer Poolは必要に応じて用意
-const observerPool = null  // または実際のObserver Poolインスタンス
 
 const bot = createAIBot(1, {
   host: 'localhost',
   port: 25565,
-  username: 'Bot',
-  version: false  // 自動検出
-}, observerPool)
+  username: 'MyBot',  // 任意の名前を指定可能
+  version: false,     // 自動検出
+  aiBotCount: 1       // 1の場合は番号を付けない
+})
 ```
+
+**パラメータ**:
+- `id` (number): ボットID（複数ボット起動時に使用）
+- `config` (Object):
+  - `host` (string): サーバーホスト
+  - `port` (number): サーバーポート
+  - `username` (string): ボット名（自由に指定可能、`.env` に依存しない）
+  - `version` (string | false): Minecraftバージョン（`false` で自動検出）
+  - `aiBotCount` (number): ボット数（1の場合は `username` をそのまま使用、2以上の場合は `username1`, `username2` のように番号が付く）
+
+### スタンドアロンで起動
+
+```bash
+npm install
+node planner_bot/index.js
+```
+
+この場合のみ、`.env` ファイルから設定を読み込みます（`MC_HOST`, `MC_PORT`, `MC_USERNAME` など）。ライブラリとして使用する場合は `.env` ファイルは無視されます。
 
 ---
 
