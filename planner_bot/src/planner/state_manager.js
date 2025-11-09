@@ -1,7 +1,7 @@
 const { loadStateSchema, loadBlockCategories } = require('./state_builder')
 const { scanBlocks } = require('../utils/block_scanner')
 
-const SCAN_RANGE = process.env.STATE_SCAN_RANGE ? Number(process.env.STATE_SCAN_RANGE) : 100
+const SCAN_RANGE = process.env.STATE_SCAN_RANGE ? Number(process.env.STATE_SCAN_RANGE) : 60
 const parsedMaxChecks = process.env.STATE_SCAN_MAX_CHECKS
   ? Number(process.env.STATE_SCAN_MAX_CHECKS)
   : Infinity
