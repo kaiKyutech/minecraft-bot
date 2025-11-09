@@ -199,11 +199,13 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   if (depth === 0) {
     const completeMessage = `目標「${goalName}」を完了しました`
     bot.systemLog(completeMessage)
+    attemptedGoals.delete(goalName)
 
     // ルート呼び出しの場合のみ結果を返す（成功時はmissingPreconditionsは空）
     return { missingPreconditions }
   } else {
     bot.systemLog(`サブゴール「${goalName}」を完了しました (深度: ${depth})`)
+    attemptedGoals.delete(goalName)
   }
 }
 
