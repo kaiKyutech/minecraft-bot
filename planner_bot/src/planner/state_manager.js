@@ -26,13 +26,16 @@ class StateManager {
   }
 
   async refresh(bot) {
+    const blockData = await this.extractNearbyBlocks(bot)
+
     this.cache = {
       timestamp: Date.now(),
       inventory: this.extractInventory(bot), // インベントリ生データ
       equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
-      nearby_blocks: await this.extractNearbyBlocks(bot) // 周辺ブロック検索
+      nearby_blocks: blockData.flags, // 周辺ブロック検索（boolean flags）
+      blocks: blockData.blocks        // ブロック座標リスト
     }
 
     // デバッグ用: GOAP状態をログ出力
@@ -136,10 +139,10 @@ class StateManager {
 
     const scanMaxChecks = SCAN_MAX_CHECKS === Infinity ? -1 : SCAN_MAX_CHECKS
 
-    const { summary } = await scanBlocks(bot, {
+    const { summary, blocks } = await scanBlocks(bot, {
       range: scanRange,
       maxChecks: scanMaxChecks,
-      collectBlocks: false,
+      collectBlocks: true,  // ★ ブロック座標リストを収集
       onBlock: ({ name, rawDistance }) => {
         for (const state of environmentStates) {
           if (nearbyBlocks[state.stateName]) continue
@@ -169,8 +172,10 @@ class StateManager {
       )
     }
 
-    return nearbyBlocks
-    // 結果例: { oak_log: 5, birch_log: 2, stone_pickaxe: 1 }
+    return {
+      flags: nearbyBlocks,  // boolean flags (GOAP用)
+      blocks: { list: blocks || [] }  // 座標リスト
+    }
   }
 
   logCurrentState(bot) {
