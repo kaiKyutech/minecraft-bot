@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { goals } = require('mineflayer-pathfinder')
 
 /**
  * 中位スキル: workbench_craft
@@ -18,18 +19,41 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   // レシピ名をそのままアイテム名として使用
   const itemName = params.recipe
 
-  // 近くの作業台を探す
-  const workbench = bot.findBlock({
-    matching: (block) => block && block.name === 'crafting_table',
-    maxDistance: 5
-  })
+  // 1. stateManagerから作業台の座標を取得
+  const state = await stateManager.getState(bot)
+  const workbenchData = state.blocks?.list?.find(b => b.name === 'crafting_table')
 
-  if (!workbench) {
+  if (!workbenchData) {
     throw new Error('近くに作業台が見つかりません（GOAPの前提条件エラー）')
   }
 
-  const distance = bot.entity.position.distanceTo(workbench.position)
-  console.log(`[WORKBENCH_CRAFT] 作業台発見: ${JSON.stringify(workbench.position)} (${distance.toFixed(1)}m)`)
+  console.log(`[WORKBENCH_CRAFT] 作業台の位置: ${JSON.stringify(workbenchData.position)} (距離: ${workbenchData.distance.toFixed(1)}m)`)
+
+  // 2. 作業台に近づく（4ブロック以内）
+  const currentDistance = bot.entity.position.distanceTo(workbenchData.position)
+  if (currentDistance > 4) {
+    console.log(`[WORKBENCH_CRAFT] 作業台へ移動中...`)
+    await bot.pathfinder.goto(new goals.GoalNear(
+      workbenchData.position.x,
+      workbenchData.position.y,
+      workbenchData.position.z,
+      4
+    ))
+  }
+
+  // 3. bot.blockAtで直接ブロックを取得（チャンク読み込み問題を回避）
+  const Vec3 = require('vec3')
+  const workbench = bot.blockAt(new Vec3(
+    workbenchData.position.x,
+    workbenchData.position.y,
+    workbenchData.position.z
+  ))
+
+  if (!workbench || workbench.name !== 'crafting_table') {
+    throw new Error('作業台の座標にブロックが見つかりません')
+  }
+
+  console.log(`[WORKBENCH_CRAFT] 作業台使用: ${JSON.stringify(workbench.position)}`)
 
   try {
     const count = params.count || 1
