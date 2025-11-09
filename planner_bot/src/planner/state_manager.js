@@ -34,7 +34,8 @@ class StateManager {
       equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
-      nearby_blocks: blockData.flags, // 周辺ブロック検索（boolean flags）
+      nearby_blocks: blockData.flags, // 周辺ブロック検索（boolean flags、既存）
+      nearby: blockData.nearby,       // ★ 新規: ドット記法用（inventory と同じ形式）
       blocks: blockData.blocks        // ブロック座標リスト
     }
 
@@ -173,8 +174,12 @@ class StateManager {
     }
 
     return {
-      flags: nearbyBlocks,  // boolean flags (GOAP用)
-      blocks: { list: blocks || [] }  // 座標リスト
+      flags: nearbyBlocks,  // boolean flags (GOAP用、既存)
+      nearby: summary.typeCounts || {},  // ★ 新規: ドット記法用（inventory と同じ形式）
+      blocks: {
+        list: blocks || [],  // 座標リスト
+        summary: summary.typeCounts || {}  // ブロック統計
+      }
     }
   }
 

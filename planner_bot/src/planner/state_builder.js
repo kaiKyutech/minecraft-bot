@@ -35,6 +35,9 @@ function buildState(worldState) {
   // 環境状態の構築
   buildEnvironmentStates(facts, worldState, schema.environment_states)
 
+  // ★ 新規: nearby状態（inventoryと同じ形式、事前定義不要）
+  facts.nearby = worldState?.nearby || {}
+
   // 世界状態の構築
   buildWorldStates(facts, worldState, schema.world_states)
 
