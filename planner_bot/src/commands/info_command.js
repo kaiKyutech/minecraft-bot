@@ -75,6 +75,49 @@ async function getInventoryInfo(bot, stateManager, worldState = null) {
 }
 
 /**
+ * 周辺ブロック情報を取得
+ */
+async function getNearbyInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
+
+  const nearbyCounts = worldState.nearby || {}
+  const blockEntries = []
+  const categoryEntries = []
+
+  for (const [name, count] of Object.entries(nearbyCounts)) {
+    if (name === 'category') continue
+    if (typeof count === 'number' && count > 0) {
+      blockEntries.push({ name, count })
+    }
+  }
+
+  blockEntries.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  const categoryCounts = nearbyCounts.category || {}
+  for (const [name, count] of Object.entries(categoryCounts)) {
+    if (typeof count === 'number' && count > 0) {
+      categoryEntries.push({ name, count })
+    }
+  }
+  categoryEntries.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  const totalBlocks = blockEntries.reduce((sum, entry) => sum + entry.count, 0)
+
+  return {
+    blocks: blockEntries,
+    categories: categoryEntries,
+    summary: {
+      totalTypes: blockEntries.length,
+      totalBlocks,
+      topBlock: blockEntries[0]?.name || null
+    }
+  }
+}
+
+/**
  * 位置情報を取得
  * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
  */
@@ -273,12 +316,14 @@ async function getAllInfo(bot, stateManager) {
   const position = await getPositionInfo(bot, stateManager, worldState)
   const locations = await getLocationsInfo(bot, stateManager)
   const players = await getAllPlayersInfo(bot, stateManager, worldState)
+  const nearby = await getNearbyInfo(bot, stateManager, worldState)
 
   return {
     inventory: inventory,
     position: position,
     locations: locations,
-    players: players  // nearbyPlayers から players に変更
+    players: players,
+    nearby: nearby
   }
 }
 

@@ -180,7 +180,7 @@ actions:
   - name: gather_diamond_ore_with_iron_pickaxe
     preconditions:
       inventory_space: true
-      nearby_diamond_ore: true
+      nearby.diamond_ore: ">=1"
       has_iron_or_better_pickaxe: true
     effects:
       inventory.diamond: "+1"

@@ -35,8 +35,8 @@ function buildState(worldState) {
   // 環境状態の構築
   buildEnvironmentStates(facts, worldState, schema.environment_states)
 
-  // ★ 新規: nearby状態（inventoryと同じ形式、事前定義不要）
-  facts.nearby = worldState?.nearby || {}
+  // nearby状態（scanBlocks集計結果をそのまま公開）
+  buildNearbyStates(facts, worldState)
 
   // 世界状態の構築
   buildWorldStates(facts, worldState, schema.world_states)
@@ -213,4 +213,21 @@ module.exports = {
   loadStateSchema,
   loadBlockCategories,
   calculateCompositeStates
+}
+
+function buildNearbyStates(facts, worldState) {
+  const nearbyCounts = worldState?.nearby || {}
+  const nearbyFacts = Object.create(null)
+
+  for (const [name, value] of Object.entries(nearbyCounts)) {
+    if (name === 'category' && value && typeof value === 'object') {
+      nearbyFacts.category = { ...value }
+      continue
+    }
+    if (typeof value === 'number') {
+      nearbyFacts[name] = value
+    }
+  }
+
+  facts.nearby = nearbyFacts
 }

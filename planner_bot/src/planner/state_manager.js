@@ -34,8 +34,8 @@ class StateManager {
       equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
-      nearby_blocks: blockData.flags, // 周辺ブロック検索（boolean flags、既存）
-      nearby: blockData.nearby,       // ★ 新規: ドット記法用（inventory と同じ形式）
+      nearby_blocks: blockData.flags, // 既存booleanフラグ
+      nearby: blockData.summary,      // ドット記法用（ブロック/カテゴリのヒット数）
       blocks: blockData.blocks        // ブロック座標リスト
     }
 
@@ -173,12 +173,14 @@ class StateManager {
       )
     }
 
+    const blockCounts = summary.typeCounts || {}
+
     return {
-      flags: nearbyBlocks,  // boolean flags (GOAP用、既存)
-      nearby: summary.typeCounts || {},  // ★ 新規: ドット記法用（inventory と同じ形式）
+      flags: nearbyBlocks,
+      summary: buildNearbySummary(blockCounts, categories),
       blocks: {
-        list: blocks || [],  // 座標リスト
-        summary: summary.typeCounts || {}  // ブロック統計
+        list: blocks || [],
+        summary: blockCounts
       }
     }
   }
@@ -199,10 +201,32 @@ class StateManager {
         numericStates.push(`${key}:${value}`)
       } else if (typeof value === 'object' && value !== null) {
         if (key === 'inventory') {
-          // inventoryオブジェクトの中身を展開して表示
           for (const [itemName, count] of Object.entries(value)) {
             if (typeof count === 'number' && count > 0) {
               numericStates.push(`inventory.${itemName}:${count}`)
+            }
+          }
+        } else if (key === 'nearby') {
+          const nearbyEntries = []
+          for (const [itemName, count] of Object.entries(value)) {
+            if (itemName === 'category' && count && typeof count === 'object') continue
+            if (typeof count === 'number' && count > 0) {
+              nearbyEntries.push(`nearby.${itemName}:${count}`)
+            }
+          }
+          if (nearbyEntries.length > 0) {
+            console.log(`[STATE] Nearby Counts: ${nearbyEntries.join(' ')}`)
+          }
+          const categoryInfo = value.category
+          if (categoryInfo && typeof categoryInfo === 'object') {
+            const categoryEntries = []
+            for (const [categoryName, catCount] of Object.entries(categoryInfo)) {
+              if (typeof catCount === 'number' && catCount > 0) {
+                categoryEntries.push(`nearby.category.${categoryName}:${catCount}`)
+              }
+            }
+            if (categoryEntries.length > 0) {
+              console.log(`[STATE] Nearby Categories: ${categoryEntries.join(' ')}`)
             }
           }
         } else if (key === 'equipment') {
@@ -288,6 +312,32 @@ function buildEnvironmentDefinition(stateName, config, categories) {
   }
 
   return null
+}
+
+function buildNearbySummary(blockCounts, categories) {
+  const summary = Object.create(null)
+
+  for (const [name, count] of Object.entries(blockCounts)) {
+    summary[name] = count
+  }
+
+  const categoryCounts = Object.create(null)
+  const categoryMap = categories?.categories || {}
+  for (const [categoryName, config] of Object.entries(categoryMap)) {
+    let total = 0
+    for (const blockName of config.blocks || []) {
+      total += blockCounts[blockName] || 0
+    }
+    if (total > 0) {
+      categoryCounts[categoryName] = total
+    }
+  }
+
+  if (Object.keys(categoryCounts).length > 0) {
+    summary.category = categoryCounts
+  }
+
+  return summary
 }
 
 function createStateManager() {
