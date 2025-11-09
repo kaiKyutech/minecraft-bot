@@ -1,4 +1,5 @@
 const goapPlanner = require('../planner/goap')
+const { buildState } = require('../planner/state_builder')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
 
 /**
@@ -76,7 +77,28 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
         // 数量削減は深度を消費しない（同じ深度で再試行）
         await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
 
-        // 数量1での取得に成功 → 元のゴールを再試行（まだ足りない可能性があるため）
+        const parsedGoal = parseQuantityGoal(goalName)
+        if (parsedGoal) {
+          await stateManager.refresh(bot)
+          const latestWorld = await stateManager.getState(bot)
+          const goapState = buildState(latestWorld)
+          const currentValue = Number(getNestedStateValue(goapState, parsedGoal.base)) || 0
+          const remaining = parsedGoal.quantity - currentValue
+
+          if (remaining <= 0) {
+            bot.systemLog(`必要数量を満たしたため目標「${goalName}」を完了とみなします。`)
+            return
+          }
+
+          if (remaining < parsedGoal.quantity) {
+            const nextGoal = `${parsedGoal.base}:${remaining}`
+            bot.systemLog(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
+            attemptedGoals.delete(goalName)
+            return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
+          }
+        }
+
+        // 数量1での取得に成功 → 進捗を確認できなかったため元のゴールを再試行
         bot.systemLog(`数量1での取得成功。目標「${goalName}」を再試行中...`)
 
         // 元のゴールを再度試す前に、試行済みセットから削除
@@ -283,24 +305,11 @@ function checkCompositeState(key, rawDiagnosis) {
  * @returns {string|null} 数量1のゴール名（例: "inventory.diamond:1"）、または変換不可能な場合はnull
  */
 function tryReduceQuantityToOne(goalName) {
-  // "inventory.diamond:3" のような形式をパース
-  const match = goalName.match(/^(.+):(\d+)$/)
-
-  if (!match) {
-    // 数量指定がない、またはbooleanの場合は変換不可能
+  const parsed = parseQuantityGoal(goalName)
+  if (!parsed || parsed.quantity <= 1) {
     return null
   }
-
-  const baseName = match[1]
-  const quantity = parseInt(match[2])
-
-  // 既に数量が1以下なら変換不要
-  if (quantity <= 1) {
-    return null
-  }
-
-  // 数量を1に減らす
-  return `${baseName}:1`
+  return `${parsed.base}:1`
 }
 
 /**
@@ -350,6 +359,30 @@ function createSubgoalFromMissing(missingItem) {
 
   // デフォルト
   return `${key}:1`
+}
+
+function parseQuantityGoal(goalName) {
+  const match = goalName.match(/^(.+):(\d+)$/)
+  if (!match) {
+    return null
+  }
+  return { base: match[1], quantity: Number(match[2]) }
+}
+
+function getNestedStateValue(state, key) {
+  if (!key.includes('.')) {
+    return state[key]
+  }
+
+  const parts = key.split('.')
+  let value = state
+  for (const part of parts) {
+    value = value?.[part]
+    if (value === undefined) {
+      return undefined
+    }
+  }
+  return value
 }
 
 /**
