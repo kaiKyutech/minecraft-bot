@@ -161,7 +161,8 @@ class StateManager {
             }
           }
         }
-        return remaining <= 0
+        // 早期終了しない（全ブロックのカウントを収集するため）
+        return false
       }
     })
 

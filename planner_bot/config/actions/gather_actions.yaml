@@ -5,7 +5,7 @@ actions:
   - name: gather_logs_barehand_x1
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 1"
     effects:
       has_log: "+1"
     cost: 10
@@ -17,7 +17,7 @@ actions:
   - name: gather_logs_barehand_x3
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 3"
     effects:
       has_log: "+3"
     cost: 30
@@ -29,7 +29,7 @@ actions:
   - name: gather_logs_barehand_x8
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 8"
     effects:
       has_log: "+8"
     cost: 80
@@ -42,7 +42,7 @@ actions:
   - name: gather_logs_with_axe_x1
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 1"
       has_any_axe: true
     effects:
       has_log: "+1"
@@ -55,7 +55,7 @@ actions:
   - name: gather_logs_with_axe_x3
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 3"
       has_any_axe: true
     effects:
       has_log: "+3"
@@ -68,7 +68,7 @@ actions:
   - name: gather_logs_with_axe_x8
     preconditions:
       inventory_space: true
-      nearby_log: true
+      nearby.category.log: ">= 8"
       has_any_axe: true
     effects:
       has_log: "+8"
@@ -83,7 +83,7 @@ actions:
   - name: gather_basic_stone_with_pickaxe_x1
     preconditions:
       inventory_space: true
-      nearby_basic_stone: true
+      nearby.category.basic_stone: ">= 1"
       has_any_pickaxe: true
     effects:
       inventory.cobblestone: "+1"
@@ -96,7 +96,7 @@ actions:
   - name: gather_basic_stone_with_pickaxe_x3
     preconditions:
       inventory_space: true
-      nearby_basic_stone: true
+      nearby.category.basic_stone: ">= 3"
       has_any_pickaxe: true
     effects:
       inventory.cobblestone: "+3"
@@ -109,7 +109,7 @@ actions:
   - name: gather_basic_stone_with_pickaxe_x8
     preconditions:
       inventory_space: true
-      nearby_basic_stone: true
+      nearby.category.basic_stone: ">= 8"
       has_any_pickaxe: true
     effects:
       inventory.cobblestone: "+8"
@@ -124,7 +124,7 @@ actions:
   - name: gather_iron_ore_with_stone_pickaxe_x1
     preconditions:
       inventory_space: true
-      nearby_iron_ore: true
+      nearby.category.iron_ore: ">= 1"
       has_stone_or_better_pickaxe: true
     effects:
       inventory.raw_iron: "+1"
@@ -137,7 +137,7 @@ actions:
   - name: gather_iron_ore_with_stone_pickaxe_x3
     preconditions:
       inventory_space: true
-      nearby_iron_ore: true
+      nearby.category.iron_ore: ">= 3"
       has_stone_or_better_pickaxe: true
     effects:
       inventory.raw_iron: "+3"
@@ -150,7 +150,7 @@ actions:
   - name: gather_iron_ore_with_stone_pickaxe_x8
     preconditions:
       inventory_space: true
-      nearby_iron_ore: true
+      nearby.category.iron_ore: ">= 8"
       has_stone_or_better_pickaxe: true
     effects:
       inventory.raw_iron: "+8"
@@ -165,7 +165,7 @@ actions:
   - name: gather_coal_ore_with_pickaxe
     preconditions:
       inventory_space: true
-      nearby_coal_ore: true
+      nearby.category.coal_ore: ">= 1"
       has_any_pickaxe: true
     effects:
       inventory.coal: "+1"
