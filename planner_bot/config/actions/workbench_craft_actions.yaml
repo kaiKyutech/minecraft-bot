@@ -3,13 +3,14 @@ actions:
   # === 木のツール ===
   - name: craft_wooden_pickaxe
     preconditions:
-      has_plank: ">=3"
+      inventory.category.plank: ">=3"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_plank: "-3"
+      inventory.category.plank: "-3"
       inventory.stick: "-2"
       inventory.wooden_pickaxe: "+1"
+      inventory.category.pickaxe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -17,13 +18,14 @@ actions:
 
   - name: craft_wooden_axe
     preconditions:
-      has_plank: ">=3"
+      inventory.category.plank: ">=3"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_plank: "-3"
+      inventory.category.plank: "-3"
       inventory.stick: "-2"
       inventory.wooden_axe: "+1"
+      inventory.category.axe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -31,11 +33,11 @@ actions:
 
   - name: craft_wooden_sword
     preconditions:
-      has_plank: ">=2"
+      inventory.category.plank: ">=2"
       inventory.stick: ">=1"
       nearby_workbench: true
     effects:
-      has_plank: "-2"
+      inventory.category.plank: "-2"
       inventory.stick: "-1"
       inventory.wooden_sword: "+1"
     cost: 7
@@ -45,11 +47,11 @@ actions:
 
   - name: craft_wooden_shovel
     preconditions:
-      has_plank: ">=1"
+      inventory.category.plank: ">=1"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_plank: "-1"
+      inventory.category.plank: "-1"
       inventory.stick: "-2"
       inventory.wooden_shovel: "+1"
     cost: 6
@@ -59,11 +61,11 @@ actions:
 
   - name: craft_wooden_hoe
     preconditions:
-      has_plank: ">=2"
+      inventory.category.plank: ">=2"
       inventory.stick: ">=2"
       nearby_workbench: true
     effects:
-      has_plank: "-2"
+      inventory.category.plank: "-2"
       inventory.stick: "-2"
       inventory.wooden_hoe: "+1"
     cost: 7
@@ -81,6 +83,8 @@ actions:
       inventory.cobblestone: "-3"
       inventory.stick: "-2"
       inventory.stone_pickaxe: "+1"
+      inventory.category.pickaxe: true
+      inventory.category.stone_or_better_pickaxe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -95,6 +99,7 @@ actions:
       inventory.cobblestone: "-3"
       inventory.stick: "-2"
       inventory.stone_axe: "+1"
+      inventory.category.axe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -159,10 +164,10 @@ actions:
   # チェスト（作業台が必要）
   - name: craft_chest
     preconditions:
-      has_plank: ">=8"
+      inventory.category.plank: ">=8"
       nearby_workbench: true
     effects:
-      has_plank: "-8"
+      inventory.category.plank: "-8"
       inventory.chest: "+1"
     cost: 8
     skill: workbench_craft
@@ -179,6 +184,9 @@ actions:
       inventory.iron_ingot: "-3"
       inventory.stick: "-2"
       inventory.iron_pickaxe: "+1"
+      inventory.category.pickaxe: true
+      inventory.category.stone_or_better_pickaxe: true
+      inventory.category.iron_or_better_pickaxe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -193,6 +201,7 @@ actions:
       inventory.iron_ingot: "-3"
       inventory.stick: "-2"
       inventory.iron_axe: "+1"
+      inventory.category.axe: true
     cost: 8
     skill: workbench_craft
     params:
@@ -299,6 +308,9 @@ actions:
       inventory.diamond: "-3"
       inventory.stick: "-2"
       inventory.diamond_pickaxe: "+1"
+      inventory.category.pickaxe: true
+      inventory.category.stone_or_better_pickaxe: true
+      inventory.category.iron_or_better_pickaxe: true
     cost: 10
     skill: workbench_craft
     params:
@@ -313,6 +325,7 @@ actions:
       inventory.diamond: "-3"
       inventory.stick: "-2"
       inventory.diamond_axe: "+1"
+      inventory.category.axe: true
     cost: 10
     skill: workbench_craft
     params:

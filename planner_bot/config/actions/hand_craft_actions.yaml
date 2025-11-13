@@ -3,10 +3,10 @@ actions:
   # === 手クラフト（2x2グリッド）===
   - name: craft_planks_from_logs
     preconditions:
-      has_log: ">=1"
+      inventory.category.log: ">=1"
     effects:
-      has_log: "-1"
-      has_plank: "+4"      # 1つの原木から4つの板
+      inventory.category.log: "-1"
+      inventory.category.plank: "+4"      # 1つの原木から4つの板
     cost: 2
     skill: hand_craft
     params:
@@ -14,9 +14,9 @@ actions:
 
   - name: craft_sticks_from_planks
     preconditions:
-      has_plank: ">=2"
+      inventory.category.plank: ">=2"
     effects:
-      has_plank: "-2"
+      inventory.category.plank: "-2"
       inventory.stick: "+4"      # 2つの板から4つの棒
     cost: 2
     skill: hand_craft
@@ -25,10 +25,10 @@ actions:
 
   - name: create_workbench
     preconditions:
-      has_plank: ">=4"
+      inventory.category.plank: ">=4"
       visible_workbench: false
     effects:
-      has_plank: "-4"
+      inventory.category.plank: "-4"
       inventory.crafting_table: "+1"  # 4つの板から作業台
     cost: 5
     skill: hand_craft

@@ -1,6 +1,7 @@
-# ブロックカテゴリ定義
+# ブロック・アイテムカテゴリ定義
 # minecraft-dataから自動生成された情報を基に、GOAPで使用するカテゴリを定義
 
+# ブロックカテゴリ（nearby.category.XXX で使用）
 categories:
   log:
     description: "原木系ブロック（通常・樹皮を剥いだもの含む）"
@@ -78,3 +79,83 @@ categories:
       - cooked_porkchop
       - cooked_chicken
       - cooked_mutton
+
+# アイテムカテゴリ（inventory.category.XXX で使用）
+item_categories:
+  log:
+    description: "原木系アイテムの合計数"
+    type: "count"
+    items:
+      - acacia_log
+      - birch_log
+      - cherry_log
+      - dark_oak_log
+      - jungle_log
+      - mangrove_log
+      - oak_log
+      - spruce_log
+      - stripped_acacia_log
+      - stripped_birch_log
+      - stripped_cherry_log
+      - stripped_dark_oak_log
+      - stripped_jungle_log
+      - stripped_mangrove_log
+      - stripped_oak_log
+      - stripped_spruce_log
+
+  plank:
+    description: "板系アイテムの合計数"
+    type: "count"
+    items:
+      - acacia_planks
+      - bamboo_planks
+      - birch_planks
+      - cherry_planks
+      - crimson_planks
+      - dark_oak_planks
+      - jungle_planks
+      - mangrove_planks
+      - oak_planks
+      - spruce_planks
+      - warped_planks
+
+  pickaxe:
+    description: "任意のピッケルを所持しているか"
+    type: "boolean"
+    items:
+      - wooden_pickaxe
+      - stone_pickaxe
+      - iron_pickaxe
+      - golden_pickaxe
+      - diamond_pickaxe
+      - netherite_pickaxe
+
+  axe:
+    description: "任意の斧を所持しているか"
+    type: "boolean"
+    items:
+      - wooden_axe
+      - stone_axe
+      - iron_axe
+      - golden_axe
+      - diamond_axe
+      - netherite_axe
+
+  stone_or_better_pickaxe:
+    description: "石以上のピッケルを所持しているか"
+    type: "boolean"
+    items:
+      - stone_pickaxe
+      - iron_pickaxe
+      - golden_pickaxe
+      - diamond_pickaxe
+      - netherite_pickaxe
+
+  iron_or_better_pickaxe:
+    description: "鉄以上のピッケルを所持しているか"
+    type: "boolean"
+    items:
+      - iron_pickaxe
+      - golden_pickaxe
+      - diamond_pickaxe
+      - netherite_pickaxe

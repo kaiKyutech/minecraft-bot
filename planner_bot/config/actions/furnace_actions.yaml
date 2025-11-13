@@ -4,10 +4,10 @@ actions:
   # 原木を燃料として使い、別の原木を木炭に変換
   - name: smelt_charcoal_with_log
     preconditions:
-      has_log: ">=2"        # 材料1個 + 燃料1個
+      inventory.category.log: ">=2"        # 材料1個 + 燃料1個
       nearby_furnace: true
     effects:
-      has_log: "-2"
+      inventory.category.log: "-2"
       inventory.charcoal: "+1"
     cost: 15
     skill: furnace_smelt
@@ -20,12 +20,12 @@ actions:
   # 板を燃料として使う（より効率的、原木1個から板4個作れる、推奨）
   - name: smelt_charcoal_with_planks
     preconditions:
-      has_log: ">=1"
-      has_plank: ">=1"      # 燃料として板を使用
+      inventory.category.log: ">=1"
+      inventory.category.plank: ">=1"      # 燃料として板を使用
       nearby_furnace: true
     effects:
-      has_log: "-1"
-      has_plank: "-1"
+      inventory.category.log: "-1"
+      inventory.category.plank: "-1"
       inventory.charcoal: "+1"
     cost: 10
     skill: furnace_smelt
@@ -76,11 +76,11 @@ actions:
   - name: smelt_iron_ingot_with_log
     preconditions:
       inventory.raw_iron: ">=1"
-      has_log: ">=1"
+      inventory.category.log: ">=1"
       nearby_furnace: true
     effects:
       inventory.raw_iron: "-1"
-      has_log: "-1"
+      inventory.category.log: "-1"
       inventory.iron_ingot: "+1"
     cost: 20
     skill: furnace_smelt
@@ -93,11 +93,11 @@ actions:
   - name: smelt_iron_ingot_with_planks
     preconditions:
       inventory.raw_iron: ">=1"
-      has_plank: ">=1"
+      inventory.category.plank: ">=1"
       nearby_furnace: true
     effects:
       inventory.raw_iron: "-1"
-      has_plank: "-1"
+      inventory.category.plank: "-1"
       inventory.iron_ingot: "+1"
     cost: 20
     skill: furnace_smelt

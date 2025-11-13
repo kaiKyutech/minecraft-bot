@@ -16,55 +16,57 @@ inventory_states:
     default: true
     description: "インベントリに空きがある"
 
-  # === カテゴリ集約（複数種類のアイテムを合計） ===
-  has_log:
-    type: number
-    default: 0
-    description: "所持している原木の合計数（oak_log, birch_log等の合計）"
-
-  has_plank:
-    type: number
-    default: 0
-    description: "所持している板の合計数（oak_planks, birch_planks等の合計）"
+  # === 動的カテゴリ（inventory.category.XXX で参照） ===
+  # 以下のカテゴリは block_categories.yaml の item_categories で定義:
+  # - inventory.category.log (count) - 原木の合計数
+  # - inventory.category.plank (count) - 板の合計数
+  # - inventory.category.pickaxe (boolean) - 任意のピッケルを所持
+  # - inventory.category.axe (boolean) - 任意の斧を所持
+  # - inventory.category.stone_or_better_pickaxe (boolean) - 石以上のピッケル
+  # - inventory.category.iron_or_better_pickaxe (boolean) - 鉄以上のピッケル
 
   # === 個別アイテムは inventory.xxx で参照 ===
   # inventory.crafting_table - 所持しているクラフト台の数
   # inventory.furnace - 所持しているかまどの数
+  # inventory.wooden_pickaxe - 木のピッケルの数
   # 等々...
 
-  # === 個別ツールは削除（inventory.xxx で参照） ===
-  # 以前の定義:
-  #   has_wooden_pickaxe, has_wooden_axe, has_wooden_sword, has_wooden_shovel, has_wooden_hoe
-  #   has_stone_pickaxe, has_stone_axe, has_stone_sword, has_stone_shovel, has_stone_hoe
-  # 新しい参照方法:
-  #   inventory.wooden_pickaxe, inventory.stone_axe 等のドット記法を使用
+  # === 旧形式（互換性のため残す、段階的に削除予定） ===
+  has_log:
+    type: number
+    default: 0
+    description: "（非推奨）inventory.category.log を使用してください"
 
-  # === ツール所持の複合判定 ===
+  has_plank:
+    type: number
+    default: 0
+    description: "（非推奨）inventory.category.plank を使用してください"
+
   has_any_pickaxe:
     type: boolean
     default: false
-    description: "任意のピッケル（木・石・鉄・ダイヤ等）を所持している"
+    description: "（非推奨）inventory.category.pickaxe を使用してください"
     computed: true
     depends_on_inventory: ["wooden_pickaxe", "stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
 
   has_any_axe:
     type: boolean
     default: false
-    description: "任意の斧（木・石・鉄・ダイヤ等）を所持している"
+    description: "（非推奨）inventory.category.axe を使用してください"
     computed: true
     depends_on_inventory: ["wooden_axe", "stone_axe", "iron_axe", "diamond_axe", "netherite_axe"]
 
   has_stone_or_better_pickaxe:
     type: boolean
     default: false
-    description: "石以上のピッケル（石・鉄・ダイヤ等）を所持している"
+    description: "（非推奨）inventory.category.stone_or_better_pickaxe を使用してください"
     computed: true
     depends_on_inventory: ["stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
 
   has_iron_or_better_pickaxe:
     type: boolean
     default: false
-    description: "鉄以上のピッケル（鉄・ダイヤ等）を所持している"
+    description: "（非推奨）inventory.category.iron_or_better_pickaxe を使用してください"
     computed: true
     depends_on_inventory: ["iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
 

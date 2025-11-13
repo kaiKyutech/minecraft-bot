@@ -203,6 +203,7 @@ class StateManager {
       } else if (typeof value === 'object' && value !== null) {
         if (key === 'inventory') {
           for (const [itemName, count] of Object.entries(value)) {
+            if (itemName === 'category' && count && typeof count === 'object') continue
             if (typeof count === 'number' && count > 0) {
               numericStates.push(`inventory.${itemName}:${count}`)
             }
@@ -245,6 +246,28 @@ class StateManager {
     console.log(`[STATE] Numeric: ${numericStates.join(' ')}`)
     if (equipmentStates.length > 0) {
       console.log(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
+    }
+
+    // inventory.category の情報を表示
+    const inventoryCategory = goapState.inventory?.category
+    if (inventoryCategory && typeof inventoryCategory === 'object') {
+      const categoryCounts = []
+      const categoryBools = []
+      for (const [categoryName, value] of Object.entries(inventoryCategory)) {
+        if (typeof value === 'number') {
+          if (value > 0) {
+            categoryCounts.push(`inventory.category.${categoryName}:${value}`)
+          }
+        } else if (typeof value === 'boolean') {
+          categoryBools.push(`inventory.category.${categoryName}:${value ? 1 : 0}`)
+        }
+      }
+      if (categoryCounts.length > 0) {
+        console.log(`[STATE] Inventory Categories (count): ${categoryCounts.join(' ')}`)
+      }
+      if (categoryBools.length > 0) {
+        console.log(`[STATE] Inventory Categories (bool): ${categoryBools.join(' ')}`)
+      }
     }
   }
 

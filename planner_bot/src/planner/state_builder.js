@@ -59,30 +59,39 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   // 動的インベントリ: 全アイテムをそのまま保存（自動追跡）
   facts.inventory = { ...counts }
 
-  // カテゴリベースでインベントリを集計
-  let logCount = 0
-  let plankCount = 0
+  // ★ 新規: inventory.category オブジェクトを構築
+  const inventoryCategory = {}
 
-  // カテゴリ定義から動的に集計
-  if (categories?.categories) {
-    for (const [itemName, count] of Object.entries(counts)) {
-      // log カテゴリ
-      if (categories.categories.log?.blocks.includes(itemName)) {
-        logCount += count
+  if (categories?.item_categories) {
+    for (const [categoryName, categoryConfig] of Object.entries(categories.item_categories)) {
+      const items = categoryConfig.items || []
+
+      if (categoryConfig.type === 'count') {
+        // 合計数を計算
+        let total = 0
+        for (const itemName of items) {
+          total += counts[itemName] || 0
+        }
+        inventoryCategory[categoryName] = total
+      } else if (categoryConfig.type === 'boolean') {
+        // 1つでも持っていればtrue
+        let hasAny = false
+        for (const itemName of items) {
+          if ((counts[itemName] || 0) >= 1) {
+            hasAny = true
+            break
+          }
+        }
+        inventoryCategory[categoryName] = hasAny
       }
-      // plank カテゴリ
-      if (categories.categories.plank?.blocks.includes(itemName)) {
-        plankCount += count
-      }
-      // basic_stone カテゴリ
-      // 丸石カテゴリは inventory.cobblestone を直接参照する運用に変更
     }
   }
 
-  // 特定アイテムの個別処理（カテゴリに含まれないもの）
-  // カテゴリ集計結果を設定
-  facts.has_log = logCount
-  facts.has_plank = plankCount
+  facts.inventory.category = inventoryCategory
+
+  // 旧形式との互換性のため残す（段階的に削除予定）
+  facts.has_log = inventoryCategory.log || 0
+  facts.has_plank = inventoryCategory.plank || 0
 
   // 複合状態を計算
   calculateCompositeStates(facts)

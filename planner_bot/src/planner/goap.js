@@ -259,10 +259,13 @@ async function plan(goalInput, worldState) {
 
       // 各リソースの合理的な上限（Minecraftの1スタック = 64個を基準）
       const RESOURCE_LIMITS = {
-        'has_log': 32,
-        'has_plank': 64,
+        'inventory.category.log': 32,
+        'inventory.category.plank': 64,
         'inventory.stick': 64,
-        'inventory.cobblestone': 64
+        'inventory.cobblestone': 64,
+        // 旧形式との互換性
+        'has_log': 32,
+        'has_plank': 64
       }
 
       // 上限を超えるリソース収集は行わない
@@ -431,15 +434,16 @@ function diagnoseGoalFailure(goal, currentState, actions, heuristicContext) {
 
 /**
  * 目標入力をパース
- * @param {string} input - ユーザー入力（例: "has_log:8", "inventory.furnace:1", "craft_wooden_pickaxe"）
+ * @param {string} input - ユーザー入力（例: "inventory.category.log:8", "inventory.furnace:1", "craft_wooden_pickaxe"）
  * @returns {Object|null} パース結果
  */
 function parseGoalInput(input) {
   const trimmed = input.trim()
 
   // パターン1: ドット記法の状態指定（数値）
-  if (/^[a-z_]+\.[a-z_]+:\d+$/.test(trimmed)) {
-    const [key, value] = trimmed.split(':')
+  const dotNumericMatch = trimmed.match(/^([a-z_]+(?:\.[a-z_]+)+):(\d+)$/)
+  if (dotNumericMatch) {
+    const [, key, value] = dotNumericMatch
     return {
       type: 'state',
       state: { [key]: Number(value) }
@@ -447,8 +451,9 @@ function parseGoalInput(input) {
   }
 
   // パターン2: ドット記法のBoolean状態指定（例: "inventory.foo:true"）
-  if (/^[a-z_]+\.[a-z_]+:(true|false)$/.test(trimmed)) {
-    const [key, value] = trimmed.split(':')
+  const dotBoolMatch = trimmed.match(/^([a-z_]+(?:\.[a-z_]+)+):(true|false)$/)
+  if (dotBoolMatch) {
+    const [, key, value] = dotBoolMatch
     return {
       type: 'state',
       state: { [key]: value === 'true' }
@@ -665,11 +670,11 @@ function calculateHeuristic(state, context = {}) {
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
     console.log('[HEURISTIC] Computing h(n) for goal:', finalGoal)
     console.log('[HEURISTIC] Current state summary:', {
-      has_log: state.has_log,
-      has_plank: state.has_plank,
+      'inventory.category.log': getStateValue(state, 'inventory.category.log'),
+      'inventory.category.plank': getStateValue(state, 'inventory.category.plank'),
       'inventory.cobblestone': getStateValue(state, 'inventory.cobblestone'),
-      inventory_charcoal: state.inventory?.charcoal,
-      inventory_iron_ingot: state.inventory?.iron_ingot
+      'inventory.charcoal': state.inventory?.charcoal,
+      'inventory.iron_ingot': state.inventory?.iron_ingot
     })
   }
 
@@ -1089,15 +1094,17 @@ function applyEffects(effects = {}, state) {
 
       // ネストされたオブジェクトをイミュータブルにコピー
       let current = next
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i]
+      let original = state
+      for (const part of parts) {
         if (!current[part]) {
           current[part] = {}
-        } else if (current[part] === state[part]) {
-          // 元のstateと同じ参照なら、コピーを作成
-          current[part] = { ...current[part] }
+        } else if (original && current[part] === original[part]) {
+          current[part] = Array.isArray(current[part])
+            ? current[part].slice()
+            : { ...current[part] }
         }
         current = current[part]
+        original = original ? original[part] : undefined
       }
 
       // 効果を適用
