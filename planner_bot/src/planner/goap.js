@@ -237,11 +237,10 @@ async function plan(goalInput, worldState) {
     // gather_logsを含む経路の追跡（デバッグ用）
     // if (current.actions.some(a => a.action && a.action.includes('gather_logs'))) {
     //   const h = calculateHeuristic(current.state, heuristicContext)
-    //   console.log(`[GOAP Debug Iter ${iterations}] ★ Processing gather_logs path:`)
-    //   console.log(`  Actions: [${current.actions.map(a => a.action).join(' → ')}]`)
-    //   console.log(`  g(n)=${current.cost}, h(n)=${h}, f(n)=${current.cost + h}`)
-    //   console.log(`  has_log: ${current.state.has_log}, nearby_furnace: ${current.state.nearby_furnace}`)
-    // }
+      //   console.log(`[GOAP Debug Iter ${iterations}] ★ Processing gather_logs path:`)
+      //   console.log(`  Actions: [${current.actions.map(a => a.action).join(' → ')}]`)
+      //   console.log(`  g(n)=${current.cost}, h(n)=${h}, f(n)=${current.cost + h}`)
+      // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
       console.log(`\n[GOAP] ✓ プラン発見`)
@@ -262,10 +261,7 @@ async function plan(goalInput, worldState) {
         'inventory.category.log': 32,
         'inventory.category.plank': 64,
         'inventory.stick': 64,
-        'inventory.cobblestone': 64,
-        // 旧形式との互換性
-        'has_log': 32,
-        'has_plank': 64
+        'inventory.cobblestone': 64
       }
 
       // 上限を超えるリソース収集は行わない

@@ -31,45 +31,6 @@ inventory_states:
   # inventory.wooden_pickaxe - 木のピッケルの数
   # 等々...
 
-  # === 旧形式（互換性のため残す、段階的に削除予定） ===
-  has_log:
-    type: number
-    default: 0
-    description: "（非推奨）inventory.category.log を使用してください"
-
-  has_plank:
-    type: number
-    default: 0
-    description: "（非推奨）inventory.category.plank を使用してください"
-
-  has_any_pickaxe:
-    type: boolean
-    default: false
-    description: "（非推奨）inventory.category.pickaxe を使用してください"
-    computed: true
-    depends_on_inventory: ["wooden_pickaxe", "stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
-
-  has_any_axe:
-    type: boolean
-    default: false
-    description: "（非推奨）inventory.category.axe を使用してください"
-    computed: true
-    depends_on_inventory: ["wooden_axe", "stone_axe", "iron_axe", "diamond_axe", "netherite_axe"]
-
-  has_stone_or_better_pickaxe:
-    type: boolean
-    default: false
-    description: "（非推奨）inventory.category.stone_or_better_pickaxe を使用してください"
-    computed: true
-    depends_on_inventory: ["stone_pickaxe", "iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
-
-  has_iron_or_better_pickaxe:
-    type: boolean
-    default: false
-    description: "（非推奨）inventory.category.iron_or_better_pickaxe を使用してください"
-    computed: true
-    depends_on_inventory: ["iron_pickaxe", "diamond_pickaxe", "netherite_pickaxe"]
-
 # === 環境・リソース近接関連 ===
 environment_states:
   # 特殊な検出が必要なブロック（ドット記法では代用できないもの）

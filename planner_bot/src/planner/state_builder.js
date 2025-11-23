@@ -90,9 +90,6 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
   facts.inventory.category = inventoryCategory
 
   // 旧形式との互換性のため残す（段階的に削除予定）
-  facts.has_log = inventoryCategory.log || 0
-  facts.has_plank = inventoryCategory.plank || 0
-
   // 複合状態を計算
   calculateCompositeStates(facts)
 }

@@ -274,7 +274,7 @@ function extractFirstSubgoal(structuredDiagnosis, rawDiagnosis, worldState) {
 
 /**
  * キーが複合状態かどうかをチェックし、複合状態なら最安のサブゴールを返す
- * @param {string} key - 状態キー（例: "has_iron_or_better_pickaxe"）
+ * @param {string} key - 状態キー（例: "inventory.category.iron_or_better_pickaxe"）
  * @param {Object} rawDiagnosis - 生の診断結果
  * @returns {string|null} 複合状態の最安サブゴール（例: "inventory.iron_pickaxe:1"）、または複合状態でない場合はnull
  */
