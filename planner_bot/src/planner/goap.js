@@ -313,18 +313,18 @@ async function plan(goalInput, worldState, logger = null) {
   }
 
   if (iterations >= MAX_ITERATIONS && open.size > 0) {
-    goapWarn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
-    goapWarn(`  目標: ${goalInput}`)
-    goapWarn(`  初期ヒューリスティック: h=${initialH}`)
-    goapWarn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
-    goapWarn(`  残り候補: ${open.size}, 訪問済み: ${visited.size}`)
-    goapWarn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
-    goapWarn(`  段階的に中間目標を実行してください。`)
+    getLogger().warn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
+    getLogger().warn(`  目標: ${goalInput}`)
+    getLogger().warn(`  初期ヒューリスティック: h=${initialH}`)
+    getLogger().warn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
+    getLogger().warn(`  残り候補: ${open.size}, 訪問済み: ${visited.size}`)
+    getLogger().warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
+    getLogger().warn(`  段階的に中間目標を実行してください。`)
   } else {
-    goapWarn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
-    goapWarn(`  目標: ${goalInput}`)
-    goapWarn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
-    goapWarn(`  原因: 実行可能なアクションがありません`)
+    getLogger().warn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
+    getLogger().warn(`  目標: ${goalInput}`)
+    getLogger().warn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
+    getLogger().warn(`  原因: 実行可能なアクションがありません`)
   }
 
   // 診断情報を追加
@@ -548,7 +548,7 @@ function getGoalStateFromParsed(parsedGoal, actions, goalAction = null) {
   if (parsedGoal.type === 'action' || parsedGoal.type === 'action_with_params') {
     const action = goalAction || actions.find(a => a.name === parsedGoal.actionName)
     if (!action) {
-      goapWarn(`未知の目標です: ${parsedGoal.actionName}`)
+      getLogger().warn(`未知の目標です: ${parsedGoal.actionName}`)
       return null
     }
     return extractPositiveEffects(action.effects)

@@ -22,6 +22,14 @@
 - `paper_idea.md`  
   実験的な構想メモ。実装ソースとは乖離している場合あり。
 
+## ログ設定（ENV）
+- `LOG_COMMANDS`: all | none | カンマ区切り（info,goal,skill,primitive,navigation,creative,chat,history,status,refresh,stop,echo）
+  - コマンド単位で出力を許可/抑制（例: noneでコマンド由来を抑制）
+- `LOG_CATEGORIES`: all | none | カンマ区切り（goap, goap.plan, goap.exec, state, skill, primitive, navigation, vision など）
+  - カテゴリ単位で出力を制御
+- `LOG_LEVEL`: error | warn | info | debug（デフォルトinfo）
+  - レベル閾値で出力制御（warnならwarn/errorのみ）
+
 ## メンテナンスの目安（2025-10-時点）
 - `ARCHITECTURE.md`, `API.md`, `CHAT_SYSTEM.md`: 最新実装と概ね整合。新機能追加時はここから更新を検討。
 - `IMPLEMENTATION_STATUS.md`, `ISSUES.md`, `TODO.md`: 日付が古い項目は現状とズレがある可能性大。内容を確認・整理してから参照推奨。

@@ -1,6 +1,7 @@
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
+const { createLogger } = require('../utils/logger')
 
 /**
  * !goal コマンドのハンドラ（再帰的サブゴール解決）
@@ -56,7 +57,6 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     await new Promise((resolve) => setImmediate(resolve))
   }
 
-  const { createLogger } = require('../utils/logger')
   const logger = createLogger({ bot, category: 'goap', commandName: bot.currentCommandName || 'goal' })
   const result = await goapPlanner.plan(goalName, worldState, logger)
 
@@ -66,7 +66,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
   if (!plan || !Array.isArray(plan)) {
     // プランニング失敗
-    bot.systemLog(`目標「${goalName}」のプランニング失敗 (深度: ${depth}/${maxDepth})`)
+    const loggerPlan = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+    loggerPlan.info(`目標「${goalName}」のプランニング失敗 (深度: ${depth}/${maxDepth})`)
 
     // 前提条件を記録
     missingPreconditions.push(goalName)
@@ -75,7 +76,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     const quantityRetry = tryReduceQuantityToOne(goalName)
 
     if (quantityRetry && !attemptedGoals.has(quantityRetry)) {
-      bot.systemLog(`数量を1に減らして再試行: 「${quantityRetry}」`)
+      const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+      logger.info(`数量を1に減らして再試行: 「${quantityRetry}」`)
 
       try {
         // 数量削減は深度を消費しない（同じ深度で再試行）
@@ -90,20 +92,23 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
           const remaining = parsedGoal.quantity - currentValue
 
           if (remaining <= 0) {
-            bot.systemLog(`必要数量を満たしたため目標「${goalName}」を完了とみなします。`)
-            return
-          }
+        const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+        logger.info(`必要数量を満たしたため目標「${goalName}」を完了とみなします。`)
+        return
+      }
 
           if (remaining < parsedGoal.quantity) {
             const nextGoal = `${parsedGoal.base}:${remaining}`
-            bot.systemLog(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
+            const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+            logger.info(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
             attemptedGoals.delete(goalName)
             return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
           }
         }
 
         // 数量1での取得に成功 → 進捗を確認できなかったため元のゴールを再試行
-        bot.systemLog(`数量1での取得成功。目標「${goalName}」を再試行中...`)
+        const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+        logger.info(`数量1での取得成功。目標「${goalName}」を再試行中...`)
 
         // 元のゴールを再度試す前に、試行済みセットから削除
         attemptedGoals.delete(goalName)
@@ -124,16 +129,17 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       subgoal = extractFirstSubgoal(structuredDiagnosis, diagnosis, worldState)
     } catch (error) {
       // 環境状態が満たされていない → LLMの判断が必要
-      bot.systemLog(`環境状態が満たされていません: ${error.missingEnvironment}`)
+      const loggerPlan = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+      loggerPlan.info(`環境状態が満たされていません: ${error.missingEnvironment}`)
 
       missingPreconditions.push(error.missingEnvironment)
 
       structuredDiagnosis.missingEnvironment = error.missingEnvironment
       structuredDiagnosis.needsLLM = true
 
-      console.log('\n=== LLMの判断が必要 ===')
-      console.log(JSON.stringify(structuredDiagnosis, null, 2))
-      console.log('========================\n')
+      loggerPlan.info('\n=== LLMの判断が必要 ===')
+      loggerPlan.info(JSON.stringify(structuredDiagnosis, null, 2))
+      loggerPlan.info('========================\n')
 
       // 会話履歴に記録
       bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
@@ -148,13 +154,14 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
     if (!subgoal) {
       // サブゴールが抽出できない → LLMの判断が必要
-      bot.systemLog('サブゴールを抽出できませんでした')
+      const loggerPlan = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+      loggerPlan.info('サブゴールを抽出できませんでした')
 
       structuredDiagnosis.needsLLM = true
 
-      console.log('\n=== 構造化された診断情報 ===')
-      console.log(JSON.stringify(structuredDiagnosis, null, 2))
-      console.log('============================\n')
+      loggerPlan.info('\n=== 構造化された診断情報 ===')
+      loggerPlan.info(JSON.stringify(structuredDiagnosis, null, 2))
+      loggerPlan.info('============================\n')
 
       bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
       logDiagnosisDetails(diagnosis)
@@ -164,13 +171,14 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       error.needsLLM = true
       error.missingPreconditions = missingPreconditions
       throw error
-    }
+      }
 
-    // サブゴールを再帰的に実行
-    bot.systemLog(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
+      // サブゴールを再帰的に実行
+      const loggerPlanInner = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+      loggerPlanInner.info(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
 
-    try {
-      await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals)
+      try {
+        await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals)
     } catch (error) {
       // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
       if (error.goalChain) {
@@ -290,12 +298,13 @@ function checkCompositeState(key, rawDiagnosis) {
   // rawDiagnosisのsuggestionsから対応する複合状態を探す
   for (const suggestion of rawDiagnosis.suggestions) {
     if (suggestion.target === key && suggestion.isComputedState && suggestion.dependencies) {
-      console.log(`[DEBUG] Found composite state in checkCompositeState: ${key}`)
-      console.log(`[DEBUG] Dependencies:`, JSON.stringify(suggestion.dependencies, null, 2))
+      const logger = createLogger({ bot: null, category: 'goap.plan', commandName: null })
+      logger.debug(`[DEBUG] Found composite state in checkCompositeState: ${key}`)
+      logger.debug(`[DEBUG] Dependencies: ${JSON.stringify(suggestion.dependencies, null, 2)}`)
 
       // 最初の（最も安価な）依存関係を選択
       const cheapestDependency = suggestion.dependencies[0]
-      console.log(`[DEBUG] Selected cheapest dependency: ${cheapestDependency}`)
+      logger.debug(`[DEBUG] Selected cheapest dependency: ${cheapestDependency}`)
 
       // "inventory.iron_pickaxe" -> "inventory.iron_pickaxe:1" の形式に変換
       return `${cheapestDependency}:1`
@@ -354,7 +363,8 @@ function createSubgoalFromMissing(missingItem) {
   if (requiredMatch) {
     const requiredValue = parseInt(requiredMatch[1])
     const shortage = requiredValue - currentValue
-    console.log(`[DEBUG] Creating subgoal: ${key}, current=${currentValue}, required=${requiredValue}, shortage=${shortage}`)
+    const logger = createLogger({ category: 'goap.plan' })
+    logger.debug(`[DEBUG] Creating subgoal: ${key}, current=${currentValue}, required=${requiredValue}, shortage=${shortage}`)
     return `${key}:${shortage}`
   }
 
@@ -471,9 +481,9 @@ function buildStructuredDiagnosis(diagnosis, goalName) {
  */
 function logDiagnosisDetails(diagnosis) {
   if (diagnosis.error) {
-    console.log('=== GOAL DIAGNOSIS ===')
-    console.log(`エラー: ${diagnosis.error}`)
-    console.log('======================')
+    logger.info('=== GOAL DIAGNOSIS ===')
+    logger.info(`エラー: ${diagnosis.error}`)
+    logger.info('======================')
     return
   }
 
@@ -481,15 +491,15 @@ function logDiagnosisDetails(diagnosis) {
     return
   }
 
-  console.log('\n=== GOAL DIAGNOSIS ===')
-  console.log('満たされていない要件:')
+  logger.info('\n=== GOAL DIAGNOSIS ===')
+  logger.info('満たされていない要件:')
 
   for (const req of diagnosis.missingRequirements) {
-    console.log(`  - ${req.key}: 現在=${req.current}, 目標=${req.target}`)
+    logger.info(`  - ${req.key}: 現在=${req.current}, 目標=${req.target}`)
   }
 
   if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
-    console.log('\n提案: 以下の方法で達成できます:\n')
+    logger.info('\n提案: 以下の方法で達成できます:\n')
 
     // 目標ごとにグループ化
     const groupedByTarget = {}
@@ -501,25 +511,25 @@ function logDiagnosisDetails(diagnosis) {
     }
 
     for (const [target, suggestions] of Object.entries(groupedByTarget)) {
-      console.log(`${target} を達成する方法:`)
+      logger.info(`${target} を達成する方法:`)
 
       for (let i = 0; i < suggestions.length; i++) {
         const suggestion = suggestions[i]
 
         // 複合状態の特別処理
         if (suggestion.isComputedState && suggestion.dependencies) {
-          console.log(`  ${target} は複合状態（自動計算）です。`)
-          console.log(`  以下のいずれかを作成/入手すれば自動的に true になります:\n`)
+          logger.info(`  ${target} は複合状態（自動計算）です。`)
+          logger.info(`  以下のいずれかを作成/入手すれば自動的に true になります:\n`)
 
           for (const dep of suggestion.dependencies) {
-            console.log(`    - ${dep} を作成`)
+            logger.info(`    - ${dep} を作成`)
           }
-          console.log('')
+          logger.info('')
           continue
         }
 
         if (suggestion.message) {
-          console.log(`  オプション${i + 1}: ${suggestion.message}`)
+          logger.info(`  オプション${i + 1}: ${suggestion.message}`)
           continue
         }
 
@@ -527,22 +537,22 @@ function logDiagnosisDetails(diagnosis) {
 
         const costStr = suggestion.cost !== undefined ? ` (コスト=${suggestion.cost})` : ''
         const statusStr = suggestion.allSatisfied ? ' ✓ 全ての前提条件を満たしています！' : ''
-        console.log(`  オプション${i + 1}: ${suggestion.action}${costStr}${statusStr}`)
+        logger.info(`  オプション${i + 1}: ${suggestion.action}${costStr}${statusStr}`)
 
         if (suggestion.preconditions && suggestion.preconditions.length > 0) {
-          console.log('    前提条件:')
+          logger.info('    前提条件:')
           for (const precond of suggestion.preconditions) {
             const mark = precond.satisfied ? '✓' : '✗'
             const requiredStr = formatRequiredValue(precond.required)
-            console.log(`      ${mark} ${precond.key}: 現在=${precond.current}, 必要=${requiredStr}`)
+            logger.info(`      ${mark} ${precond.key}: 現在=${precond.current}, 必要=${requiredStr}`)
           }
         }
-        console.log('')
+        logger.info('')
       }
     }
   }
 
-  console.log('======================\n')
+  logger.info('======================\n')
 }
 
 function formatRequiredValue(required) {
@@ -564,30 +574,31 @@ function formatRequiredValue(required) {
  * @param {Array} plan - プラン
  */
 function logPlanDetails(goalName, plan) {
-  console.log('=== GOAP PLAN DETAILS ===')
-  console.log(`目標: ${goalName}`)
-  console.log(`プラン長: ${plan.length} ステップ`)
-  console.log('詳細:')
+  const logger = createLogger({ category: 'goap.plan' })
+  logger.info('=== GOAP PLAN DETAILS ===')
+  logger.info(`目標: ${goalName}`)
+  logger.info(`プラン長: ${plan.length} ステップ`)
+  logger.info('詳細:')
 
   plan.forEach((step, index) => {
-    console.log(`  ${index + 1}. ${step.action}`)
-    console.log(`     スキル: ${step.skill || 'なし'}`)
-    console.log(`     パラメータ: ${JSON.stringify(step.params || {})}`)
+    logger.info(`  ${index + 1}. ${step.action}`)
+    logger.info(`     スキル: ${step.skill || 'なし'}`)
+    logger.info(`     パラメータ: ${JSON.stringify(step.params || {})}`)
 
     if (step.preconditions && Object.keys(step.preconditions).length > 0) {
-      console.log(`     前提条件: ${JSON.stringify(step.preconditions)}`)
+      logger.info(`     前提条件: ${JSON.stringify(step.preconditions)}`)
     }
     if (step.effects && Object.keys(step.effects).length > 0) {
-      console.log(`     効果: ${JSON.stringify(step.effects)}`)
+      logger.info(`     効果: ${JSON.stringify(step.effects)}`)
     }
 
-    console.log(`     コスト: ${step.cost || 0}`)
-    console.log('')
+    logger.info(`     コスト: ${step.cost || 0}`)
+    logger.info('')
   })
 
   const totalCost = plan.reduce((sum, step) => sum + (step.cost || 0), 0)
-  console.log(`総コスト: ${totalCost}`)
-  console.log('========================')
+  logger.info(`総コスト: ${totalCost}`)
+  logger.info('========================')
 }
 
 module.exports = handleGoalCommand
