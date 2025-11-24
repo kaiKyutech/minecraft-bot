@@ -85,6 +85,8 @@ function printCompletionBanner(aiCount) {
   console.log('    !info vision ' + chalk.gray('{"yaw": (current), "pitch": (current), "renderWait": (10000)}'));
   console.log('    !info scanBlocks ' + chalk.gray('{"range": (32), "type": "diamond_ore", "maxChecks": (25000), "minYOffset": (-32), "maxYOffset": (32), "yaw": (current), "coneAngle": (360)}'));
   console.log('                  ' + chalk.gray('# type(s) / maxChecks / min|maxYOffset / yaw / coneAngle を調整可能 (type 省略時は全て)'));
+  console.log('    !info recipesFor ' + chalk.yellow('{"item": "diamond_pickaxe"}') + chalk.gray(', "count": (1)  # item 必須, count オプション'));
+  console.log('    !info recipesUsing ' + chalk.yellow('{"ingredients": ["diamond", "stick"]}') + chalk.gray(', "mode": ("and"|"or") (and)'));
   console.log('');
   console.log('  Navigation (移動):');
   console.log('    !navigation register {' + chalk.yellow('"name": "home"') + chalk.gray(', "coords": ([100, 64, 200])') + '}');

@@ -11,10 +11,13 @@
  *   !info all
  *   !info vision {"yaw": 90, "pitch": 0}
  *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
+ *   !info recipesFor {"item": "diamond_pickaxe"}
+ *   !info recipesUsing {"ingredients": ["diamond", "stick"], "mode": "and"}
  */
 
 const vision = require('../vision/capture')
 const { scanBlocks } = require('../utils/block_scanner')
+const { listRecipesFor, listRecipesUsing } = require('../utils/recipe_utils')
 
 /**
  * インベントリ情報を取得
@@ -335,7 +338,7 @@ async function handleInfoCommand(bot, username, message, stateManager) {
   const parts = trimmed.split(' ')
 
   if (parts.length < 2) {
-    throw new Error('使用方法: !info <type>\n利用可能: all, vision, scanBlocks')
+    throw new Error('使用方法: !info <type>\n利用可能: all, vision, scanBlocks, recipesFor, recipesUsing')
   }
 
   const infoType = parts[1]
@@ -378,10 +381,27 @@ async function handleInfoCommand(bot, username, message, stateManager) {
       bot.systemLog(JSON.stringify({ blocks: data.blocks.slice(0, 10) }, null, 2))
     }
   }
+  else if (infoType === 'recipesFor') {
+    const itemName = params.item || params.name
+    const count = params.count !== undefined ? params.count : 1
+    if (!itemName) {
+      throw new Error('recipesFor には item パラメータが必要です')
+    }
+    data = await listRecipesFor(bot, itemName, count)
+    bot.systemLog(`[INFO] recipesFor ${data.item} x${data.count}: ${data.recipes.length} recipe(s)`)
+    bot.systemLog(JSON.stringify(data, null, 2))
+  }
+  else if (infoType === 'recipesUsing') {
+    const mode = params.mode === 'or' ? 'or' : 'and'
+    const ingredients = params.ingredients || params.ingredient
+    data = await listRecipesUsing(bot, ingredients, mode)
+    bot.systemLog(`[INFO] recipesUsing (${mode}) ingredients: ${data.ingredients.join(', ')}`)
+    bot.systemLog(JSON.stringify(data, null, 2))
+  }
   else {
     throw new Error(
       `未知の情報タイプ: ${infoType}\n` +
-      `利用可能: all, vision, scanBlocks`
+      `利用可能: all, vision, scanBlocks, recipesFor, recipesUsing`
     )
   }
 
