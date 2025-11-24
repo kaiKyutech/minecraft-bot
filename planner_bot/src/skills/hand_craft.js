@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * 中位スキル: hand_craft
@@ -14,7 +15,8 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
   if (!stateManager) throw new Error('stateManager が提供されていません')
   if (!params.recipe) throw new Error('recipe パラメータが必要です')
 
-  console.log(`[HAND_CRAFT] レシピ「${params.recipe}」を手クラフトで実行`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[HAND_CRAFT] レシピ「${params.recipe}」を手クラフトで実行`)
 
   // 動的レシピ解決
   const itemName = resolveDynamicRecipe(bot, params.recipe)
@@ -31,7 +33,7 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
       table: null  // 手クラフト（2x2グリッド）
     })
 
-    console.log(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
+    logger.info(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
   } catch (error) {
     throw new Error(`手クラフトに失敗しました: ${error.message}`)
@@ -60,7 +62,8 @@ function resolveDynamicRecipe(bot, recipeType) {
 
       const [, , species] = logMatch
       const planksName = `${species}_planks`
-      console.log(`[HAND_CRAFT] 動的解決: ${logItem.name} → ${planksName}`)
+      const logger = createLogger({ bot, category: 'skill' })
+      logger.info(`[HAND_CRAFT] 動的解決: ${logItem.name} → ${planksName}`)
 
       return planksName
     }

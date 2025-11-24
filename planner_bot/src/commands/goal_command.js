@@ -56,7 +56,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     await new Promise((resolve) => setImmediate(resolve))
   }
 
-  const logger = bot?.systemLog ? { log: bot.systemLog.bind(bot), warn: bot.systemLog.bind(bot), error: bot.systemLog.bind(bot) } : null
+  const { createLogger } = require('../utils/logger')
+  const logger = createLogger({ bot, category: 'goap', commandName: bot.currentCommandName || 'goal' })
   const result = await goapPlanner.plan(goalName, worldState, logger)
 
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す

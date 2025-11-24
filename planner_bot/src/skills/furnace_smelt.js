@@ -1,4 +1,5 @@
 const minecraftData = require('minecraft-data')
+const { createLogger } = require('../utils/logger')
 
 /**
  * 中位スキル: furnace_smelt
@@ -15,7 +16,8 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     throw new Error('input, fuel, output パラメータが必要です')
   }
 
-  console.log(`[FURNACE_SMELT] ${input} を ${fuel} で精錬して ${output} を作成`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[FURNACE_SMELT] ${input} を ${fuel} で精錬して ${output} を作成`)
 
   const mcData = minecraftData(bot.version)
 
@@ -29,12 +31,12 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     throw new Error('近くにかまどが見つかりません')
   }
 
-  console.log(`[FURNACE_SMELT] かまどを発見: ${JSON.stringify(furnaceBlock.position)}`)
+  logger.info(`[FURNACE_SMELT] かまどを発見: ${JSON.stringify(furnaceBlock.position)}`)
 
   // かまどに近づく
   const distance = bot.entity.position.distanceTo(furnaceBlock.position)
   if (distance > 4) {
-    console.log(`[FURNACE_SMELT] かまどに近づいています（距離: ${distance.toFixed(2)}）`)
+    logger.info(`[FURNACE_SMELT] かまどに近づいています（距離: ${distance.toFixed(2)}）`)
     await bot.pathfinder.goto(new (require('mineflayer-pathfinder').goals.GoalNear)(
       furnaceBlock.position.x,
       furnaceBlock.position.y,
@@ -55,7 +57,7 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     throw new Error(`燃料 ${fuel} がインベントリに見つかりません`)
   }
 
-  console.log(`[FURNACE_SMELT] 材料: ${inputItem.name}, 燃料: ${fuelItem.name}`)
+  logger.info(`[FURNACE_SMELT] 材料: ${inputItem.name}, 燃料: ${fuelItem.name}`)
 
   // かまどを開く
   const furnace = await bot.openFurnace(furnaceBlock)
@@ -63,14 +65,14 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
   try {
     // 材料を配置
     await furnace.putInput(inputItem.type, null, 1)
-    console.log(`[FURNACE_SMELT] 材料を配置しました`)
+    logger.info(`[FURNACE_SMELT] 材料を配置しました`)
 
     // 燃料を配置
     await furnace.putFuel(fuelItem.type, null, fuel_count)
-    console.log(`[FURNACE_SMELT] 燃料を配置しました`)
+    logger.info(`[FURNACE_SMELT] 燃料を配置しました`)
 
     // 精錬が完了するまで待つ（最大30秒）
-    console.log(`[FURNACE_SMELT] 精錬中...`)
+    logger.info(`[FURNACE_SMELT] 精錬中...`)
     const timeout = 30000
     const startTime = Date.now()
 
@@ -79,9 +81,9 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
 
       // 出力スロットをチェック
       if (furnace.outputItem()) {
-        console.log(`[FURNACE_SMELT] 精錬完了`)
+        logger.info(`[FURNACE_SMELT] 精錬完了`)
         await furnace.takeOutput()
-        console.log(`[FURNACE_SMELT] ${output} を取得しました`)
+        logger.info(`[FURNACE_SMELT] ${output} を取得しました`)
         break
       }
     }
@@ -94,7 +96,7 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     furnace.close()
   }
 
-  console.log(`[FURNACE_SMELT] 完了`)
+  logger.info(`[FURNACE_SMELT] 完了`)
 }
 
 /**

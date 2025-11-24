@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * スキル: equip_mainhand
@@ -14,7 +15,8 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
 
   const { item } = params
 
-  console.log(`[EQUIP_MAINHAND] ${item} を手に持ちます`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[EQUIP_MAINHAND] ${item} を手に持ちます`)
 
   try {
     // インベントリから対象アイテムを探す
@@ -26,7 +28,7 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
     // 手に持つ（メインハンド）
     await bot.equip(itemToEquip, 'hand')
 
-    console.log(`[EQUIP_MAINHAND] ${item} を手に持ちました`)
+    logger.info(`[EQUIP_MAINHAND] ${item} を手に持ちました`)
 
   } catch (error) {
     throw new Error(`アイテムを手に持つのに失敗しました: ${error.message}`)

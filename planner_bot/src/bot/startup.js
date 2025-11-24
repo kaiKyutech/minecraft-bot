@@ -61,6 +61,10 @@ function printStartupBanner(config) {
   console.log(chalk.gray('  - all / (unset): 全コマンドのログを表示'));
   console.log(chalk.gray('  - none: コマンド由来のログを非表示'));
   console.log(chalk.gray('  - comma list: 例) info,goal で許可リスト指定 (info,goal,skill,primitive,navigation,creative,chat,history,status,refresh,stop,echo)'));
+  const catRaw = process.env.LOG_CATEGORIES || 'all (default)';
+  console.log(`Log Categories (LOG_CATEGORIES): ${catRaw}`);
+  const lvlRaw = process.env.LOG_LEVEL || 'info (default)';
+  console.log(`Log Level (LOG_LEVEL): ${lvlRaw}`);
   console.log('='.repeat(60));
 }
 

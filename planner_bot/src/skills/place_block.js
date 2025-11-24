@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * 中位スキル: place_block
@@ -12,7 +13,8 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
   if (!stateManager) throw new Error('stateManager が提供されていません')
   if (!params.blockName) throw new Error('blockName パラメータが必要です')
 
-  console.log(`[PLACE_BLOCK] ブロック「${params.blockName}」をボットの目の前に設置中`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[PLACE_BLOCK] ブロック「${params.blockName}」をボットの目の前に設置中`)
 
   try {
     // インベントリから指定されたブロックを検索
@@ -59,12 +61,12 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
           face: { x: 0, y: 1, z: 0 }  // 上面に設置
         })
 
-        console.log(`[PLACE_BLOCK] ${params.blockName}を${placePos}に設置完了`)
+        logger.info(`[PLACE_BLOCK] ${params.blockName}を${placePos}に設置完了`)
         placed = true
         break
 
       } catch (placeError) {
-        console.log(`[PLACE_BLOCK] ${placePos}への設置失敗、次の位置を試行`)
+        logger.info(`[PLACE_BLOCK] ${placePos}への設置失敗、次の位置を試行`)
         continue
       }
     }

@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * 中位スキル: move_to
@@ -17,7 +18,8 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
   if (params.position) {
     // 直接座標指定
     targetPosition = params.position
-    console.log(`[MOVE_TO] 座標${JSON.stringify(targetPosition)}へ移動中`)
+    const logger = createLogger({ bot, category: 'skill' })
+    logger.info(`[MOVE_TO] 座標${JSON.stringify(targetPosition)}へ移動中`)
 
   } else if (params.blockType) {
     // ブロックタイプ指定（例：crafting_table）
@@ -31,7 +33,8 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
     }
 
     targetPosition = targetBlock.position
-    console.log(`[MOVE_TO] ${params.blockType}(${targetPosition})へ移動中`)
+    const logger = createLogger({ bot, category: 'skill' })
+    logger.info(`[MOVE_TO] ${params.blockType}(${targetPosition})へ移動中`)
 
   } else {
     throw new Error('position または blockType パラメータが必要です')
@@ -44,7 +47,8 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
       range: params.range || 3.0
     })
 
-    console.log(`[MOVE_TO] 目標位置に到着`)
+    const logger = createLogger({ bot, category: 'skill' })
+    logger.info(`[MOVE_TO] 目標位置に到着`)
 
   } catch (error) {
     throw new Error(`移動に失敗しました: ${error.message}`)

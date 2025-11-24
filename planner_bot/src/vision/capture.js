@@ -8,6 +8,7 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs').promises;
+const { createLogger } = require('../utils/logger');
 
 /**
  * 現在の視界のスクリーンショットを取得
@@ -27,22 +28,22 @@ async function capture(bot, stateManager, params = {}) {
     // 1. 空きポートを取得（動的インポート）
     const getPort = (await import('get-port')).default;
     port = await getPort();
-    console.log(`[VISION] Using port ${port} for viewer`);
+    logger.info(`[VISION] Using port ${port} for viewer`);
 
     // 2. Viewerを起動（必要な時だけ）
-    console.log('[VISION] Step 1: Starting viewer...');
+    logger.info('[VISION] Step 1: Starting viewer...');
     const viewerStartTime = Date.now();
     if (!bot.viewer) {
       const { mineflayer: mineflayerViewer } = require('prismarine-viewer');
       viewer = mineflayerViewer(bot, { port, firstPerson: true });
-      console.log(`[VISION] Viewer started on port ${port}`);
+      logger.info(`[VISION] Viewer started on port ${port}`);
       // Viewerのサーバー起動を待つ
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log(`[VISION] Viewer initialization completed (${Date.now() - viewerStartTime}ms)`);
+      logger.info(`[VISION] Viewer initialization completed (${Date.now() - viewerStartTime}ms)`);
     } else {
       viewer = bot.viewer;
       port = viewer.port;
-      console.log('[VISION] Reusing existing viewer');
+      logger.info('[VISION] Reusing existing viewer');
     }
 
     // ポートが有効か確認
@@ -56,7 +57,7 @@ async function capture(bot, stateManager, params = {}) {
     // 視線方向が指定されている場合はbot.look()で調整
     // 座標系: 北=0°, 反時計回り（西=90°, 南=180°, 東=270°または-90°）
     // 注意: Mineflayer公式ドキュメントには「東=0°」と記載されているが実際は「北=0°」
-    console.log('[VISION] Step 2: Setting view direction...');
+    logger.info('[VISION] Step 2: Setting view direction...');
     if (params.yaw !== undefined || params.pitch !== undefined) {
       const yawRadians = params.yaw !== undefined
         ? params.yaw * Math.PI / 180
@@ -66,9 +67,9 @@ async function capture(bot, stateManager, params = {}) {
         : bot.entity.pitch;
       await bot.look(yawRadians, pitchRadians, true);
       await new Promise(resolve => setTimeout(resolve, 200));
-      console.log('[VISION] View direction set');
+      logger.info('[VISION] View direction set');
     } else {
-      console.log('[VISION] Using current view direction');
+      logger.info('[VISION] Using current view direction');
     }
 
     // ログ出力用に度数で取得
@@ -89,25 +90,25 @@ async function capture(bot, stateManager, params = {}) {
       };
     }
 
-    console.log(`[VISION] Capture from ${bot.username}`);
-    console.log(`[VISION] Position: (${Math.floor(position.x)}, ${Math.floor(position.y)}, ${Math.floor(position.z)})`);
-    console.log(`[VISION] Yaw: ${yaw.toFixed(2)}°, Pitch: ${pitch.toFixed(2)}°`);
+    logger.info(`[VISION] Capture from ${bot.username}`);
+    logger.info(`[VISION] Position: (${Math.floor(position.x)}, ${Math.floor(position.y)}, ${Math.floor(position.z)})`);
+    logger.info(`[VISION] Yaw: ${yaw.toFixed(2)}°, Pitch: ${pitch.toFixed(2)}°`);
     if (targetInfo) {
-      console.log(`[VISION] Target: ${targetInfo.name} at (${targetInfo.position.x}, ${targetInfo.position.y}, ${targetInfo.position.z})`);
+      logger.info(`[VISION] Target: ${targetInfo.name} at (${targetInfo.position.x}, ${targetInfo.position.y}, ${targetInfo.position.z})`);
     } else {
-      console.log(`[VISION] Target: none`);
+      logger.info(`[VISION] Target: none`);
     }
 
     // 4. Puppeteerでスクリーンショット撮影
-    console.log('[VISION] Step 3: Launching browser...');
+    logger.info('[VISION] Step 3: Launching browser...');
     const browserStartTime = Date.now();
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    console.log(`[VISION] Browser launched (${Date.now() - browserStartTime}ms)`);
+    logger.info(`[VISION] Browser launched (${Date.now() - browserStartTime}ms)`);
 
-    console.log('[VISION] Step 4: Loading page...');
+    logger.info('[VISION] Step 4: Loading page...');
     const pageStartTime = Date.now();
     const page = await browser.newPage();
     await page.setViewport({
@@ -120,14 +121,14 @@ async function capture(bot, stateManager, params = {}) {
       waitUntil: 'networkidle2',
       timeout: 10000
     });
-    console.log(`[VISION] Page loaded (${Date.now() - pageStartTime}ms)`);
+    logger.info(`[VISION] Page loaded (${Date.now() - pageStartTime}ms)`);
 
     // 描画完了まで待機
     const renderWait = params.renderWait !== undefined ? params.renderWait : 10000;
-    console.log(`[VISION] Step 5: Waiting for render completion (${renderWait}ms)...`);
+    logger.info(`[VISION] Step 5: Waiting for render completion (${renderWait}ms)...`);
     const renderStartTime = Date.now();
     await new Promise(resolve => setTimeout(resolve, renderWait));
-    console.log(`[VISION] Render wait completed (${Date.now() - renderStartTime}ms)`);
+    logger.info(`[VISION] Render wait completed (${Date.now() - renderStartTime}ms)`);
 
     // オーバーレイ描画（位置・方角情報）
     await page.evaluate((yaw, pitch, position, targetInfo) => {
@@ -312,7 +313,7 @@ async function capture(bot, stateManager, params = {}) {
     await fs.mkdir(path.join(process.cwd(), 'screenshots'), { recursive: true });
     await fs.writeFile(filepath, screenshot, 'base64');
 
-    console.log(`[VISION] Screenshot saved: ${filepath}`);
+    logger.info(`[VISION] Screenshot saved: ${filepath}`);
 
     return {
       success: true,
@@ -335,14 +336,14 @@ async function capture(bot, stateManager, params = {}) {
     };
 
   } catch (error) {
-    console.error('[VISION] Capture failed:', error);
+    logger.error('[VISION] Capture failed:', error);
     throw error;
 
   } finally {
     // 5. クリーンアップ
     if (browser) {
       await browser.close();
-      console.log('[VISION] Browser closed');
+      logger.info('[VISION] Browser closed');
     }
 
     // Viewerをクローズ
@@ -352,7 +353,7 @@ async function capture(bot, stateManager, params = {}) {
 
     // bot.viewerは常にクリア（エラー時も確実に）
     bot.viewer = null;
-    console.log('[VISION] Viewer closed');
+    logger.info('[VISION] Viewer closed');
   }
 }
 

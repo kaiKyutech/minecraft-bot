@@ -1,6 +1,7 @@
 const { Vec3 } = require('vec3')
 const minecraftData = require('minecraft-data')
 const { goals, Movements } = require('mineflayer-pathfinder')
+const { createLogger } = require('./utils/logger')
 
 const movementCache = new WeakMap()
 
@@ -62,19 +63,20 @@ async function digBlock(bot, params = {}) {
 
   const digTime = bot.digTime(block)
   const startTime = Date.now()
-  console.log(`[DIG] ${block.name} 採掘開始、予想時間: ${(digTime / 1000).toFixed(2)}秒、ツール: ${bot.heldItem?.name || '素手'}`)
+  const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+  logger.info(`[DIG] ${block.name} 採掘開始、予想時間: ${(digTime / 1000).toFixed(2)}秒、ツール: ${bot.heldItem?.name || '素手'}`)
 
   // 採掘中断を検知
   const digAbortHandler = () => {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
-    console.log(`[DIG] ⚠️  採掘が中断されました！経過時間: ${elapsed}秒 / 予想時間: ${(digTime / 1000).toFixed(2)}秒`)
+    logger.info(`[DIG] ⚠️  採掘が中断されました！経過時間: ${elapsed}秒 / 予想時間: ${(digTime / 1000).toFixed(2)}秒`)
   }
   bot.once('diggingAborted', digAbortHandler)
 
   try {
     await bot.dig(block)
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
-    console.log(`[DIG] ${block.name} 採掘完了、実際の時間: ${elapsed}秒`)
+    logger.info(`[DIG] ${block.name} 採掘完了、実際の時間: ${elapsed}秒`)
   } finally {
     bot.removeListener('diggingAborted', digAbortHandler)
   }
@@ -89,14 +91,17 @@ async function equipBestToolForBlock(bot, block) {
     if (bestTool) {
       const mcData = minecraftData(bot.version)
       const toolName = mcData.items[bestTool.type].name
-      console.log(`[TOOL] ${block.name}用に${toolName}を装備`)
+      const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+      logger.info(`[TOOL] ${block.name}用に${toolName}を装備`)
       await bot.equip(bestTool, 'hand')
     } else {
-      console.log(`[TOOL] ${block.name}用の適切なツールが見つからず、素手で掘削`)
+      const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+      logger.info(`[TOOL] ${block.name}用の適切なツールが見つからず、素手で掘削`)
       await bot.unequip('hand')
     }
   } catch (error) {
-    console.log(`[TOOL] ツール装備に失敗、素手で掘削: ${error.message}`)
+    const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+    logger.info(`[TOOL] ツール装備に失敗、素手で掘削: ${error.message}`)
   }
 }
 
@@ -124,7 +129,8 @@ async function findBestTool(bot, block) {
     })
 
   const blockData = mcData.blocks[block.type]
-  console.log(`[TOOL] ${block.name}に最適ツール選択中...`)
+  const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+  logger.info(`[TOOL] ${block.name}に最適ツール選択中...`)
 
   if (availableTools.length === 0) return null
 
@@ -144,13 +150,13 @@ async function findBestTool(bot, block) {
 
       // 装備確認してから採掘時間を測定
       if (!bot.heldItem || bot.heldItem.type !== tool.type) {
-        console.log(`[TOOL] ${toolName}: 装備失敗をスキップ`)
+        logger.info(`[TOOL] ${toolName}: 装備失敗をスキップ`)
         continue
       }
 
       const digTimeMs = bot.digTime(block)  // ミリ秒
       const digTimeSec = digTimeMs / 1000   // 秒に変換
-      console.log(`[TOOL] ${toolName}: ${digTimeSec.toFixed(2)}秒`)
+      logger.info(`[TOOL] ${toolName}: ${digTimeSec.toFixed(2)}秒`)
 
       if (digTimeSec > 0 && digTimeSec < bestTime) {
         bestTime = digTimeSec
@@ -168,21 +174,21 @@ async function findBestTool(bot, block) {
 
     // 素手確認してから測定
     if (bot.heldItem) {
-      console.log(`[TOOL] 素手: 装備解除失敗をスキップ`)
+      logger.info(`[TOOL] 素手: 装備解除失敗をスキップ`)
       // handDigTimeを定義しないのでスキップされる
     } else {
       const handDigTimeMs = bot.digTime(block)  // ミリ秒
       const handDigTimeSec = handDigTimeMs / 1000  // 秒に変換
-      console.log(`[TOOL] 素手: ${handDigTimeSec.toFixed(2)}秒`)
+      logger.info(`[TOOL] 素手: ${handDigTimeSec.toFixed(2)}秒`)
 
       if (handDigTimeSec > 0 && (!bestTool || handDigTimeSec < bestTime)) {
-        console.log(`[TOOL] 素手が最適`)
+        logger.info(`[TOOL] 素手が最適`)
         bestTool = null
         bestTime = handDigTimeSec
       }
     }
   } catch (error) {
-    console.log(`[TOOL] 素手: 計算失敗 - ${error.message}`)
+    logger.info(`[TOOL] 素手: 計算失敗 - ${error.message}`)
   }
 
   // 元の手持ちアイテムを復元
@@ -197,9 +203,9 @@ async function findBestTool(bot, block) {
   }
 
   if (bestTool) {
-    console.log(`[TOOL] 最適ツール: ${mcData.items[bestTool.type].name} (${bestTime.toFixed(2)}秒)`)
+    logger.info(`[TOOL] 最適ツール: ${mcData.items[bestTool.type].name} (${bestTime.toFixed(2)}秒)`)
   } else {
-    console.log(`[TOOL] 素手が最適`)
+    logger.info(`[TOOL] 素手が最適`)
   }
 
   return bestTool
@@ -257,7 +263,8 @@ async function collectDrops(bot, params = {}) {
   // デバッグ: 近くのエンティティを確認
   const nearbyEntities = Object.values(bot.entities)
     .filter((entity) => entity && bot.entity.position.distanceTo(entity.position) <= radius)
-  // console.log(`[COLLECT] 範囲内エンティティ: ${nearbyEntities.map(e => `${e.name}(${e.id})`).join(', ')}`)
+      // const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+      // logger.info(`[COLLECT] 範囲内エンティティ: ${nearbyEntities.map(e => `${e.name}(${e.id})`).join(', ')}`)
 
   const drops = Object.values(bot.entities)
     .filter((entity) => entity && entity.name === 'item')
@@ -265,7 +272,7 @@ async function collectDrops(bot, params = {}) {
       if (itemName) {
         const held = entity.metadata?.[entity.metadata.length - 1]
         const displayName = held?.itemId ? mcData.items[held.itemId]?.name : null
-        // console.log(`[COLLECT] アイテムドロップ: ${displayName} (期待: ${itemName})`)
+        // logger.info(`[COLLECT] アイテムドロップ: ${displayName} (期待: ${itemName})`)
         return displayName === itemName
       }
       return true
@@ -273,7 +280,7 @@ async function collectDrops(bot, params = {}) {
     .filter((entity) => bot.entity.position.distanceTo(entity.position) <= radius)
     .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
 
-  // console.log(`[COLLECT] 対象ドロップ数: ${drops.length}`)
+  // logger.info(`[COLLECT] 対象ドロップ数: ${drops.length}`)
 
   let pickedUpCount = 0
 
@@ -301,7 +308,8 @@ async function collectDrops(bot, params = {}) {
         pickedUpCount++
       }
     } catch (error) {
-      console.log(`[COLLECT] ドロップ回収失敗（スキップ）: ${error.message}`)
+      const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+      logger.info(`[COLLECT] ドロップ回収失敗（スキップ）: ${error.message}`)
       // ドロップ1個の回収失敗は許容して次に進む
       continue
     }
@@ -438,7 +446,8 @@ async function findBlock(bot, params = {}) {
   const start = process.hrtime.bigint()
   const block = bot.findBlock(options)
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6
-  console.log(`[PRIMITIVES] findBlock match=${describeMatch(params.match)} distance=${options.maxDistance} took ${elapsedMs.toFixed(1)}ms`)
+  const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+  logger.info(`[PRIMITIVES] findBlock match=${describeMatch(params.match)} distance=${options.maxDistance} took ${elapsedMs.toFixed(1)}ms`)
   if (!block) throw new Error('条件に合うブロックが見つかりません')
   return {
     position: block.position.clone(),
@@ -453,7 +462,8 @@ async function findBlocks(bot, params = {}) {
   const start = process.hrtime.bigint()
   const blocks = bot.findBlocks(options)
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6
-  console.log(`[PRIMITIVES] findBlocks match=${describeMatch(params.match)} distance=${options.maxDistance} count=${options.count} took ${elapsedMs.toFixed(1)}ms`)
+  const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
+  logger.info(`[PRIMITIVES] findBlocks match=${describeMatch(params.match)} distance=${options.maxDistance} count=${options.count} took ${elapsedMs.toFixed(1)}ms`)
   if (!blocks || blocks.length === 0) {
     throw new Error('条件に合うブロックが見つかりません')
   }

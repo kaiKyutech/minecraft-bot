@@ -1,5 +1,6 @@
 const { loadStateSchema, loadBlockCategories } = require('./state_builder')
 const { scanBlocks } = require('../utils/block_scanner')
+const { createLogger } = require('../utils/logger')
 
 const SCAN_RANGE = process.env.STATE_SCAN_RANGE ? Number(process.env.STATE_SCAN_RANGE) : 60
 const parsedMaxChecks = process.env.STATE_SCAN_MAX_CHECKS
@@ -54,9 +55,10 @@ class StateManager {
 
     // デバッグ: 全スロットの詳細をログ出力
     if (process.env.DEBUG_INVENTORY === '1') {
-      console.log('[STATE] インベントリスロット詳細:')
+      const logger = getLogger(bot)
+      logger.info('[STATE] インベントリスロット詳細:')
       for (const item of slots) {
-        console.log(`  - ${item.name} x${item.count} (slot: ${item.slot}, type: ${item.type})`)
+        logger.info(`  - ${item.name} x${item.count} (slot: ${item.slot}, type: ${item.type})`)
       }
     }
 
@@ -170,7 +172,8 @@ class StateManager {
     })
 
     if (process.env.STATE_SCAN_DEBUG === '1') {
-      console.log(
+      const logger = getLogger(bot)
+      logger.info(
         `[STATE_SCAN] range=${summary.scanRange} checks=${summary.checksUsed} ` +
         `remaining=${remaining} limit=${summary.maxChecks ?? 'unlimited'} ` +
         `limitReached=${summary.limitReached ? 1 : 0} callbackStop=${summary.stoppedByCallback ? 1 : 0}`
@@ -190,6 +193,7 @@ class StateManager {
   }
 
   logCurrentState(bot) {
+    const logger = getLogger(bot, 'state')
     const { buildState } = require('./state_builder')
     const goapState = buildState(this.cache)
 
@@ -220,7 +224,7 @@ class StateManager {
             }
           }
           if (nearbyEntries.length > 0) {
-            console.log(`[STATE] Nearby Counts: ${nearbyEntries.join(' ')}`)
+            logger.info(`[STATE] Nearby Counts: ${nearbyEntries.join(' ')}`)
           }
           const categoryInfo = value.category
           if (categoryInfo && typeof categoryInfo === 'object') {
@@ -231,7 +235,7 @@ class StateManager {
               }
             }
             if (categoryEntries.length > 0) {
-              console.log(`[STATE] Nearby Categories: ${categoryEntries.join(' ')}`)
+              logger.info(`[STATE] Nearby Categories: ${categoryEntries.join(' ')}`)
             }
           }
         } else if (key === 'equipment') {
@@ -245,10 +249,10 @@ class StateManager {
       }
     }
 
-    console.log(`[STATE] Boolean: ${booleanStates.join(' ')}`)
-    console.log(`[STATE] Numeric: ${numericStates.join(' ')}`)
+    logger.info(`[STATE] Boolean: ${booleanStates.join(' ')}`)
+    logger.info(`[STATE] Numeric: ${numericStates.join(' ')}`)
     if (equipmentStates.length > 0) {
-      console.log(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
+      logger.info(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
     }
 
     // inventory.category の情報を表示
@@ -266,10 +270,10 @@ class StateManager {
         }
       }
       if (categoryCounts.length > 0) {
-        console.log(`[STATE] Inventory Categories (count): ${categoryCounts.join(' ')}`)
+        logger.info(`[STATE] Inventory Categories (count): ${categoryCounts.join(' ')}`)
       }
       if (categoryBools.length > 0) {
-        console.log(`[STATE] Inventory Categories (bool): ${categoryBools.join(' ')}`)
+        logger.info(`[STATE] Inventory Categories (bool): ${categoryBools.join(' ')}`)
       }
     }
   }
@@ -284,12 +288,13 @@ class StateManager {
    * @param {Object} position - 座標 {x, y, z}
    */
   registerLocation(name, position) {
+    const logger = getLogger()
     this.namedLocations[name] = {
       x: Math.floor(position.x),
       y: Math.floor(position.y),
       z: Math.floor(position.z)
     }
-    console.log(`[STATE_MANAGER] 場所「${name}」を登録: (${this.namedLocations[name].x}, ${this.namedLocations[name].y}, ${this.namedLocations[name].z})`)
+    logger.info(`[STATE_MANAGER] 場所「${name}」を登録: (${this.namedLocations[name].x}, ${this.namedLocations[name].y}, ${this.namedLocations[name].z})`)
   }
 
   /**
@@ -373,3 +378,11 @@ function createStateManager() {
 
 module.exports = createStateManager
 module.exports.StateManager = StateManager
+
+function getLogger(bot = null, category = 'state') {
+  return createLogger({
+    bot,
+    category,
+    commandName: bot?.currentCommandName || null
+  })
+}

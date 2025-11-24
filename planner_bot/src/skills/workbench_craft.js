@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 const { goals } = require('mineflayer-pathfinder')
 
 /**
@@ -14,7 +15,8 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   if (!stateManager) throw new Error('stateManager が提供されていません')
   if (!params.recipe) throw new Error('recipe パラメータが必要です')
 
-  console.log(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」を作業台で実行`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」を作業台で実行`)
 
   // レシピ名をそのままアイテム名として使用
   const itemName = params.recipe
@@ -27,12 +29,12 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
     throw new Error('近くに作業台が見つかりません（GOAPの前提条件エラー）')
   }
 
-  console.log(`[WORKBENCH_CRAFT] 作業台の位置: ${JSON.stringify(workbenchData.position)} (距離: ${workbenchData.distance.toFixed(1)}m)`)
+  logger.info(`[WORKBENCH_CRAFT] 作業台の位置: ${JSON.stringify(workbenchData.position)} (距離: ${workbenchData.distance.toFixed(1)}m)`)
 
   // 2. 作業台に近づく（4ブロック以内）
   const currentDistance = bot.entity.position.distanceTo(workbenchData.position)
   if (currentDistance > 4) {
-    console.log(`[WORKBENCH_CRAFT] 作業台へ移動中...`)
+    logger.info(`[WORKBENCH_CRAFT] 作業台へ移動中...`)
     await bot.pathfinder.goto(new goals.GoalNear(
       workbenchData.position.x,
       workbenchData.position.y,
@@ -53,7 +55,7 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
     throw new Error('作業台の座標にブロックが見つかりません')
   }
 
-  console.log(`[WORKBENCH_CRAFT] 作業台使用: ${JSON.stringify(workbench.position)}`)
+  logger.info(`[WORKBENCH_CRAFT] 作業台使用: ${JSON.stringify(workbench.position)}`)
 
   try {
     const count = params.count || 1
@@ -64,7 +66,7 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
       table: workbench  // Blockインスタンスそのものを渡す
     })
 
-    console.log(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)
+    logger.info(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
   } catch (error) {
     throw new Error(`作業台クラフトに失敗しました: ${error.message}`)

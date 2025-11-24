@@ -2,20 +2,15 @@ const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
 const { checkCompositeState, buildStructuredDiagnosis } = require('../commands/goal_command')
+const { createLogger } = require('../utils/logger')
 
 function makeLogger(bot) {
-  const base = bot?.systemLog ? bot.systemLog.bind(bot) : console.log
-  return {
-    log: base,
-    warn: base,
-    error: base
-  }
+  return createLogger({ bot, category: 'goap.exec', commandName: 'goal' })
 }
 
 function goapExecLog(bot, ...args) {
-  const fn = bot?.systemLog ? bot.systemLog.bind(bot) : console.log
-  const message = args.length === 1 ? args[0] : args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ')
-  fn(message)
+  const logger = createLogger({ bot, category: 'goap.exec', commandName: 'goal' })
+  logger.info(...args)
 }
 
 // イベントループに制御を返す（I/Oフェーズまで到達させる）

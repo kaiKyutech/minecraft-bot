@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * 中位スキル: collect_drops
@@ -13,7 +14,8 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
   const radius = params.radius ?? 12
   const maxAttempts = params.maxAttempts ?? 3
 
-  console.log(`[COLLECT_DROPS] 半径${radius}ブロック以内のドロップを回収します`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[COLLECT_DROPS] 半径${radius}ブロック以内のドロップを回収します`)
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // 近くのドロップを検索
@@ -26,16 +28,16 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
       )
 
     if (drops.length === 0) {
-      console.log(`[COLLECT_DROPS] ドロップが見つかりません（試行${attempt + 1}/${maxAttempts}）`)
+      logger.info(`[COLLECT_DROPS] ドロップが見つかりません（試行${attempt + 1}/${maxAttempts}）`)
       if (attempt === maxAttempts - 1) {
-        console.log('[COLLECT_DROPS] ドロップ回収完了（アイテムなし）')
+        logger.info('[COLLECT_DROPS] ドロップ回収完了（アイテムなし）')
         return
       }
       await delay(200)
       continue
     }
 
-    console.log(`[COLLECT_DROPS] ${drops.length}個のドロップを発見、回収中...`)
+    logger.info(`[COLLECT_DROPS] ${drops.length}個のドロップを発見、回収中...`)
 
     // 各ドロップに接近して拾う
     let collectedCount = 0
@@ -43,7 +45,7 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
       try {
         // ドロップアイテムの位置を取得
         const dropPosition = drop.position.clone()
-        console.log(`[COLLECT_DROPS] ドロップ位置: ${dropPosition.x.toFixed(1)}, ${dropPosition.y.toFixed(1)}, ${dropPosition.z.toFixed(1)}`)
+        logger.info(`[COLLECT_DROPS] ドロップ位置: ${dropPosition.x.toFixed(1)}, ${dropPosition.y.toFixed(1)}, ${dropPosition.z.toFixed(1)}`)
 
         // ドロップに接近（1.2ブロック以内に入る）
         await primitives.moveTo(bot, {
@@ -58,9 +60,9 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
         // まだ存在するか確認
         if (!bot.entities[drop.id]) {
           collectedCount++
-          console.log(`[COLLECT_DROPS] アイテムを回収しました（${collectedCount}/${drops.length}）`)
+          logger.info(`[COLLECT_DROPS] アイテムを回収しました（${collectedCount}/${drops.length}）`)
         } else {
-          console.log(`[COLLECT_DROPS] アイテムがまだ存在します、さらに接近します`)
+          logger.info(`[COLLECT_DROPS] アイテムがまだ存在します、さらに接近します`)
           // さらに近づく
           await primitives.moveTo(bot, {
             position: dropPosition,
@@ -71,18 +73,18 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
 
           if (!bot.entities[drop.id]) {
             collectedCount++
-            console.log(`[COLLECT_DROPS] アイテムを回収しました（${collectedCount}/${drops.length}）`)
+            logger.info(`[COLLECT_DROPS] アイテムを回収しました（${collectedCount}/${drops.length}）`)
           } else {
-            console.log(`[COLLECT_DROPS] アイテムを回収できませんでした`)
+            logger.info(`[COLLECT_DROPS] アイテムを回収できませんでした`)
           }
         }
       } catch (error) {
-        console.log(`[COLLECT_DROPS] ドロップ回収失敗（スキップ）: ${error.message}`)
+        logger.info(`[COLLECT_DROPS] ドロップ回収失敗（スキップ）: ${error.message}`)
         continue
       }
     }
 
-    console.log(`[COLLECT_DROPS] ドロップ回収処理完了（回収: ${collectedCount}個）`)
+    logger.info(`[COLLECT_DROPS] ドロップ回収処理完了（回収: ${collectedCount}個）`)
     return
   }
 }

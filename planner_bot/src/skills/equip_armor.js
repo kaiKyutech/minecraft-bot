@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 
 /**
  * スキル: equip_armor
@@ -15,7 +16,8 @@ module.exports = async function equipArmor(bot, params = {}, stateManager) {
 
   const { slot, item } = params
 
-  console.log(`[EQUIP_ARMOR] ${item} を ${slot} スロットに装備します`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[EQUIP_ARMOR] ${item} を ${slot} スロットに装備します`)
 
   try {
     // パラメータのslotをMineflayerのdestinationにマッピング
@@ -40,7 +42,7 @@ module.exports = async function equipArmor(bot, params = {}, stateManager) {
     // 装備を実行（Mineflayer API: bot.equip(item, destination)）
     await bot.equip(itemToEquip, destination)
 
-    console.log(`[EQUIP_ARMOR] ${item} の装備が完了しました`)
+    logger.info(`[EQUIP_ARMOR] ${item} の装備が完了しました`)
 
   } catch (error) {
     throw new Error(`装備に失敗しました: ${error.message}`)

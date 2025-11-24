@@ -1,4 +1,5 @@
 const primitives = require('../primitives')
+const { createLogger } = require('../utils/logger')
 const minecraftData = require('minecraft-data')
 const { loadBlockCategories } = require('../planner/state_builder')
 const { scanBlocks } = require('../utils/block_scanner')
@@ -15,6 +16,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   const loopCount = Number.isFinite(params.count) ? params.count : 1
   if (loopCount <= 0) return
+  const logger = createLogger({ bot, category: 'skill', commandName: bot.currentCommandName })
 
   const itemName = await resolveItemName(params, bot)
   const matchCondition = itemName
@@ -40,13 +42,13 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       if (selectedTool) {
         const mcData = require('minecraft-data')(bot.version)
         const toolName = mcData.items[selectedTool.type].name
-        console.log(`[GATHER] 最適ツールを選択: ${toolName}`)
+        logger.info(`[GATHER] 最適ツールを選択: ${toolName}`)
       } else {
-        console.log(`[GATHER] 素手が最適と判定`)
+        logger.info(`[GATHER] 素手が最適と判定`)
       }
     }
   } catch (error) {
-    console.log('[GATHER] ツール選択用のサンプルブロックが見つからず、素手で開始')
+    logger.info('[GATHER] ツール選択用のサンプルブロックが見つからず、素手で開始')
   }
 
   let completed = 0
@@ -66,7 +68,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       const oldest = avoidedPositionOrder.shift()
       if (oldest) avoidedPositionKeys.delete(oldest)
     }
-    console.log(`[GATHER] 失敗したターゲットを回避リストに追加: ${key}`)
+    logger.info(`[GATHER] 失敗したターゲットを回避リストに追加: ${key}`)
   }
 
   const acquireTarget = async () => {
@@ -139,7 +141,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
           await bot.equip(selectedTool, 'hand')
           await delay(50) // 装備完了を待つ
         } catch (error) {
-          console.log(`[GATHER] ツール再装備に失敗: ${error.message}`)
+          logger.info(`[GATHER] ツール再装備に失敗: ${error.message}`)
         }
       } else {
         // 素手が最適な場合
@@ -152,16 +154,16 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
 
       // 掘削
-      console.log(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
+      logger.info(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
       await primitives.digBlock(bot, { position: blockInfo.position })
-      console.log(`[GATHER] ブロック掘削完了`)
+      logger.info(`[GATHER] ブロック掘削完了`)
 
       completed += 1
     } catch (error) {
       rememberFailedTarget(blockInfo?.position)
 
       if (isRecoverableGatherError(error)) {
-        console.log(`[GATHER] ブロック収集でエラー: ${error.message} → 別候補で再試行`)
+        logger.info(`[GATHER] ブロック収集でエラー: ${error.message} → 別候補で再試行`)
         await delay(params.retryDelayMs ?? 100)
         continue
       }
@@ -173,16 +175,16 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   // 全ブロック掘削完了後、最後に1回だけドロップ回収
   if (collectName) {
     await delay(collectDelayMs) // allow freshly spawned drops to register
-    console.log(`[GATHER] 全${completed}個の掘削完了、ドロップ回収を開始`)
+    logger.info(`[GATHER] 全${completed}個の掘削完了、ドロップ回収を開始`)
     try {
       const collectDropsSkill = require('./collect_drops')
       await collectDropsSkill(bot, {
         radius: collectRadius,
         maxAttempts: 3
       }, stateManager)
-      console.log(`[GATHER] ドロップ回収完了`)
+      logger.info(`[GATHER] ドロップ回収完了`)
     } catch (error) {
-      console.log(`[GATHER] ドロップ回収でエラー: ${error.message}`)
+      logger.info(`[GATHER] ドロップ回収でエラー: ${error.message}`)
       // ドロップ回収失敗は致命的ではないので続行
     }
   }
@@ -245,20 +247,24 @@ async function selectBestBlockFromCategory(bot, categoryName, categories, mcData
       })
 
       if (block) {
-        console.log(`[GATHER] カテゴリ「${categoryName}」から「${cachedBlock}」を選択（キャッシュ使用）`)
+        const logger = createLogger({ bot, category: 'skill' })
+        logger.info(`[GATHER] カテゴリ「${categoryName}」から「${cachedBlock}」を選択（キャッシュ使用）`)
         return cachedBlock
       } else {
-        console.log(`[GATHER] キャッシュされたブロック「${cachedBlock}」が見つからず、再探索します`)
+        const logger = createLogger({ bot, category: 'skill' })
+        logger.info(`[GATHER] キャッシュされたブロック「${cachedBlock}」が見つからず、再探索します`)
         blockSelectionCache.delete(cacheKey)
       }
     } catch (error) {
-      console.log(`[GATHER] キャッシュされたブロック「${cachedBlock}」の探索に失敗、再探索します`)
+      const logger = createLogger({ bot, category: 'skill' })
+      logger.info(`[GATHER] キャッシュされたブロック「${cachedBlock}」の探索に失敗、再探索します`)
       blockSelectionCache.delete(cacheKey)
     }
   }
 
   // キャッシュがないか、キャッシュが使えない場合は scanBlocks で全探索（1回だけ）
-  console.log(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
+  const logger = createLogger({ bot, category: 'skill' })
+  logger.info(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
 
   const result = await scanBlocks(bot, {
     range: maxDistance,
@@ -273,7 +279,7 @@ async function selectBestBlockFromCategory(bot, categoryName, categories, mcData
 
   // scanBlocks は距離順にソート済み
   const closest = result.blocks[0]
-  console.log(`[GATHER] カテゴリ「${categoryName}」から「${closest.name}」を選択（距離: ${closest.distance}）`)
+  logger.info(`[GATHER] カテゴリ「${categoryName}」から「${closest.name}」を選択（距離: ${closest.distance}）`)
 
   // キャッシュに保存
   blockSelectionCache.set(cacheKey, closest.name)

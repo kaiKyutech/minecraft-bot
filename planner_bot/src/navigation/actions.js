@@ -1,5 +1,6 @@
 const primitives = require('../primitives')
 const { Vec3 } = require('vec3')
+const { createLogger } = require('../utils/logger')
 
 /**
  * Navigation Actions - 場所の登録と移動
@@ -48,6 +49,7 @@ function hasSpaceAbove(bot, x, y, z) {
  */
 function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
   const startY = Math.floor(bot.entity.position.y)
+  const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
   const maxRange = 50
 
   // "surface" モード: 上空から下に探索（空が見える地表）
@@ -60,7 +62,7 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
       if (block && isSolidGround(block.name)) {
         // 上に2ブロック分の空間があるか確認
         if (hasSpaceAbove(bot, x, y, z)) {
-          console.log(`[NAVIGATION] 地表を検出: Y=${y + 1}`)
+          logger.info(`[NAVIGATION] 地表を検出: Y=${y + 1}`)
           return y + 1
         }
       }
@@ -118,7 +120,7 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
   }
 
   // 見つからなければ現在地のY座標を返す
-  console.log(`[NAVIGATION] 立てる地面が見つかりませんでした。現在地のY座標を使用します`)
+  logger.info(`[NAVIGATION] 立てる地面が見つかりませんでした。現在地のY座標を使用します`)
   return startY
 }
 
@@ -146,7 +148,8 @@ module.exports = {
         throw new Error('座標は数値である必要があります')
       }
       position = { x, y, z }
-      console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] を「${params.name}」として登録`)
+      const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+      logger.info(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] を「${params.name}」として登録`)
     }
     // blockType指定があれば、そのブロックの位置を登録
     else if (params.blockType) {
@@ -158,11 +161,13 @@ module.exports = {
         throw new Error(`${params.blockType} が見つかりません`)
       }
       position = block.position
-      console.log(`[NAVIGATION] ${params.blockType} の位置を「${params.name}」として登録`)
+      const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+      logger.info(`[NAVIGATION] ${params.blockType} の位置を「${params.name}」として登録`)
     }
     // どちらも指定されていない場合は現在地
     else {
-      console.log(`[NAVIGATION] 現在地を「${params.name}」として登録`)
+      const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+      logger.info(`[NAVIGATION] 現在地を「${params.name}」として登録`)
     }
 
     stateManager.registerLocation(params.name, position)
@@ -189,11 +194,12 @@ module.exports = {
       throw new Error('場所名（name）が必要です')
     }
 
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
     const location = stateManager.getLocation(params.name)
     if (!location) {
       const registered = Object.keys(stateManager.namedLocations)
       const message = `場所「${params.name}」は登録されていません。登録済み: ${registered.length > 0 ? registered.join(', ') : 'なし'}`
-      console.log(`[NAVIGATION] ${message}`)
+      logger.info(`[NAVIGATION] ${message}`)
       return {
         success: false,
         message: message,
@@ -201,14 +207,14 @@ module.exports = {
       }
     }
 
-    console.log(`[NAVIGATION] 「${params.name}」へ移動開始: (${location.x}, ${location.y}, ${location.z})`)
+    logger.info(`[NAVIGATION] 「${params.name}」へ移動開始: (${location.x}, ${location.y}, ${location.z})`)
 
     await primitives.moveTo(bot, {
       position: location,
       range: 3.0
     })
 
-    console.log(`[NAVIGATION] 「${params.name}」に到達しました`)
+    logger.info(`[NAVIGATION] 「${params.name}」に到達しました`)
 
     return {
       success: true,
@@ -238,14 +244,15 @@ module.exports = {
       throw new Error('座標は数値である必要があります')
     }
 
-    console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] へ移動開始`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] へ移動開始`)
 
     await primitives.moveTo(bot, {
       position: { x, y, z },
       range: 3.0
     })
 
-    console.log(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] に到達しました`)
+    logger.info(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] に到達しました`)
 
     return {
       success: true,
@@ -271,7 +278,8 @@ module.exports = {
       throw new Error(`プレイヤー「${targetUsername}」が見つかりません`)
     }
 
-    console.log(`[NAVIGATION] ${targetUsername} を追跡開始`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] ${targetUsername} を追跡開始`)
 
     // 既に追跡中なら停止
     if (bot.followTarget) {
@@ -312,7 +320,8 @@ module.exports = {
     bot.followTarget = null
     bot.pathfinder.setGoal(null)
 
-    console.log(`[NAVIGATION] ${target} の追跡を停止しました`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] ${target} の追跡を停止しました`)
 
     return {
       success: true,
@@ -338,7 +347,8 @@ module.exports = {
     // yawが指定されていない場合は現在の視線方向を使用
     if (yaw === undefined) {
       yaw = bot.entity.yaw * 180 / Math.PI  // ラジアンから度数に変換
-      console.log(`[NAVIGATION] yaw未指定、現在の視線方向を使用: ${yaw.toFixed(2)}°`)
+      const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+      logger.info(`[NAVIGATION] yaw未指定、現在の視線方向を使用: ${yaw.toFixed(2)}°`)
     }
 
     // 有効な verticalMode かチェック
@@ -355,16 +365,17 @@ module.exports = {
     const targetX = Math.floor(currentPos.x - Math.sin(yawRadians) * distance)
     const targetZ = Math.floor(currentPos.z - Math.cos(yawRadians) * distance)
 
-    console.log(`[NAVIGATION] Yaw ${yaw.toFixed(2)}° 方向に ${distance} ブロック移動開始`)
-    console.log(`[NAVIGATION] 目標XZ: (${targetX}, ${targetZ})`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] Yaw ${yaw.toFixed(2)}° 方向に ${distance} ブロック移動開始`)
+    logger.info(`[NAVIGATION] 目標XZ: (${targetX}, ${targetZ})`)
 
     // 目標座標の地表高さを取得
     let targetY
     try {
       targetY = findSurfaceHeight(bot, targetX, targetZ, verticalMode)
-      console.log(`[NAVIGATION] 目標Y座標: ${targetY} (verticalMode: ${verticalMode})`)
+      logger.info(`[NAVIGATION] 目標Y座標: ${targetY} (verticalMode: ${verticalMode})`)
     } catch (error) {
-      console.error(`[NAVIGATION] ${error.message}`)
+      logger.error(`[NAVIGATION] ${error.message}`)
       throw error
     }
 
@@ -375,7 +386,7 @@ module.exports = {
     })
 
     const finalPos = bot.entity.position
-    console.log(`[NAVIGATION] 到達: (${Math.floor(finalPos.x)}, ${Math.floor(finalPos.y)}, ${Math.floor(finalPos.z)})`)
+    logger.info(`[NAVIGATION] 到達: (${Math.floor(finalPos.x)}, ${Math.floor(finalPos.y)}, ${Math.floor(finalPos.z)})`)
 
     return {
       success: true,
@@ -424,7 +435,8 @@ module.exports = {
       )
     }
 
-    console.log(`[NAVIGATION] ${targetPlayer} の近くに移動してアイテムをドロップします（現在距離: ${Math.floor(distance)}ブロック）`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] ${targetPlayer} の近くに移動してアイテムをドロップします（現在距離: ${Math.floor(distance)}ブロック）`)
 
     // インベントリにアイテムがあるか確認（移動前にチェック）
     const item = bot.inventory.items().find(i => i.name === itemName)
@@ -440,7 +452,7 @@ module.exports = {
     const goal = new GoalFollow(player.entity, 2) // 2ブロック以内まで近づく
 
     bot.pathfinder.setGoal(goal, true)
-    console.log(`[NAVIGATION] ${targetPlayer} を追跡開始（移動しても追いかけます）`)
+    logger.info(`[NAVIGATION] ${targetPlayer} を追跡開始（移動しても追いかけます）`)
 
     // 2.5ブロック以内に入るまで待つ（最大30秒）
     await new Promise((resolve, reject) => {
@@ -452,7 +464,7 @@ module.exports = {
 
         if (currentDistance <= 2.5) { // 2.5ブロック以内に入ったら成功
           clearInterval(checkInterval)
-          console.log(`[NAVIGATION] ${targetPlayer} の近くに到着しました（距離: ${Math.floor(currentDistance * 10) / 10}ブロック）`)
+          logger.info(`[NAVIGATION] ${targetPlayer} の近くに到着しました（距離: ${Math.floor(currentDistance * 10) / 10}ブロック）`)
           resolve()
         } else if (Date.now() - startTime > timeout) {
           clearInterval(checkInterval)
@@ -467,14 +479,14 @@ module.exports = {
     // プレイヤーの方を向く（目の高さ）
     const targetPosition = player.entity.position.offset(0, player.entity.height, 0)
     await bot.lookAt(targetPosition)
-    console.log(`[NAVIGATION] ${targetPlayer} の方を向きました`)
+    logger.info(`[NAVIGATION] ${targetPlayer} の方を向きました`)
 
-    console.log(`[NAVIGATION] ${itemName} を ${dropCount}個ドロップします`)
+    logger.info(`[NAVIGATION] ${itemName} を ${dropCount}個ドロップします`)
 
     // アイテムをドロップ
     await bot.toss(item.type, null, dropCount)
 
-    console.log(`[NAVIGATION] ${targetPlayer} の近くに ${itemName} を ${dropCount}個ドロップしました`)
+    logger.info(`[NAVIGATION] ${targetPlayer} の近くに ${itemName} を ${dropCount}個ドロップしました`)
 
     return {
       success: true,
@@ -495,7 +507,8 @@ module.exports = {
   async pickupItems(bot, stateManager, params) {
     const { range = 5, itemName = null } = params
 
-    console.log(`[NAVIGATION] 周囲${range}ブロック以内のアイテムを拾います${itemName ? `（対象: ${itemName}）` : ''}`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] 周囲${range}ブロック以内のアイテムを拾います${itemName ? `（対象: ${itemName}）` : ''}`)
 
     // 周囲のドロップアイテムを検索
     const droppedItems = Object.values(bot.entities)
@@ -517,7 +530,7 @@ module.exports = {
       })
 
     if (droppedItems.length === 0) {
-      console.log(`[NAVIGATION] 拾うアイテムが見つかりませんでした`)
+      logger.info(`[NAVIGATION] 拾うアイテムが見つかりませんでした`)
       return {
         success: true,
         message: '拾うアイテムが見つかりませんでした',
@@ -526,7 +539,7 @@ module.exports = {
       }
     }
 
-    console.log(`[NAVIGATION] ${droppedItems.length}個のアイテムが見つかりました`)
+    logger.info(`[NAVIGATION] ${droppedItems.length}個のアイテムが見つかりました`)
 
     // 最も近いアイテムの位置に移動（近づけば自動的に拾われる）
     const closestItem = droppedItems.reduce((closest, item) => {
@@ -545,9 +558,9 @@ module.exports = {
       // 少し待機（アイテムが自動的に拾われるのを待つ）
       await new Promise(resolve => setTimeout(resolve, 500))
 
-      console.log(`[NAVIGATION] アイテムを拾いました`)
+      logger.info(`[NAVIGATION] アイテムを拾いました`)
     } catch (error) {
-      console.log(`[NAVIGATION] 移動に失敗しました: ${error.message}`)
+      logger.info(`[NAVIGATION] 移動に失敗しました: ${error.message}`)
     }
 
     return {
@@ -563,6 +576,7 @@ module.exports = {
    */
   async chestOpen(bot, stateManager, params) {
     const { coords } = params || {}
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
 
     let targetPos
     let x, y, z
@@ -589,10 +603,10 @@ module.exports = {
       y = cy
       z = cz
       targetPos = new Vec3(x, y, z)
-      console.log(`[NAVIGATION] チェストを開く: [${x}, ${y}, ${z}]`)
+      logger.info(`[NAVIGATION] チェストを開く: [${x}, ${y}, ${z}]`)
     } else {
       // 座標が指定されていない場合、最も近いチェストを探す
-      console.log(`[NAVIGATION] 近くのチェストを探索中...`)
+      logger.info(`[NAVIGATION] 近くのチェストを探索中...`)
 
       const chestBlock = bot.findBlock({
         matching: (block) => block.name === 'chest',
@@ -611,7 +625,7 @@ module.exports = {
       y = targetPos.y
       z = targetPos.z
       const distance = bot.entity.position.distanceTo(targetPos)
-      console.log(`[NAVIGATION] チェストを発見: [${x}, ${y}, ${z}] (距離: ${distance.toFixed(1)} ブロック)`)
+      logger.info(`[NAVIGATION] チェストを発見: [${x}, ${y}, ${z}] (距離: ${distance.toFixed(1)} ブロック)`)
     }
 
     // ブロックが存在するか確認
@@ -637,10 +651,10 @@ module.exports = {
     // チェストまで移動
     const distance = bot.entity.position.distanceTo(targetPos)
     if (distance > 4.5) {
-      console.log(`[NAVIGATION] チェストまで移動中... (距離: ${Math.floor(distance)} ブロック)`)
+      logger.info(`[NAVIGATION] チェストまで移動中... (距離: ${Math.floor(distance)} ブロック)`)
       try {
         await primitives.moveTo(bot, { position: targetPos, range: 4.5 })
-        console.log(`[NAVIGATION] 移動完了`)
+        logger.info(`[NAVIGATION] 移動完了`)
       } catch (error) {
         return {
           success: false,
@@ -654,7 +668,7 @@ module.exports = {
     let chest
     try {
       chest = await bot.openContainer(block)
-      console.log(`[NAVIGATION] チェストを開きました`)
+      logger.info(`[NAVIGATION] チェストを開きました`)
     } catch (error) {
       return {
         success: false,
@@ -695,8 +709,8 @@ module.exports = {
     bot.currentChest = chest
     bot.currentChestPosition = { x, y, z }
 
-    console.log(`[NAVIGATION] チェストの内容を確認しました（開いたまま）`)
-    console.log(`[NAVIGATION] チェスト: ${chestItemList.length}種類のアイテム, 空きスロット: ${emptySlots}/${totalSlots}`)
+    logger.info(`[NAVIGATION] チェストの内容を確認しました（開いたまま）`)
+    logger.info(`[NAVIGATION] チェスト: ${chestItemList.length}種類のアイテム, 空きスロット: ${emptySlots}/${totalSlots}`)
 
     return {
       success: true,
@@ -782,11 +796,12 @@ module.exports = {
       depositCount = availableCount
     }
 
-    console.log(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount}`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount}`)
 
     try {
       await bot.currentChest.deposit(inventoryItem.type, null, depositCount)
-      console.log(`[NAVIGATION] ${item} x ${depositCount} を預けました`)
+      logger.info(`[NAVIGATION] ${item} x ${depositCount} を預けました`)
 
       return {
         success: true,
@@ -857,7 +872,8 @@ module.exports = {
       }
     }
 
-    console.log(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount}`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount}`)
 
     const chestItem = bot.currentChest.items().find(i => i.name === item)
     if (!chestItem) {
@@ -877,7 +893,7 @@ module.exports = {
       }
 
       await bot.currentChest.withdraw(chestItem.type, null, withdrawCount)
-      console.log(`[NAVIGATION] ${item} x ${withdrawCount} を取り出しました`)
+      logger.info(`[NAVIGATION] ${item} x ${withdrawCount} を取り出しました`)
 
       return {
         success: true,
@@ -912,7 +928,8 @@ module.exports = {
 
     // チェストを閉じる
     bot.currentChest.close()
-    console.log(`[NAVIGATION] チェストを閉じました`)
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
+    logger.info(`[NAVIGATION] チェストを閉じました`)
 
     // 状態をクリア
     bot.currentChest = null
