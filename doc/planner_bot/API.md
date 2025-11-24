@@ -527,7 +527,7 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
   missingPreconditions: [
     "inventory.diamond:3",
     "inventory.iron_pickaxe:1",
-    "has_any_pickaxe:true"
+    "inventory.category.pickaxe:true"
   ]
 }
 
@@ -539,7 +539,7 @@ const diagnostics = bot.getConversationHistory({ type: 'system_info' })
   missingPreconditions: [
     "inventory.diamond:3",
     "inventory.iron_pickaxe:1",
-    "has_any_pickaxe:true",
+    "inventory.category.pickaxe:true",
     "inventory.cobblestone:3"
   ]
 }
@@ -1091,7 +1091,7 @@ if (result.data.success) {
 
 現在の状況やブロック情報を取得します。
 
-**利用可能なタイプ**: `all`, `vision`, `scanBlocks`
+**利用可能なタイプ**: `all`, `vision`, `scanBlocks`, `recipesFor`, `recipesUsing`
 
 ---
 
@@ -1239,6 +1239,122 @@ const directions = {
 - `!info all` 実行時は `stateManager.refresh(bot)` を通じてプレイヤーインベントリを取得しているが、チェストなどのコンテナを開いたままの状態では Mineflayer の仕様により `bot.inventory.items()` が即時更新されないことがある。
 - そのためチェスト操作中に `!info all` を呼ぶと、預け入れ／取り出し前の在庫数が表示される場合がある。
 - 最新のインベントリを確認したい場合は、`!navigation chestClose {}`（または手動でGUIを閉じる）→ `!info all` の順で実行すると確実。
+
+#### `!info recipesFor` - 指定アイテムを作るレシピを取得
+
+`minecraft-data` のレシピを参照し、指定アイテムを作成するための材料リストを返します。
+
+**パラメータ**:
+- `item` (string, 必須): 作りたいアイテム名（例: `diamond_pickaxe`）
+- `count` (number, オプション): 何個作るか（デフォルト `1`）。材料・出力の必要数がスケールされます。
+
+**使用例**:
+```
+/w Bot1 !info recipesFor {"item": "diamond_pickaxe"}
+/w Bot1 !info recipesFor {"item": "diamond_pickaxe", "count": 2}
+```
+
+**返却例**:
+```json
+{
+  "success": true,
+  "type": "recipesFor",
+  "item": "diamond_pickaxe",
+  "count": 2,
+  "recipes": [
+    {
+      "station": "crafting_table",   // hand | crafting_table
+      "shaped": true,                // true: 並び順固定, false: 順不同/単一素材変換
+      "outputs": [{ "name": "diamond_pickaxe", "count": 2 }],
+      "inputs": [
+        { "name": "diamond", "count": 6 },
+        { "name": "stick", "count": 4 }
+      ],
+      "shape": [
+        ["diamond", "diamond", "diamond"],
+        [null, "stick", null],
+        [null, "stick", null]
+      ]
+    }
+  ]
+}
+```
+
+#### `!info recipesUsing` - 指定材料を含むレシピを検索
+
+指定した材料を使うレシピ（= それを入力に含む出力アイテム）を検索します。
+
+**パラメータ**:
+- `ingredients` (string | string[], 必須): 材料名またはその配列
+- `mode` (string, オプション): `"and"` | `"or"`（デフォルト `"and"`）
+  - `and`: 全ての材料を含むレシピだけを返す
+  - `or`: いずれかの材料を含むレシピを返す
+
+**使用例**:
+```
+/w Bot1 !info recipesUsing {"ingredients": ["diamond", "stick"], "mode": "and"}
+/w Bot1 !info recipesUsing {"ingredients": ["diamond"], "mode": "or"}
+```
+
+**返却例（抜粋）**:
+```json
+{
+  "success": true,
+  "type": "recipesUsing",
+  "ingredients": ["diamond", "stick"],
+  "mode": "and",
+  "results": [
+    {
+      "item": "diamond_pickaxe",
+      "station": "crafting_table",
+      "shaped": true,
+      "outputs": [{ "name": "diamond_pickaxe", "count": 1 }],
+      "inputs": [
+        { "name": "diamond", "count": 3 },
+        { "name": "stick", "count": 2 }
+      ],
+      "shape": [
+        ["diamond", "diamond", "diamond"],
+        [null, "stick", null],
+        [null, "stick", null]
+      ]
+    }
+  ]
+}
+```
+
+**備考**:
+- PC版の `minecraft-data` レシピにはかまど・溶鉱炉・燻製器などの種別情報が含まれていないため、`station` は現状 `hand` と `crafting_table` のみ判別しています。
+
+#### `!info all` - 状態スナップショット
+
+全体情報を JSON で返す API エントリポイント。戻り値は以下の形式です。
+
+```json
+{
+  "success": true,
+  "type": "all",
+  "data": {
+    "inventory": { "items": [...], "summary": {...} },
+    "position": { "position": {...}, "rotation": {...}, "time": {...}, "health": 20, "food": 20 },
+    "locations": { "locations": [...], "count": 0 },
+    "players": { "players": [...], "summary": {...} },
+    "nearby": {
+      "blocks": [{ "name": "diamond_ore", "count": 7 }, ...],
+      "categories": [{ "name": "log", "count": 8 }, ...],
+      "summary": { "totalTypes": 5, "totalBlocks": 40, "topBlock": "cobblestone" }
+    }
+  }
+}
+```
+
+- `inventory`: `inventory.*` のカウントを `items` 配列 + サマリーで返却。カテゴリ（tool/material/other）付き。
+- `position`: 座標・向き・時間・体力/満腹度。
+- `locations`: `stateManager` に登録済みのマーカー一覧（距離順）。
+- `players`: `bot.players` から取得した周囲プレイヤーの位置・距離リスト。
+- `nearby`: `scanBlocks` の集計を `nearby.<blockName>` / `nearby.category.<name>` としてまとめたもの。`state_builder.buildNearbyStates()` により GOAP の `facts.nearby` に同期され、YAML では `nearby.diamond_ore >= 1` や `nearby.category.basic_stone >= 5` のように使用可能。
+
+加えて、コンソールには `stateManager.refresh` で構築した GOAP ステートのサマリーログ（`[STATE] Boolean`, `[STATE] Numeric (Inventory)` など）が出力されるため、人が状況を素早く把握するのにも便利です。
 
 **戻り値**:
 ```javascript

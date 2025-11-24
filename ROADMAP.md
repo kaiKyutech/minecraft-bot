@@ -53,7 +53,7 @@ LLMを活用した高度な判断と、GOAPによる効率的なプラン実行�
   preconditions:
     inventory_space: true
     nearby_iron_ore: true
-    has_any_pickaxe: true  # 石以上のピッケルが必要
+    inventory.category.pickaxe: true  # 石以上のピッケルが必要
   effects:
     inventory.iron_ore: "+1"
   cost: 8
@@ -161,7 +161,7 @@ nearby_iron_ore:
   max_distance: 5
 
 # 複合状態の更新
-has_any_pickaxe:
+inventory.category.pickaxe:
   depends_on_inventory:
     - wooden_pickaxe
     - stone_pickaxe
@@ -169,7 +169,7 @@ has_any_pickaxe:
     - diamond_pickaxe
     - netherite_pickaxe
 
-has_any_axe:
+inventory.category.axe:
   depends_on_inventory:
     - wooden_axe
     - stone_axe
@@ -189,9 +189,9 @@ has_any_axe:
   preconditions:
     inventory_space: true
     nearby_diamond_ore: true
-    # ここは鉄以上のピッケルが必要だが、簡易的にhas_any_pickaxeを使う
+    # ここは鉄以上のピッケルが必要だが、簡易的にinventory.category.pickaxeを使う
     # 実際は inventory.iron_pickaxe や inventory.diamond_pickaxe が必要
-    inventory.iron_pickaxe: ">=1"  # または has_iron_or_better_pickaxe
+    inventory.iron_pickaxe: ">=1"  # または inventory.category.iron_or_better_pickaxe
   effects:
     inventory.diamond: "+1"
   cost: 15
@@ -432,7 +432,7 @@ cooked_meat:
 - [ ] workbench_craft_actions.yamlに鉄・ダイヤツール/防具を追加
 - [ ] hand_craft_actions.yamlに松明・パンを追加
 - [ ] block_categories.yamlに鉱石カテゴリを追加
-- [ ] 複合状態（has_any_pickaxe等）に鉄・ダイヤを追加
+- [ ] 複合状態（inventory.category.pickaxe等）に鉄・ダイヤを追加
 
 ---
 
@@ -801,10 +801,10 @@ async function llmDecisionLoop(bot, interval = 10000) {
 
 **複合状態の追加候補:**
 ```yaml
-has_stone_or_better_pickaxe:
+inventory.category.stone_or_better_pickaxe:
   depends_on_inventory: [stone_pickaxe, iron_pickaxe, diamond_pickaxe, netherite_pickaxe]
 
-has_iron_or_better_pickaxe:
+inventory.category.iron_or_better_pickaxe:
   depends_on_inventory: [iron_pickaxe, diamond_pickaxe, netherite_pickaxe]
 ```
 

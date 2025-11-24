@@ -79,7 +79,7 @@ Creative: ナビゲーション（場所の登録・移動）
 目標を実行できません
 === 不足している要件 ===
 nearby_iron_ore: 現在=false, 必要=true
-has_stone_or_better_pickaxe: 現在=false, 必要=true
+inventory.category.stone_or_better_pickaxe: 現在=false, 必要=true
 ---
 GOAP実行不可: 素材が近くにないか道具が不足しています
 ```

@@ -166,7 +166,7 @@ preconditions:
 Goal cannot be executed
 === MISSING ===
 nearby_diamond_ore: now=false, need=true
-has_iron_or_better_pickaxe: now=false, need=true
+inventory.category.iron_or_better_pickaxe: now=false, need=true
 ---
 GOAP cannot execute. Materials not nearby or tools missing.
 Consider: !creative nav, !status, or prepare materials first
@@ -307,7 +307,7 @@ Creative: navigation, exploration, building
 Goal cannot be executed
 === MISSING ===
 nearby_iron_ore: now=false, need=true
-has_stone_or_better_pickaxe: now=false, need=true
+inventory.category.stone_or_better_pickaxe: now=false, need=true
 ---
 GOAP cannot execute. Materials not nearby or tools missing.
 Consider: !creative nav, !status, or prepare materials first
