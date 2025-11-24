@@ -3,6 +3,21 @@ const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
 const { checkCompositeState, buildStructuredDiagnosis } = require('../commands/goal_command')
 
+function makeLogger(bot) {
+  const base = bot?.systemLog ? bot.systemLog.bind(bot) : console.log
+  return {
+    log: base,
+    warn: base,
+    error: base
+  }
+}
+
+function goapExecLog(bot, ...args) {
+  const fn = bot?.systemLog ? bot.systemLog.bind(bot) : console.log
+  const message = args.length === 1 ? args[0] : args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ')
+  fn(message)
+}
+
 // イベントループに制御を返す（I/Oフェーズまで到達させる）
 function yieldToEventLoop() {
   return new Promise((resolve) => setImmediate(resolve))
@@ -32,21 +47,23 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     const step = currentPlan[stepIndex]
 
     if (!step.skill) {
-      console.log(`目標達成: ${step.action}`)
+      goapExecLog(bot, `目標達成: ${step.action}`)
       stepIndex++
       continue
     }
 
     // アクション開始前に最新状態へ更新（各ステップ1回）もしかするとこれじゃgoapが崩れるかもしれない。実験的にここだけにしてみる。
+    stateManager.silentRefresh = !bot.shouldLogCommand('goal')
     await stateManager.refresh(bot)
+    stateManager.silentRefresh = false
 
     const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
 
     if (!preconditionStatus.satisfied) {
-      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
+      goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
 
       // サブゴール探索
-      console.log(`[REACTIVE_GOAP] 補助サブゴールを探索します...`)
+      goapExecLog(bot, `[REACTIVE_GOAP] 補助サブゴールを探索します...`)
       const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus, signal)
 
       if (resolved) {
@@ -54,15 +71,17 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
         continue
       }
 
-      console.log(`[REACTIVE_GOAP] サブゴールでの解決に失敗。リプランニングを実行...`)
-      console.log(`[REACTIVE_GOAP] 目標: ${goalName}`)
+      goapExecLog(bot, `[REACTIVE_GOAP] サブゴールでの解決に失敗。リプランニングを実行...`)
+      goapExecLog(bot, `[REACTIVE_GOAP] 目標: ${goalName}`)
 
+      stateManager.silentRefresh = !bot.shouldLogCommand('goal')
       await stateManager.refresh(bot)
+      stateManager.silentRefresh = false
       const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
 
-      console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
-      console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
-      logReplanDetails(newPlan)
+      goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
+      goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
+      logReplanDetails(newPlan, bot)
 
       currentPlan = newPlan
       stepIndex = 0
@@ -81,16 +100,16 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       if (error.name === 'AbortError') {
         throw error
       }
-      console.log(`[REACTIVE_GOAP] ステップ "${step.action}" の実行中にエラーが発生: ${error.message}`)
-      console.log(`[REACTIVE_GOAP] 現在の状態から再度プランニングします...`)
+      goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の実行中にエラーが発生: ${error.message}`)
+      goapExecLog(bot, `[REACTIVE_GOAP] 現在の状態から再度プランニングします...`)
 
       // 状態を更新してリプランニング
       await stateManager.refresh(bot)
       const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
 
-      console.log(`[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
-      console.log(`[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
-      logReplanDetails(newPlan)
+      goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
+      goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
+      logReplanDetails(newPlan, bot)
 
       currentPlan = newPlan
       stepIndex = 0
@@ -98,8 +117,8 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     }
   }
 
-  console.log(`[EXECUTION] 全${currentPlan.length}ステップ完了`)
-  console.log(`[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
+  goapExecLog(bot, `[EXECUTION] 全${currentPlan.length}ステップ完了`)
+  goapExecLog(bot, `[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
 }
 
 /**
@@ -120,7 +139,7 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
   }
 
   const currentState = await stateManager.getState(bot)
-  const result = await goapPlanner.plan(goalName, currentState)
+  const result = await goapPlanner.plan(goalName, currentState, makeLogger(bot))
 
   // 新しい戻り値形式に対応
   let newPlan = null
@@ -143,33 +162,33 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
       if (diagnosis.error) {
         errorMessage = `リプランニングに失敗: ${diagnosis.error}`
       } else if (diagnosis.suggestions && diagnosis.suggestions.length > 0) {
-        console.log('\n=== REPLANNING DIAGNOSIS ===')
-        console.log('プランが見つからなかった理由:')
+        goapExecLog(bot, '\n=== REPLANNING DIAGNOSIS ===')
+        goapExecLog(bot, 'プランが見つからなかった理由:')
 
         if (diagnosis.missingRequirements && diagnosis.missingRequirements.length > 0) {
-          console.log('満たされていない要件:')
+          goapExecLog(bot, '満たされていない要件:')
           for (const req of diagnosis.missingRequirements) {
-            console.log(`  - ${req.key}: 現在=${req.current}, 目標=${req.target}`)
+            goapExecLog(bot, `  - ${req.key}: 現在=${req.current}, 目標=${req.target}`)
           }
         }
 
-        console.log('\n提案:')
+        goapExecLog(bot, '\n提案:')
         for (const suggestion of diagnosis.suggestions.slice(0, 3)) { // 最大3つまで表示
           if (suggestion.message) {
-            console.log(`  - ${suggestion.message}`)
+            goapExecLog(bot, `  - ${suggestion.message}`)
           } else if (suggestion.action && suggestion.missingPreconditions) {
-            console.log(`  - ${suggestion.target} を達成するには ${suggestion.action} が必要ですが、以下が不足:`)
+            goapExecLog(bot, `  - ${suggestion.target} を達成するには ${suggestion.action} が必要ですが、以下が不足:`)
             for (const missing of suggestion.missingPreconditions.slice(0, 2)) {
               const requiredStr = typeof missing.required === 'boolean'
                 ? missing.required.toString()
                 : typeof missing.required === 'string' && missing.required.match(/^(>=|<=|>|<|==|!=)/)
                   ? missing.required
                   : `>= ${missing.required}`
-              console.log(`      * ${missing.key}: 現在=${missing.current}, 必要=${requiredStr}`)
+              goapExecLog(bot, `      * ${missing.key}: 現在=${missing.current}, 必要=${requiredStr}`)
             }
           }
         }
-        console.log('===========================\n')
+        goapExecLog(bot, '===========================\n')
 
         // 複合状態を自動解決してみる
         const structuredDiagnosis = buildStructuredDiagnosis(diagnosis, goalName)
@@ -177,17 +196,17 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
           for (const req of structuredDiagnosis.missingRequirements) {
             const compositeGoal = checkCompositeState(req.key, diagnosis)
             if (compositeGoal) {
-              console.log(`[REPLAN] 複合状態 "${req.key}" を検出 → サブゴール "${compositeGoal}" を試行`)
+              goapExecLog(bot, `[REPLAN] 複合状態 "${req.key}" を検出 → サブゴール "${compositeGoal}" を試行`)
 
               // サブゴールのプランニングを試みる
-              const subResult = await goapPlanner.plan(compositeGoal, currentState)
+              const subResult = await goapPlanner.plan(compositeGoal, currentState, makeLogger(bot))
               const subPlan = subResult?.plan
 
               if (subPlan && Array.isArray(subPlan) && subPlan.length > 0) {
-                console.log(`[REPLAN] サブゴール "${compositeGoal}" のプランを発見、返します`)
+                goapExecLog(bot, `[REPLAN] サブゴール "${compositeGoal}" のプランを発見、返します`)
                 return subPlan
               } else {
-                console.log(`[REPLAN] サブゴール "${compositeGoal}" のプランニングも失敗`)
+                goapExecLog(bot, `[REPLAN] サブゴール "${compositeGoal}" のプランニングも失敗`)
                 if (missingPreconditions) {
                   missingPreconditions.push(compositeGoal)
                 }
@@ -225,9 +244,9 @@ async function executeStep(bot, step, stateManager, signal = null) {
     throw new Error(`スキル ${step.skill} が見つかりません`)
   }
 
-  console.log('\n' + '='.repeat(80))
-  console.log(`[EXECUTION] ステップ: ${step.action}`)
-  console.log('='.repeat(80))
+  goapExecLog(bot, '\n' + '='.repeat(80))
+  goapExecLog(bot, `[EXECUTION] ステップ: ${step.action}`)
+  goapExecLog(bot, '='.repeat(80))
 
   // アクション実行前に状態を更新 34行に移動してみた。実験です。うまくいかない可能性があります。
   //await stateManager.refresh(bot)
@@ -236,7 +255,7 @@ async function executeStep(bot, step, stateManager, signal = null) {
   let abortHandler = null
   if (signal) {
     abortHandler = () => {
-      console.log('[EXECUTION] キャンセルシグナル受信、ボット操作を中断します')
+      goapExecLog(bot, '[EXECUTION] キャンセルシグナル受信、ボット操作を中断します')
       // 移動を停止
       if (bot.pathfinder) {
         bot.pathfinder.setGoal(null)
@@ -258,8 +277,8 @@ async function executeStep(bot, step, stateManager, signal = null) {
       // アクション実行前に状態を更新　34行に移動してみた。実験です。うまくいかない可能性があります。
       //await stateManager.refresh(bot)
 
-    console.log(`[EXECUTION] ステップ "${step.action}" 完了`)
-    console.log('='.repeat(80) + '\n')
+    goapExecLog(bot, `[EXECUTION] ステップ "${step.action}" 完了`)
+    goapExecLog(bot, '='.repeat(80) + '\n')
   } finally {
     // リスナーをクリーンアップ
     if (signal && abortHandler) {
@@ -272,10 +291,10 @@ async function executeStep(bot, step, stateManager, signal = null) {
  * リプラン詳細をログ出力
  * @param {Array} plan - プラン
  */
-function logReplanDetails(plan) {
-  console.log(`[REACTIVE_GOAP] 新プランの詳細:`)
+function logReplanDetails(plan, bot) {
+  goapExecLog(bot, `[REACTIVE_GOAP] 新プランの詳細:`)
   plan.forEach((step, index) => {
-    console.log(`  ${index + 1}. ${step.action} (skill: ${step.skill || 'なし'})`)
+    goapExecLog(bot, `  ${index + 1}. ${step.action} (skill: ${step.skill || 'なし'})`)
   })
 }
 
@@ -369,10 +388,10 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
       continue
     }
 
-    console.log(`[REACTIVE_GOAP]   → 補助ゴール検討: ${missing.key} ${formatCondition(missing.condition)} / 現在値 ${missing.currentValue ?? 0}`)
-    console.log(`[REACTIVE_GOAP]     サブゴール候補: ${subGoalInput}`)
+    goapExecLog(bot, `[REACTIVE_GOAP]   → 補助ゴール検討: ${missing.key} ${formatCondition(missing.condition)} / 現在値 ${missing.currentValue ?? 0}`)
+    goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール候補: ${subGoalInput}`)
 
-    const subResult = await goapPlanner.plan(subGoalInput, status.worldState)
+    const subResult = await goapPlanner.plan(subGoalInput, status.worldState, makeLogger(bot))
 
     // 新しい戻り値形式に対応
     let subPlan = null
@@ -386,33 +405,33 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
     }
 
     if (!subPlan || !Array.isArray(subPlan) || subPlan.length === 0) {
-      console.log(`[REACTIVE_GOAP]     サブプラン生成に失敗 (${subGoalInput})`)
+      goapExecLog(bot, `[REACTIVE_GOAP]     サブプラン生成に失敗 (${subGoalInput})`)
 
       // 診断情報があれば簡潔に表示
       if (subDiagnosis && subDiagnosis.suggestions && subDiagnosis.suggestions.length > 0) {
         const firstSuggestion = subDiagnosis.suggestions[0]
         if (firstSuggestion.missingPreconditions && firstSuggestion.missingPreconditions.length > 0) {
           const firstMissing = firstSuggestion.missingPreconditions[0]
-          console.log(`[REACTIVE_GOAP]       → 不足: ${firstMissing.key} (現在: ${firstMissing.current})`)
+          goapExecLog(bot, `[REACTIVE_GOAP]       → 不足: ${firstMissing.key} (現在: ${firstMissing.current})`)
         }
       }
 
       continue
     }
 
-    console.log(`[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
+    goapExecLog(bot, `[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
 
     try {
       await executeSimplePlan(bot, subPlan, stateManager, signal)
       await stateManager.refresh(bot)
-      console.log(`[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
+      goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
       return true
     } catch (error) {
       // キャンセルエラーは再スロー
       if (error.name === 'AbortError') {
         throw error
       }
-      console.log(`[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
+      goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
       await stateManager.refresh(bot)
     }
   }

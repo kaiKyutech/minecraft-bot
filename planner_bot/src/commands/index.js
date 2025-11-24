@@ -54,14 +54,21 @@ function stopAll(bot) {
 
 async function handleChatCommand(bot, username, message, stateManager) {
   const trimmed = message.trim()
+  const commandName = determineCommandName(trimmed)
+  bot.currentCommandName = commandName
+
+  try {
 
   if (trimmed === '!status') {
     return await handleStatusCommand(bot, username, stateManager)
   }
 
   if (trimmed === '!refresh') {
+    setCommand('refresh')
     const start = performance.now()
+    stateManager.silentRefresh = !bot.shouldLogCommand('refresh')
     await stateManager.refresh(bot)
+    stateManager.silentRefresh = false
     const elapsed = performance.now() - start
     bot.systemLog(`[REFRESH] Completed in ${elapsed.toFixed(1)}ms`)
     return {
@@ -337,8 +344,29 @@ async function handleChatCommand(bot, username, message, stateManager) {
       message: echoMessage
     }
   }
+
+  } finally {
+    bot.lastCommandName = commandName
+    bot.currentCommandName = null
+  }
 }
 
 module.exports = {
   handleChatCommand
+}
+
+function determineCommandName(trimmed) {
+  if (trimmed === '!status') return 'status'
+  if (trimmed === '!refresh') return 'refresh'
+  if (/^!info(\s|$)/.test(trimmed)) return 'info'
+  if (/^!navigation(\s|$)/.test(trimmed)) return 'navigation'
+  if (/^!primitive(\s|$)/.test(trimmed)) return 'primitive'
+  if (/^!skill(\s|$)/.test(trimmed)) return 'skill'
+  if (trimmed.startsWith('!goal ')) return 'goal'
+  if (trimmed === '!stop') return 'stop'
+  if (trimmed.startsWith('!creative ')) return 'creative'
+  if (trimmed === '!history' || trimmed.startsWith('!history ')) return 'history'
+  if (trimmed.startsWith('!chat ')) return 'chat'
+  if (trimmed.startsWith('!echo ')) return 'echo'
+  return null
 }

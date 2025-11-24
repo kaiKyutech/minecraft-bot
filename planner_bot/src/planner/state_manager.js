@@ -16,6 +16,7 @@ class StateManager {
   constructor() {
     this.cache = null
     this.namedLocations = {}  // 登録された場所の座標マップ {name: {x, y, z}}
+    this.silentRefresh = false  // リフレッシュ時のログ抑制フラグ
   }
 
   async getState(bot) {
@@ -40,7 +41,9 @@ class StateManager {
     }
 
     // デバッグ用: GOAP状態をログ出力
-    this.logCurrentState(bot)
+    if (!this.silentRefresh) {
+      this.logCurrentState(bot)
+    }
 
     return this.cache
   }

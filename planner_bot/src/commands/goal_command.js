@@ -46,7 +46,9 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   }
 
   // プランニング前に必ず最新の状態を取得
+  stateManager.silentRefresh = !bot.shouldLogCommand('goal')
   await stateManager.refresh(bot)
+  stateManager.silentRefresh = false
   const worldState = await stateManager.getState(bot)
 
   // 連続プランニングの前にイベントループに制御を返す
@@ -54,7 +56,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     await new Promise((resolve) => setImmediate(resolve))
   }
 
-  const result = await goapPlanner.plan(goalName, worldState)
+  const logger = bot?.systemLog ? { log: bot.systemLog.bind(bot), warn: bot.systemLog.bind(bot), error: bot.systemLog.bind(bot) } : null
+  const result = await goapPlanner.plan(goalName, worldState, logger)
 
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
   const plan = result.plan

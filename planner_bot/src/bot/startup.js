@@ -55,6 +55,12 @@ function printStartupBanner(config) {
   console.log('='.repeat(60));
   console.log(`Server: ${config.host}:${config.port}`);
   console.log(`AI Bots: ${config.aiBotCount}`);
+  const raw = process.env.LOG_COMMANDS
+  const modeLabel = raw ? raw : 'all (default)'
+  console.log(`Log Filter (LOG_COMMANDS): ${modeLabel}`);
+  console.log(chalk.gray('  - all / (unset): 全コマンドのログを表示'));
+  console.log(chalk.gray('  - none: コマンド由来のログを非表示'));
+  console.log(chalk.gray('  - comma list: 例) info,goal で許可リスト指定 (info,goal,skill,primitive,navigation,creative,chat,history,status,refresh,stop,echo)'));
   console.log('='.repeat(60));
 }
 

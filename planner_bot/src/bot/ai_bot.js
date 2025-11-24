@@ -22,11 +22,14 @@ function debugLog(message) {
  * @param {Object} bot - Mineflayerボット
  */
 function addLoggingSystem(bot) {
-  // 会話履歴を管理（全員の発言を時系列に保存）
+// 会話履歴を管理（全員の発言を時系列に保存）
   bot.conversationHistory = []
 
   // 会話連番カウンター
   bot.conversationSequence = 0
+
+  // コマンドログフィルタ（環境変数で制御）
+  bot.logFilter = buildLogFilter()
 
   // GOAP実行中の中断用AbortController
   bot.currentAbortController = null
@@ -36,6 +39,12 @@ function addLoggingSystem(bot) {
    * @param {string} message - ログメッセージ
    */
   bot.systemLog = (message) => {
+    // コマンド実行中のみフィルタ判定（通常ログは常に表示）
+    if (bot.currentCommandName && bot.logFilter.enabled) {
+      if (!bot.logFilter.allowed.has(bot.currentCommandName)) {
+        return
+      }
+    }
     console.log(`[${bot.username}] ${message}`)
   }
 
@@ -123,6 +132,44 @@ function addLoggingSystem(bot) {
     console.warn('[DEPRECATED] bot.chatWithDelay is deprecated. Use bot.speak() instead.')
     await bot.speak(username, message)
   }
+
+  /**
+   * コマンド名に対してログを出すべきか判定
+   * @param {string|null} commandName
+   * @returns {boolean}
+   */
+  bot.shouldLogCommand = (commandName) => {
+    if (!commandName) return true
+    if (!bot.logFilter.enabled) return true
+    return bot.logFilter.allowed.has(commandName)
+  }
+}
+
+function buildLogFilter() {
+  const env = process.env.LOG_COMMANDS
+  if (!env || env.trim().length === 0) {
+    return { enabled: false, allowed: new Set() }  // デフォルトは全ログ許可
+  }
+
+  const normalized = env.trim().toLowerCase()
+  if (normalized === 'all') {
+    return { enabled: false, allowed: new Set() }
+  }
+  if (normalized === 'none') {
+    return { enabled: true, allowed: new Set() }  // 何も許可しない
+  }
+
+  const allowed = new Set(
+    normalized
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+  )
+
+  return {
+    enabled: true,
+    allowed
+  }
 }
 
 /**
@@ -171,7 +218,7 @@ function createAIBot(id, config) {
         const result = await handleChatCommand(bot, username, message, stateManager)
 
         // コマンドの最終的な返り値をログ出力
-        if (result !== undefined) {
+        if (result !== undefined && bot.shouldLogCommand(bot.lastCommandName)) {
           console.log('='.repeat(80))
           console.log(`[${bot.username}] [COMMAND_RESULT] 最終的なコマンドの返り値:`)
           console.log(JSON.stringify(result, null, 2))

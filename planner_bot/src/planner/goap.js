@@ -16,6 +16,29 @@ const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP
 const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50  // 50 → 25に短縮
 
 let domain
+let activeLogger = null
+
+function goapLog(...args) {
+  const { log } = createLogger(activeLogger)
+  log(...args)
+}
+
+function goapWarn(...args) {
+  const { warn } = createLogger(activeLogger)
+  warn(...args)
+}
+
+function goapError(...args) {
+  const { error } = createLogger(activeLogger)
+  error(...args)
+}
+
+function createLogger(logger) {
+  const log = logger?.log ? logger.log.bind(logger) : console.log
+  const warn = logger?.warn ? logger.warn.bind(logger) : console.warn
+  const error = logger?.error ? logger.error.bind(logger) : console.error
+  return { log, warn, error }
+}
 
 /**
  * 最小ヒープ（優先度キュー）
@@ -100,10 +123,10 @@ function loadDomain() {
       const parsed = YAML.parse(raw)
       if (parsed && Array.isArray(parsed.actions)) {
         allActions = allActions.concat(parsed.actions)
-        console.log(`[GOAP] ${filename} から ${parsed.actions.length} 個のアクションを読み込みました`)
+        goapLog(`[GOAP] ${filename} から ${parsed.actions.length} 個のアクションを読み込みました`)
       }
     } catch (error) {
-      console.error(`[GOAP] ${filename} の読み込みに失敗: ${error.message}`)
+      goapError(`[GOAP] ${filename} の読み込みに失敗: ${error.message}`)
     }
   }
 
@@ -112,18 +135,20 @@ function loadDomain() {
   }
 
   domain = { actions: allActions }
-  console.log(`[GOAP] 合計 ${allActions.length} 個のアクションを読み込みました`)
+  goapLog(`[GOAP] 合計 ${allActions.length} 個のアクションを読み込みました`)
   return domain
 }
 
-async function plan(goalInput, worldState) {
+async function plan(goalInput, worldState, logger = null) {
+  activeLogger = logger
+  try {
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
 
   // 目標入力をパース
   const parsedGoal = parseGoalInput(goalInput)
   if (!parsedGoal) {
-    console.warn(`無効な目標形式です: ${goalInput}`)
+    goapWarn(`無効な目標形式です: ${goalInput}`)
     return { plan: null, diagnosis: { error: `無効な目標形式です: ${goalInput}` } }
   }
 
@@ -131,7 +156,7 @@ async function plan(goalInput, worldState) {
   if (parsedGoal.type === 'action' || parsedGoal.type === 'action_with_params') {
     goalAction = actions.find(a => a.name === parsedGoal.actionName) || null
     if (!goalAction) {
-      console.warn(`未知の目標です: ${goalInput}`)
+      goapWarn(`未知の目標です: ${goalInput}`)
       return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
     }
   }
@@ -139,7 +164,7 @@ async function plan(goalInput, worldState) {
   // 目標状態を取得
   const goalState = getGoalStateFromParsed(parsedGoal, actions, goalAction)
   if (!goalState) {
-    console.warn(`未知の目標です: ${goalInput}`)
+    goapWarn(`未知の目標です: ${goalInput}`)
     return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
   }
 
@@ -160,19 +185,19 @@ async function plan(goalInput, worldState) {
   if (process.env.GOAP_DISABLE_ACTION_FILTER !== '1') {
     const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
     filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
-    console.log(`[GOAP] 関連変数 (${relevantVars.size}個):`, Array.from(relevantVars).sort())
-    console.log(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+    goapLog(`[GOAP] 関連変数 (${relevantVars.size}個): ${JSON.stringify(Array.from(relevantVars).sort())}`)
+    goapLog(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
 
     // デバッグ: フィルタリングされたアクションのリスト
     if (process.env.GOAP_DEBUG_ACTIONS === '1') {
-      console.log(`[GOAP] フィルタリング後のアクション:`)
-      filteredActions.forEach(a => console.log(`  - ${a.name}`))
-      console.log(`[GOAP] 除外されたアクション (${actions.length - filteredActions.length}個):`)
+      goapLog(`[GOAP] フィルタリング後のアクション:`)
+      filteredActions.forEach(a => goapLog(`  - ${a.name}`))
+      goapLog(`[GOAP] 除外されたアクション (${actions.length - filteredActions.length}個):`)
       const excludedActions = actions.filter(a => !filteredActions.includes(a))
-      excludedActions.forEach(a => console.log(`  - ${a.name}`))
+      excludedActions.forEach(a => goapLog(`  - ${a.name}`))
     }
   } else {
-    console.log(`[GOAP] アクション数: ${actions.length}`)
+    goapLog(`[GOAP] アクション数: ${actions.length}`)
   }
 
 
@@ -180,7 +205,7 @@ async function plan(goalInput, worldState) {
 
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
-  console.log(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
+  goapLog(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
 
   // ヒューリスティック値をキャッシュ
   const hCache = new Map()
@@ -230,8 +255,8 @@ async function plan(goalInput, worldState) {
         ? `...${current.actions.slice(-3).map(a => a.action).join(' → ')}`
         : current.actions.map(a => a.action).join(' → ')
 
-      console.log(`[GOAP Iter ${iterations}] queue:${open.size} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
-      console.log(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
+      goapLog(`[GOAP Iter ${iterations}] queue:${open.size} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
+      goapLog(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
     }
 
     // gather_logsを含む経路の追跡（デバッグ用）
@@ -243,8 +268,8 @@ async function plan(goalInput, worldState) {
       // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
-      console.log(`\n[GOAP] ✓ プラン発見`)
-      console.log(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
+      goapLog(`\n[GOAP] ✓ プラン発見`)
+      goapLog(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
       return { plan: current.actions, diagnosis: null }
     }
 
@@ -297,24 +322,27 @@ async function plan(goalInput, worldState) {
   }
 
   if (iterations >= MAX_ITERATIONS && open.size > 0) {
-    console.warn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
-    console.warn(`  目標: ${goalInput}`)
-    console.warn(`  初期ヒューリスティック: h=${initialH}`)
-    console.warn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
-    console.warn(`  残り候補: ${open.size}, 訪問済み: ${visited.size}`)
-    console.warn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
-    console.warn(`  段階的に中間目標を実行してください。`)
+    goapWarn(`\n[GOAP] ❌ プラン未発見 (イテレーション上限)`)
+    goapWarn(`  目標: ${goalInput}`)
+    goapWarn(`  初期ヒューリスティック: h=${initialH}`)
+    goapWarn(`  イテレーション: ${iterations} / ${MAX_ITERATIONS}`)
+    goapWarn(`  残り候補: ${open.size}, 訪問済み: ${visited.size}`)
+    goapWarn(`  この目標は現在の状態から直接達成するには複雑すぎます。`)
+    goapWarn(`  段階的に中間目標を実行してください。`)
   } else {
-    console.warn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
-    console.warn(`  目標: ${goalInput}`)
-    console.warn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
-    console.warn(`  原因: 実行可能なアクションがありません`)
+    goapWarn(`\n[GOAP] ❌ プラン未発見 (候補枯渇)`)
+    goapWarn(`  目標: ${goalInput}`)
+    goapWarn(`  イテレーション: ${iterations}, 訪問済み: ${visited.size}`)
+    goapWarn(`  原因: 実行可能なアクションがありません`)
   }
 
   // 診断情報を追加
   const diagnosis = diagnoseGoalFailure(adjustedGoal, initialState, filteredActions, heuristicContext)
   return { plan: null, diagnosis }
 
+  } finally {
+    activeLogger = null
+  }
 }
 
 // buildState関数は state_builder.js に移動
@@ -529,7 +557,7 @@ function getGoalStateFromParsed(parsedGoal, actions, goalAction = null) {
   if (parsedGoal.type === 'action' || parsedGoal.type === 'action_with_params') {
     const action = goalAction || actions.find(a => a.name === parsedGoal.actionName)
     if (!action) {
-      console.warn(`未知の目標です: ${parsedGoal.actionName}`)
+      goapWarn(`未知の目標です: ${parsedGoal.actionName}`)
       return null
     }
     return extractPositiveEffects(action.effects)
@@ -645,7 +673,7 @@ const HEURISTIC_MAX = MAX_ITERATIONS * 2
 function calculateHeuristic(state, context = {}) {
   if (!context) {
     if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-      console.log('[HEURISTIC] WARNING: context is null/undefined')
+      goapWarn('[HEURISTIC] WARNING: context is null/undefined')
     }
     return 0
   }
@@ -655,7 +683,7 @@ function calculateHeuristic(state, context = {}) {
 
   if (!finalGoal || Object.keys(finalGoal).length === 0) {
     if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-      console.log('[HEURISTIC] WARNING: finalGoal is empty')
+      goapWarn('[HEURISTIC] WARNING: finalGoal is empty')
     }
     return 0
   }
@@ -664,8 +692,8 @@ function calculateHeuristic(state, context = {}) {
   let estimate = 0
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-    console.log('[HEURISTIC] Computing h(n) for goal:', finalGoal)
-    console.log('[HEURISTIC] Current state summary:', {
+    goapLog('[HEURISTIC] Computing h(n) for goal:', finalGoal)
+    goapLog('[HEURISTIC] Current state summary:', {
       'inventory.category.log': getStateValue(state, 'inventory.category.log'),
       'inventory.category.plank': getStateValue(state, 'inventory.category.plank'),
       'inventory.cobblestone': getStateValue(state, 'inventory.cobblestone'),
@@ -679,12 +707,12 @@ function calculateHeuristic(state, context = {}) {
     const steps = estimateRequirement(key, requirement, state, actions, memo, new Set())
 
     if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-      console.log(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
+      goapLog(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
     }
 
     if (!Number.isFinite(steps)) {
       if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-        console.log(`[HEURISTIC] ERROR: ${key} returned non-finite value`)
+        goapWarn(`[HEURISTIC] ERROR: ${key} returned non-finite value`)
       }
       return HEURISTIC_MAX
     }
@@ -692,7 +720,7 @@ function calculateHeuristic(state, context = {}) {
   }
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-    console.log(`[HEURISTIC] Final h(n) = ${estimate}`)
+    goapLog(`[HEURISTIC] Final h(n) = ${estimate}`)
   }
 
   return Math.min(estimate, HEURISTIC_MAX)
@@ -722,7 +750,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
   const candidateActions = findActionsForRequirement(key, requirement, actions)
   if (candidateActions.length === 0) {
     if (shouldDebugRequirement(key)) {
-      console.log(`[HEURISTIC] 要求 ${key} ${formatRequirement(requirement)} を満たすアクションが見つかりません`)
+      goapWarn(`[HEURISTIC] 要求 ${key} ${formatRequirement(requirement)} を満たすアクションが見つかりません`)
     }
     memo.set(signature, HEURISTIC_MAX)
     visiting.delete(signature)
@@ -744,14 +772,14 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
     let preconditionCost = 0
     if (action.preconditions) {
       if (shouldDebugRequirement(key)) {
-        console.log(`[HEURISTIC] ${key} <- ${action.name} (必要回数 ${repeats})`)
+        goapLog(`[HEURISTIC] ${key} <- ${action.name} (必要回数 ${repeats})`)
       }
       for (const [preKey, preCondition] of Object.entries(action.preconditions)) {
         const preRequirement = buildRequirementFromCondition(preCondition)
         const subCost = estimateRequirement(preKey, preRequirement, state, actions, memo, visiting)
         if (!Number.isFinite(subCost) || subCost >= HEURISTIC_MAX) {
           if (shouldDebugRequirement(key)) {
-            console.log(`  [NG] 前提 ${preKey} ${formatRequirement(preRequirement)} の推定が失敗`)
+            goapWarn(`  [NG] 前提 ${preKey} ${formatRequirement(preRequirement)} の推定が失敗`)
           }
           preconditionCost = HEURISTIC_MAX
           break
@@ -759,7 +787,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
         // Math.max → 合計に変更（全ての前提条件を満たす必要があるため）
         preconditionCost += subCost
         if (shouldDebugRequirement(key)) {
-          console.log(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
+          goapLog(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
         }
       }
     }
@@ -771,7 +799,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
     const actionCost = Number.isFinite(action.cost) ? action.cost : 1
     const total = preconditionCost + (actionCost * repeats)
     if (shouldDebugRequirement(key)) {
-      console.log(`  => 推定コスト ${total} (前提: ${preconditionCost}, アクション: ${actionCost} x ${repeats})`)
+      goapLog(`  => 推定コスト ${total} (前提: ${preconditionCost}, アクション: ${actionCost} x ${repeats})`)
     }
     if (total < best) {
       best = total
@@ -779,7 +807,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
   }
 
   if (best >= HEURISTIC_MAX && shouldDebugRequirement(key)) {
-    console.log(`[HEURISTIC] 要求 ${key} ${formatRequirement(requirement)} の推定に失敗 (循環または未解決)`)
+    goapWarn(`[HEURISTIC] 要求 ${key} ${formatRequirement(requirement)} の推定に失敗 (循環または未解決)`)
   }
 
   memo.set(signature, best)
