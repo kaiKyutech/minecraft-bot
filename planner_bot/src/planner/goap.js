@@ -103,8 +103,32 @@ function loadDomain() {
   // 複数のアクションファイルを読み込んでマージ
   let allActions = []
 
-  // 静的ファイルのみ読み込む（自動生成フォルダはスキップ）
+  // 1) 自動生成されたアクションを優先して読み込む
+  if (fs.existsSync(GENERATED_ACTIONS_DIR)) {
+    const generatedFiles = fs.readdirSync(GENERATED_ACTIONS_DIR).filter(f => f.endsWith('.yaml'))
+    for (const filename of generatedFiles) {
+      const filepath = path.join(GENERATED_ACTIONS_DIR, filename)
+      try {
+        const raw = fs.readFileSync(filepath, 'utf8')
+        const parsed = YAML.parse(raw)
+        if (parsed && Array.isArray(parsed.actions)) {
+          allActions = allActions.concat(parsed.actions)
+          getLogger().info(`[GOAP] ${filename} (generated) から ${parsed.actions.length} 個のアクションを読み込みました`)
+        }
+      } catch (error) {
+        getLogger().error(`[GOAP] ${filename} (generated) の読み込みに失敗: ${error.message}`)
+      }
+    }
+  }
+
+  const hasGeneratedGather = allActions.some(a => typeof a.name === 'string' && a.name.startsWith('auto_gather_'))
+
+  // 2) 静的ファイルを読み込む（生成済みgatherがある場合は元のgather_actions.yamlをスキップ）
   for (const filename of ACTION_FILES) {
+    if (filename === 'gather_actions.yaml' && hasGeneratedGather) {
+      getLogger().info('[GOAP] 自動生成されたgatherアクションを優先するため gather_actions.yaml はスキップしました')
+      continue
+    }
     const filepath = path.join(ACTIONS_DIR, filename)
     try {
       const raw = fs.readFileSync(filepath, 'utf8')

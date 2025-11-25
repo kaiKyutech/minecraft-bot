@@ -1,6 +1,7 @@
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
+const { ensureGatherActionsGenerated } = require('../planner/gather_generator')
 const { createLogger } = require('../utils/logger')
 
 /**
@@ -51,6 +52,11 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   await stateManager.refresh(bot)
   stateManager.silentRefresh = false
   const worldState = await stateManager.getState(bot)
+
+  // gatherアクションを自動生成（初回のみ、bot.versionベース）
+  if (depth === 0) {
+    await ensureGatherActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
+  }
 
   // ゴール前にピッケルを最低限用意する（ヒューリスティック不足から判断）
   if (allowPrep && depth === 0) {
