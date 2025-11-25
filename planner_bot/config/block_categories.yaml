@@ -159,3 +159,20 @@ item_categories:
       - golden_pickaxe
       - diamond_pickaxe
       - netherite_pickaxe
+
+  shovel:
+    description: "任意のシャベルを所持しているか"
+    type: "boolean"
+    items:
+      - wooden_shovel
+      - stone_shovel
+      - iron_shovel
+      - golden_shovel
+      - diamond_shovel
+      - netherite_shovel
+
+  shears:
+    description: "ハサミを所持しているか"
+    type: "boolean"
+    items:
+      - shears

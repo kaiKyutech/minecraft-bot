@@ -5,6 +5,7 @@ const { buildState, loadStateSchema, calculateCompositeStates } = require('./sta
 const { createLogger } = require('../utils/logger')
 
 const ACTIONS_DIR = path.join(__dirname, '../../config/actions')
+const GENERATED_ACTIONS_DIR = path.join(__dirname, '../../config/actions_generated')
 const ACTION_FILES = [
   'gather_actions.yaml',
   'hand_craft_actions.yaml',
@@ -102,6 +103,7 @@ function loadDomain() {
   // 複数のアクションファイルを読み込んでマージ
   let allActions = []
 
+  // 静的ファイルのみ読み込む（自動生成フォルダはスキップ）
   for (const filename of ACTION_FILES) {
     const filepath = path.join(ACTIONS_DIR, filename)
     try {
@@ -197,6 +199,19 @@ async function plan(goalInput, worldState, logger = null) {
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
   getLogger().info(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
+
+  // ヒューリスティックが示す不足リソースを簡易表示
+  const hintEntries = []
+  for (const [key, target] of Object.entries(adjustedGoal)) {
+    const requirement = buildRequirementFromGoalTarget(target)
+    const deficit = computeRequirementDeficit(key, requirement, initialState)
+    if (deficit > 0) {
+      hintEntries.push(`${key} (${formatRequirement(requirement)}) → 不足 ${deficit}`)
+    }
+  }
+  if (hintEntries.length > 0) {
+    getLogger().info(`[GOAP] ヒューリスティック補足: ${hintEntries.join(' / ')}`)
+  }
 
   // ヒューリスティック値をキャッシュ
   const hCache = new Map()
@@ -1375,7 +1390,20 @@ function analyzeRelevantVariables(goal, actions, initialState = null) {
 
         // 正の効果を持つアクションの前提条件のみを追加
         if (isPositiveEffect && action.preconditions) {
-          for (const preVar of Object.keys(action.preconditions)) {
+          for (const [preVar, preCond] of Object.entries(action.preconditions)) {
+            // 初期状態ですでに満たしている前提は関連拡張しない
+            if (initialState) {
+              const currentVal = getStateValue(initialState, preVar)
+              if (evaluateCondition(currentVal, preCond)) {
+                continue
+              }
+              // nearby/visible 系は初期状態で0/未定義なら拡張しない（環境がないものは探さない）
+              if ((preVar.startsWith('nearby.') || preVar.startsWith('visible_')) &&
+                  (currentVal === undefined || currentVal === 0)) {
+                continue
+              }
+            }
+
             if (!relevant.has(preVar)) {
               relevant.add(preVar)
               queue.push(preVar)

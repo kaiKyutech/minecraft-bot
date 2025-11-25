@@ -1,0 +1,1987 @@
+actions:
+  - name: auto_gather_acacia_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 1"
+    effects:
+      inventory.acacia_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 1
+  - name: auto_gather_acacia_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 3"
+    effects:
+      inventory.acacia_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 3
+  - name: auto_gather_acacia_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 8"
+    effects:
+      inventory.acacia_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 8
+  - name: auto_gather_acacia_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.acacia_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 1
+  - name: auto_gather_acacia_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.acacia_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 3
+  - name: auto_gather_acacia_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.acacia_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.acacia_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: acacia_log
+      count: 8
+  - name: auto_gather_birch_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 1"
+    effects:
+      inventory.birch_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 1
+  - name: auto_gather_birch_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 3"
+    effects:
+      inventory.birch_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 3
+  - name: auto_gather_birch_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 8"
+    effects:
+      inventory.birch_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 8
+  - name: auto_gather_birch_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.birch_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 1
+  - name: auto_gather_birch_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.birch_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 3
+  - name: auto_gather_birch_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.birch_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.birch_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: birch_log
+      count: 8
+  - name: auto_gather_cherry_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 1"
+    effects:
+      inventory.cherry_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 1
+  - name: auto_gather_cherry_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 3"
+    effects:
+      inventory.cherry_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 3
+  - name: auto_gather_cherry_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 8"
+    effects:
+      inventory.cherry_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 8
+  - name: auto_gather_cherry_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.cherry_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 1
+  - name: auto_gather_cherry_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.cherry_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 3
+  - name: auto_gather_cherry_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.cherry_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.cherry_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: cherry_log
+      count: 8
+  - name: auto_gather_dark_oak_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 1"
+    effects:
+      inventory.dark_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 1
+  - name: auto_gather_dark_oak_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 3"
+    effects:
+      inventory.dark_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 3
+  - name: auto_gather_dark_oak_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 8"
+    effects:
+      inventory.dark_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 8
+  - name: auto_gather_dark_oak_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.dark_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 1
+  - name: auto_gather_dark_oak_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.dark_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 3
+  - name: auto_gather_dark_oak_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.dark_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: dark_oak_log
+      count: 8
+  - name: auto_gather_jungle_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 1"
+    effects:
+      inventory.jungle_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 1
+  - name: auto_gather_jungle_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 3"
+    effects:
+      inventory.jungle_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 3
+  - name: auto_gather_jungle_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 8"
+    effects:
+      inventory.jungle_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 8
+  - name: auto_gather_jungle_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.jungle_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 1
+  - name: auto_gather_jungle_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.jungle_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 3
+  - name: auto_gather_jungle_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.jungle_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.jungle_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: jungle_log
+      count: 8
+  - name: auto_gather_mangrove_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 1"
+    effects:
+      inventory.mangrove_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 1
+  - name: auto_gather_mangrove_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 3"
+    effects:
+      inventory.mangrove_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 3
+  - name: auto_gather_mangrove_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 8"
+    effects:
+      inventory.mangrove_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 8
+  - name: auto_gather_mangrove_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.mangrove_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 1
+  - name: auto_gather_mangrove_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.mangrove_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 3
+  - name: auto_gather_mangrove_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.mangrove_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: mangrove_log
+      count: 8
+  - name: auto_gather_oak_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 1"
+    effects:
+      inventory.oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 1
+  - name: auto_gather_oak_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 3"
+    effects:
+      inventory.oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 3
+  - name: auto_gather_oak_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 8"
+    effects:
+      inventory.oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 8
+  - name: auto_gather_oak_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 1
+  - name: auto_gather_oak_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 3
+  - name: auto_gather_oak_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.oak_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: oak_log
+      count: 8
+  - name: auto_gather_spruce_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 1"
+    effects:
+      inventory.spruce_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 1
+  - name: auto_gather_spruce_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 3"
+    effects:
+      inventory.spruce_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 3
+  - name: auto_gather_spruce_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 8"
+    effects:
+      inventory.spruce_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 8
+  - name: auto_gather_spruce_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.spruce_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 1
+  - name: auto_gather_spruce_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.spruce_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 3
+  - name: auto_gather_spruce_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.spruce_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.spruce_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: spruce_log
+      count: 8
+  - name: auto_gather_stripped_acacia_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 1"
+    effects:
+      inventory.stripped_acacia_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 1
+  - name: auto_gather_stripped_acacia_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 3"
+    effects:
+      inventory.stripped_acacia_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 3
+  - name: auto_gather_stripped_acacia_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 8"
+    effects:
+      inventory.stripped_acacia_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 8
+  - name: auto_gather_stripped_acacia_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_acacia_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 1
+  - name: auto_gather_stripped_acacia_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_acacia_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 3
+  - name: auto_gather_stripped_acacia_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_acacia_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_acacia_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_acacia_log
+      count: 8
+  - name: auto_gather_stripped_birch_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 1"
+    effects:
+      inventory.stripped_birch_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 1
+  - name: auto_gather_stripped_birch_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 3"
+    effects:
+      inventory.stripped_birch_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 3
+  - name: auto_gather_stripped_birch_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 8"
+    effects:
+      inventory.stripped_birch_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 8
+  - name: auto_gather_stripped_birch_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_birch_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 1
+  - name: auto_gather_stripped_birch_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_birch_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 3
+  - name: auto_gather_stripped_birch_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_birch_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_birch_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_birch_log
+      count: 8
+  - name: auto_gather_stripped_cherry_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 1"
+    effects:
+      inventory.stripped_cherry_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 1
+  - name: auto_gather_stripped_cherry_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 3"
+    effects:
+      inventory.stripped_cherry_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 3
+  - name: auto_gather_stripped_cherry_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 8"
+    effects:
+      inventory.stripped_cherry_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 8
+  - name: auto_gather_stripped_cherry_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_cherry_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 1
+  - name: auto_gather_stripped_cherry_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_cherry_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 3
+  - name: auto_gather_stripped_cherry_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_cherry_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_cherry_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_cherry_log
+      count: 8
+  - name: auto_gather_stripped_dark_oak_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 1"
+    effects:
+      inventory.stripped_dark_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 1
+  - name: auto_gather_stripped_dark_oak_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 3"
+    effects:
+      inventory.stripped_dark_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 3
+  - name: auto_gather_stripped_dark_oak_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 8"
+    effects:
+      inventory.stripped_dark_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 8
+  - name: auto_gather_stripped_dark_oak_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_dark_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 1
+  - name: auto_gather_stripped_dark_oak_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_dark_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 3
+  - name: auto_gather_stripped_dark_oak_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_dark_oak_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_dark_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_dark_oak_log
+      count: 8
+  - name: auto_gather_stripped_jungle_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 1"
+    effects:
+      inventory.stripped_jungle_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 1
+  - name: auto_gather_stripped_jungle_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 3"
+    effects:
+      inventory.stripped_jungle_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 3
+  - name: auto_gather_stripped_jungle_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 8"
+    effects:
+      inventory.stripped_jungle_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 8
+  - name: auto_gather_stripped_jungle_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_jungle_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 1
+  - name: auto_gather_stripped_jungle_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_jungle_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 3
+  - name: auto_gather_stripped_jungle_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_jungle_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_jungle_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_jungle_log
+      count: 8
+  - name: auto_gather_stripped_mangrove_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 1"
+    effects:
+      inventory.stripped_mangrove_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 1
+  - name: auto_gather_stripped_mangrove_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 3"
+    effects:
+      inventory.stripped_mangrove_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 3
+  - name: auto_gather_stripped_mangrove_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 8"
+    effects:
+      inventory.stripped_mangrove_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 8
+  - name: auto_gather_stripped_mangrove_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_mangrove_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 1
+  - name: auto_gather_stripped_mangrove_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_mangrove_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 3
+  - name: auto_gather_stripped_mangrove_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_mangrove_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_mangrove_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_mangrove_log
+      count: 8
+  - name: auto_gather_stripped_oak_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 1"
+    effects:
+      inventory.stripped_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 1
+  - name: auto_gather_stripped_oak_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 3"
+    effects:
+      inventory.stripped_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 3
+  - name: auto_gather_stripped_oak_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 8"
+    effects:
+      inventory.stripped_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 8
+  - name: auto_gather_stripped_oak_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_oak_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 1
+  - name: auto_gather_stripped_oak_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_oak_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 3
+  - name: auto_gather_stripped_oak_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_oak_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_oak_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_oak_log
+      count: 8
+  - name: auto_gather_stripped_spruce_log_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 1"
+    effects:
+      inventory.stripped_spruce_log: "+1"
+      inventory.category.log: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 1
+  - name: auto_gather_stripped_spruce_log_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 3"
+    effects:
+      inventory.stripped_spruce_log: "+3"
+      inventory.category.log: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 3
+  - name: auto_gather_stripped_spruce_log_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 8"
+    effects:
+      inventory.stripped_spruce_log: "+8"
+      inventory.category.log: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 8
+  - name: auto_gather_stripped_spruce_log_axe_x1
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 1"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_spruce_log: "+1"
+      inventory.category.log: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 1
+  - name: auto_gather_stripped_spruce_log_axe_x3
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 3"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_spruce_log: "+3"
+      inventory.category.log: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 3
+  - name: auto_gather_stripped_spruce_log_axe_x8
+    preconditions:
+      inventory_space: true
+      nearby.stripped_spruce_log: ">= 8"
+      inventory.category.axe: true
+    effects:
+      inventory.stripped_spruce_log: "+8"
+      inventory.category.log: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stripped_spruce_log
+      count: 8
+  - name: auto_gather_acacia_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.acacia_planks: ">= 1"
+    effects:
+      inventory.acacia_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: acacia_planks
+      count: 1
+  - name: auto_gather_acacia_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.acacia_planks: ">= 3"
+    effects:
+      inventory.acacia_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: acacia_planks
+      count: 3
+  - name: auto_gather_acacia_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.acacia_planks: ">= 8"
+    effects:
+      inventory.acacia_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: acacia_planks
+      count: 8
+  - name: auto_gather_bamboo_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.bamboo_planks: ">= 1"
+    effects:
+      inventory.bamboo_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bamboo_planks
+      count: 1
+  - name: auto_gather_bamboo_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.bamboo_planks: ">= 3"
+    effects:
+      inventory.bamboo_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: bamboo_planks
+      count: 3
+  - name: auto_gather_bamboo_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.bamboo_planks: ">= 8"
+    effects:
+      inventory.bamboo_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: bamboo_planks
+      count: 8
+  - name: auto_gather_birch_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.birch_planks: ">= 1"
+    effects:
+      inventory.birch_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: birch_planks
+      count: 1
+  - name: auto_gather_birch_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.birch_planks: ">= 3"
+    effects:
+      inventory.birch_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: birch_planks
+      count: 3
+  - name: auto_gather_birch_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.birch_planks: ">= 8"
+    effects:
+      inventory.birch_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: birch_planks
+      count: 8
+  - name: auto_gather_cherry_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.cherry_planks: ">= 1"
+    effects:
+      inventory.cherry_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cherry_planks
+      count: 1
+  - name: auto_gather_cherry_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.cherry_planks: ">= 3"
+    effects:
+      inventory.cherry_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: cherry_planks
+      count: 3
+  - name: auto_gather_cherry_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.cherry_planks: ">= 8"
+    effects:
+      inventory.cherry_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: cherry_planks
+      count: 8
+  - name: auto_gather_crimson_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.crimson_planks: ">= 1"
+    effects:
+      inventory.crimson_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: crimson_planks
+      count: 1
+  - name: auto_gather_crimson_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.crimson_planks: ">= 3"
+    effects:
+      inventory.crimson_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: crimson_planks
+      count: 3
+  - name: auto_gather_crimson_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.crimson_planks: ">= 8"
+    effects:
+      inventory.crimson_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: crimson_planks
+      count: 8
+  - name: auto_gather_dark_oak_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.dark_oak_planks: ">= 1"
+    effects:
+      inventory.dark_oak_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: dark_oak_planks
+      count: 1
+  - name: auto_gather_dark_oak_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.dark_oak_planks: ">= 3"
+    effects:
+      inventory.dark_oak_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: dark_oak_planks
+      count: 3
+  - name: auto_gather_dark_oak_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.dark_oak_planks: ">= 8"
+    effects:
+      inventory.dark_oak_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: dark_oak_planks
+      count: 8
+  - name: auto_gather_jungle_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.jungle_planks: ">= 1"
+    effects:
+      inventory.jungle_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: jungle_planks
+      count: 1
+  - name: auto_gather_jungle_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.jungle_planks: ">= 3"
+    effects:
+      inventory.jungle_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: jungle_planks
+      count: 3
+  - name: auto_gather_jungle_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.jungle_planks: ">= 8"
+    effects:
+      inventory.jungle_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: jungle_planks
+      count: 8
+  - name: auto_gather_mangrove_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.mangrove_planks: ">= 1"
+    effects:
+      inventory.mangrove_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: mangrove_planks
+      count: 1
+  - name: auto_gather_mangrove_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.mangrove_planks: ">= 3"
+    effects:
+      inventory.mangrove_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: mangrove_planks
+      count: 3
+  - name: auto_gather_mangrove_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.mangrove_planks: ">= 8"
+    effects:
+      inventory.mangrove_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: mangrove_planks
+      count: 8
+  - name: auto_gather_oak_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.oak_planks: ">= 1"
+    effects:
+      inventory.oak_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: oak_planks
+      count: 1
+  - name: auto_gather_oak_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.oak_planks: ">= 3"
+    effects:
+      inventory.oak_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: oak_planks
+      count: 3
+  - name: auto_gather_oak_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.oak_planks: ">= 8"
+    effects:
+      inventory.oak_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: oak_planks
+      count: 8
+  - name: auto_gather_spruce_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.spruce_planks: ">= 1"
+    effects:
+      inventory.spruce_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: spruce_planks
+      count: 1
+  - name: auto_gather_spruce_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.spruce_planks: ">= 3"
+    effects:
+      inventory.spruce_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: spruce_planks
+      count: 3
+  - name: auto_gather_spruce_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.spruce_planks: ">= 8"
+    effects:
+      inventory.spruce_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: spruce_planks
+      count: 8
+  - name: auto_gather_warped_planks_barehand_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 1"
+      nearby.warped_planks: ">= 1"
+    effects:
+      inventory.warped_planks: "+1"
+      inventory.category.plank: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: warped_planks
+      count: 1
+  - name: auto_gather_warped_planks_barehand_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 3"
+      nearby.warped_planks: ">= 3"
+    effects:
+      inventory.warped_planks: "+3"
+      inventory.category.plank: "+3"
+    cost: 15
+    skill: gather
+    params:
+      itemName: warped_planks
+      count: 3
+  - name: auto_gather_warped_planks_barehand_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.plank: ">= 8"
+      nearby.warped_planks: ">= 8"
+    effects:
+      inventory.warped_planks: "+8"
+      inventory.category.plank: "+8"
+    cost: 40
+    skill: gather
+    params:
+      itemName: warped_planks
+      count: 8
+  - name: auto_gather_stone_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 1"
+      nearby.stone: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.stone: "+1"
+      inventory.cobblestone: "+1"
+      inventory.category.basic_stone: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: stone
+      count: 1
+  - name: auto_gather_stone_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 3"
+      nearby.stone: ">= 3"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.stone: "+3"
+      inventory.cobblestone: "+3"
+      inventory.category.basic_stone: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: stone
+      count: 3
+  - name: auto_gather_stone_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 8"
+      nearby.stone: ">= 8"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.stone: "+8"
+      inventory.cobblestone: "+8"
+      inventory.category.basic_stone: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: stone
+      count: 8
+  - name: auto_gather_cobblestone_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 1"
+      nearby.cobblestone: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.cobblestone: "+1"
+      inventory.category.basic_stone: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: cobblestone
+      count: 1
+  - name: auto_gather_cobblestone_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 3"
+      nearby.cobblestone: ">= 3"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.cobblestone: "+3"
+      inventory.category.basic_stone: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: cobblestone
+      count: 3
+  - name: auto_gather_cobblestone_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.basic_stone: ">= 8"
+      nearby.cobblestone: ">= 8"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.cobblestone: "+8"
+      inventory.category.basic_stone: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: cobblestone
+      count: 8
+  - name: auto_gather_iron_ore_stone_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 1"
+      nearby.iron_ore: ">= 1"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.iron_ore: "+1"
+      inventory.raw_iron: "+1"
+      inventory.category.iron_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 1
+  - name: auto_gather_iron_ore_stone_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 3"
+      nearby.iron_ore: ">= 3"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.iron_ore: "+3"
+      inventory.raw_iron: "+3"
+      inventory.category.iron_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 3
+  - name: auto_gather_iron_ore_stone_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 8"
+      nearby.iron_ore: ">= 8"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.iron_ore: "+8"
+      inventory.raw_iron: "+8"
+      inventory.category.iron_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: iron_ore
+      count: 8
+  - name: auto_gather_deepslate_iron_ore_stone_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 1"
+      nearby.deepslate_iron_ore: ">= 1"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_iron_ore: "+1"
+      inventory.raw_iron: "+1"
+      inventory.category.iron_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: deepslate_iron_ore
+      count: 1
+  - name: auto_gather_deepslate_iron_ore_stone_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 3"
+      nearby.deepslate_iron_ore: ">= 3"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_iron_ore: "+3"
+      inventory.raw_iron: "+3"
+      inventory.category.iron_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: deepslate_iron_ore
+      count: 3
+  - name: auto_gather_deepslate_iron_ore_stone_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.iron_ore: ">= 8"
+      nearby.deepslate_iron_ore: ">= 8"
+      inventory.category.stone_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_iron_ore: "+8"
+      inventory.raw_iron: "+8"
+      inventory.category.iron_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: deepslate_iron_ore
+      count: 8
+  - name: auto_gather_diamond_ore_iron_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 1"
+      nearby.diamond_ore: ">= 1"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.diamond_ore: "+1"
+      inventory.diamond: "+1"
+      inventory.category.diamond_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: diamond_ore
+      count: 1
+  - name: auto_gather_diamond_ore_iron_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 3"
+      nearby.diamond_ore: ">= 3"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.diamond_ore: "+3"
+      inventory.diamond: "+3"
+      inventory.category.diamond_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: diamond_ore
+      count: 3
+  - name: auto_gather_diamond_ore_iron_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 8"
+      nearby.diamond_ore: ">= 8"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.diamond_ore: "+8"
+      inventory.diamond: "+8"
+      inventory.category.diamond_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: diamond_ore
+      count: 8
+  - name: auto_gather_deepslate_diamond_ore_iron_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 1"
+      nearby.deepslate_diamond_ore: ">= 1"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_diamond_ore: "+1"
+      inventory.diamond: "+1"
+      inventory.category.diamond_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: deepslate_diamond_ore
+      count: 1
+  - name: auto_gather_deepslate_diamond_ore_iron_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 3"
+      nearby.deepslate_diamond_ore: ">= 3"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_diamond_ore: "+3"
+      inventory.diamond: "+3"
+      inventory.category.diamond_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: deepslate_diamond_ore
+      count: 3
+  - name: auto_gather_deepslate_diamond_ore_iron_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.diamond_ore: ">= 8"
+      nearby.deepslate_diamond_ore: ">= 8"
+      inventory.category.iron_or_better_pickaxe: true
+    effects:
+      inventory.deepslate_diamond_ore: "+8"
+      inventory.diamond: "+8"
+      inventory.category.diamond_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: deepslate_diamond_ore
+      count: 8
+  - name: auto_gather_coal_ore_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 1"
+      nearby.coal_ore: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.coal_ore: "+1"
+      inventory.coal: "+1"
+      inventory.category.coal_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: coal_ore
+      count: 1
+  - name: auto_gather_coal_ore_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 3"
+      nearby.coal_ore: ">= 3"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.coal_ore: "+3"
+      inventory.coal: "+3"
+      inventory.category.coal_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: coal_ore
+      count: 3
+  - name: auto_gather_coal_ore_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 8"
+      nearby.coal_ore: ">= 8"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.coal_ore: "+8"
+      inventory.coal: "+8"
+      inventory.category.coal_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: coal_ore
+      count: 8
+  - name: auto_gather_deepslate_coal_ore_pickaxe_x1
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 1"
+      nearby.deepslate_coal_ore: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.deepslate_coal_ore: "+1"
+      inventory.coal: "+1"
+      inventory.category.coal_ore: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: deepslate_coal_ore
+      count: 1
+  - name: auto_gather_deepslate_coal_ore_pickaxe_x3
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 3"
+      nearby.deepslate_coal_ore: ">= 3"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.deepslate_coal_ore: "+3"
+      inventory.coal: "+3"
+      inventory.category.coal_ore: "+3"
+    cost: 3
+    skill: gather
+    params:
+      itemName: deepslate_coal_ore
+      count: 3
+  - name: auto_gather_deepslate_coal_ore_pickaxe_x8
+    preconditions:
+      inventory_space: true
+      nearby.category.coal_ore: ">= 8"
+      nearby.deepslate_coal_ore: ">= 8"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.deepslate_coal_ore: "+8"
+      inventory.coal: "+8"
+      inventory.category.coal_ore: "+8"
+    cost: 8
+    skill: gather
+    params:
+      itemName: deepslate_coal_ore
+      count: 8
