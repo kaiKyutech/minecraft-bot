@@ -29,6 +29,7 @@ class StateManager {
 
   async refresh(bot) {
     const blockData = await this.extractNearbyBlocks(bot)
+    const hasSpace = this.hasInventorySpace(bot)
 
     this.cache = {
       timestamp: Date.now(),
@@ -36,6 +37,7 @@ class StateManager {
       equipment: this.extractEquipment(bot), // 装備情報
       position: bot.entity?.position ? bot.entity.position.clone() : null,
       isDay: bot.time ? bot.time.isDay : true,
+      inventory_space: hasSpace,
       nearby_blocks: blockData.flags, // 既存booleanフラグ
       nearby: blockData.summary,      // ドット記法用（ブロック/カテゴリのヒット数）
       blocks: blockData.blocks        // ブロック座標リスト
@@ -312,6 +314,11 @@ class StateManager {
    */
   getLocations() {
     return { ...this.namedLocations }
+  }
+
+  hasInventorySpace(bot) {
+    if (!bot || !bot.inventory || typeof bot.inventory.emptySlotCount !== 'function') return true
+    return bot.inventory.emptySlotCount() > 0
   }
 }
 

@@ -56,6 +56,11 @@ function buildInventoryStates(facts, worldState, inventorySchema) {
     facts[stateName] = config.default
   }
 
+  // inventory_space をworldStateから上書き
+  if (worldState?.inventory_space !== undefined) {
+    facts.inventory_space = Boolean(worldState.inventory_space)
+  }
+
   // 動的インベントリ: 全アイテムをそのまま保存（自動追跡）
   facts.inventory = { ...counts }
 
