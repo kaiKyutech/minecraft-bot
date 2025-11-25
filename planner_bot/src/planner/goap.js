@@ -194,7 +194,7 @@ async function plan(goalInput, worldState, logger = null) {
   }
 
 
-  const heuristicContext = buildHeuristicContext(adjustedGoal, goalAction, filteredActions)
+  const heuristicContext = { ...buildHeuristicContext(adjustedGoal, goalAction, filteredActions), logShortage: true }
 
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
@@ -695,6 +695,7 @@ function calculateHeuristic(state, context = {}) {
   }
 
   const memo = new Map()
+  const shortageLog = [] // { key, requirement, deficit }
   let estimate = 0
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
@@ -710,7 +711,7 @@ function calculateHeuristic(state, context = {}) {
 
   for (const [key, target] of Object.entries(finalGoal)) {
     const requirement = buildRequirementFromGoalTarget(target)
-    const steps = estimateRequirement(key, requirement, state, actions, memo, new Set())
+    const steps = estimateRequirement(key, requirement, state, actions, memo, new Set(), shortageLog)
 
     if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
       getLogger().info(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
@@ -729,10 +730,31 @@ function calculateHeuristic(state, context = {}) {
     getLogger().info(`[HEURISTIC] Final h(n) = ${estimate}`)
   }
 
+  // 不足リソースのログを表示（重複はマージ）。初回の計算時のみ。
+  if (context.logShortage && !context._shortageLogged && shortageLog.length > 0) {
+    const merged = new Map()
+    for (const entry of shortageLog) {
+      // nearby.* はGOAPでは解決できないので別枠扱い
+      if (entry.key.startsWith('nearby.')) continue
+      const sig = `${entry.key}|${entry.requirement.type}|${entry.requirement.operator || ''}|${entry.requirement.value}`
+      if (!merged.has(sig)) {
+        merged.set(sig, { ...entry })
+      } else {
+        const existing = merged.get(sig)
+        existing.deficit = Math.max(existing.deficit, entry.deficit)
+      }
+    }
+    const display = Array.from(merged.values())
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map(e => `${e.key} ${formatRequirement(e.requirement)} (不足=${e.deficit})`)
+    getLogger().info(`[GOAP] 不足リソース: ${display.join(', ')}`)
+    context._shortageLogged = true
+  }
+
   return Math.min(estimate, HEURISTIC_MAX)
 }
 
-function estimateRequirement(key, requirement, state, actions, memo, visiting) {
+function estimateRequirement(key, requirement, state, actions, memo, visiting, shortageLog) {
   const signature = buildRequirementSignature(key, requirement, state)
   if (memo.has(signature)) return memo.get(signature)
   if (visiting.has(signature)) return HEURISTIC_MAX
@@ -745,8 +767,11 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
     visiting.delete(signature)
     return 0
   }
+  if (shortageLog) {
+    shortageLog.push({ key, requirement, deficit })
+  }
 
-  const compositeEstimate = tryEstimateCompositeRequirement(key, requirement, state, actions, memo, visiting)
+  const compositeEstimate = tryEstimateCompositeRequirement(key, requirement, state, actions, memo, visiting, shortageLog)
   if (compositeEstimate !== null) {
     memo.set(signature, compositeEstimate)
     visiting.delete(signature)
@@ -782,7 +807,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
       }
       for (const [preKey, preCondition] of Object.entries(action.preconditions)) {
         const preRequirement = buildRequirementFromCondition(preCondition)
-        const subCost = estimateRequirement(preKey, preRequirement, state, actions, memo, visiting)
+        const subCost = estimateRequirement(preKey, preRequirement, state, actions, memo, visiting, shortageLog)
         if (!Number.isFinite(subCost) || subCost >= HEURISTIC_MAX) {
           if (shouldDebugRequirement(key)) {
             getLogger().warn(`  [NG] 前提 ${preKey} ${formatRequirement(preRequirement)} の推定が失敗`)
@@ -821,7 +846,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting) {
   return best
 }
 
-function tryEstimateCompositeRequirement(key, requirement, state, actions, memo, visiting) {
+function tryEstimateCompositeRequirement(key, requirement, state, actions, memo, visiting, shortageLog) {
   const dependenciesMap = loadCompositeStateDependencies()
   const deps = dependenciesMap[key]
 
@@ -834,7 +859,7 @@ function tryEstimateCompositeRequirement(key, requirement, state, actions, memo,
 
     for (const depKey of deps) {
       const depRequirement = buildRequirementFromCompositeDependency(depKey)
-      const steps = estimateRequirement(depKey, depRequirement, state, actions, memo, visiting)
+      const steps = estimateRequirement(depKey, depRequirement, state, actions, memo, visiting, shortageLog)
       if (Number.isFinite(steps) && steps < best) {
         best = steps
       }
