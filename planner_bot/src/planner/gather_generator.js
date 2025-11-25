@@ -44,16 +44,22 @@ async function generateGatherActions(version) {
   const actions = [];
 
   for (const [categoryName, categoryConfig] of Object.entries(blockCategories)) {
-    // カテゴリgather（最寄りの任意ブロックを掘る）を追加
-    actions.push(...buildCategoryActions(categoryName));
-
-    // フィルタがある場合のみ限定生成
-    if (TARGET_CATEGORIES instanceof Set && !TARGET_CATEGORIES.has(categoryName)) continue;
-
     const blocks = categoryConfig.blocks || [];
     if (blocks.length === 0) continue;
 
-    // カテゴリ内の全ブロックについてアクション生成
+    // 代表ブロックからツール要件を推定
+    const representativeName = blocks.find((b) => mcData.blocksByName[b]);
+    const representative = representativeName ? mcData.blocksByName[representativeName] : null;
+    const categoryToolReq = representative ? resolveToolRequirement(mcData, representative) : null;
+    const categoryDrop = representative ? getPrimaryDrop(mcData, representative) : null;
+
+    // カテゴリgather（最寄りの任意ブロックを掘る）を追加
+    actions.push(...buildCategoryActions(categoryName, categoryToolReq, categoryDrop));
+
+    // フィルタがある場合のみ限定生成（個別ブロック）
+    if (TARGET_CATEGORIES instanceof Set && !TARGET_CATEGORIES.has(categoryName)) continue;
+
+    // カテゴリ内の全ブロックについてアクション生成（個別指定）
     for (const blockName of blocks) {
       const block = mcData.blocksByName[blockName];
       if (!block) continue;
@@ -245,7 +251,7 @@ function buildAction({ categoryName, blockName, count, dropName, toolRequirement
   };
 }
 
-function buildCategoryActions(categoryName) {
+function buildCategoryActions(categoryName, toolRequirement, categoryDrop) {
   // カテゴリを指定して最寄りのブロックを掘るバリエーション（コストは個別より安く設定）
   const actions = [];
   const preBase = {
@@ -258,7 +264,27 @@ function buildCategoryActions(categoryName) {
   const discounts = { 1: 0.5, 3: 0.35, 8: 0.2 }; // カテゴリ優先のため個別より安め
 
   for (const count of DEFAULT_COUNTS) {
-    // 素手
+    // ツール要件があるカテゴリ（石/鉱石など）はツール前提のみ
+    if (toolRequirement && toolRequirement.precondition) {
+      const toolLabel = toolRequirement.label || 'tool';
+      actions.push({
+        name: `auto_gather_${categoryName}_category_${toolLabel}_x${count}`,
+        preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}`, [toolRequirement.precondition]: true },
+        effects: {
+          [`inventory.category.${categoryName}`]: `+${count}`,
+          ...(categoryDrop && categoryName !== 'log' ? { [`inventory.${categoryDrop}`]: `+${count}` } : {})
+        },
+        cost: Math.max(1, Math.round(perUnitTool * count * (discounts[count] ?? 1))),
+        skill: 'gather',
+        params: {
+          itemName: categoryName,
+          count
+        }
+      });
+      continue;
+    }
+
+    // ツール要件が無いカテゴリ（logなど）は素手＋（場合によっては斧）を用意
     actions.push({
       name: `auto_gather_${categoryName}_category_barehand_x${count}`,
       preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}` },
@@ -273,20 +299,23 @@ function buildCategoryActions(categoryName) {
       }
     });
 
-    // ツール（ピッケル/斧などはカテゴリでは判定できないので、とりあえず一般ツールカテゴリは付けない）
-    actions.push({
-      name: `auto_gather_${categoryName}_category_tool_x${count}`,
-      preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}` },
-      effects: {
-        [`inventory.category.${categoryName}`]: `+${count}`
-      },
-      cost: Math.max(1, Math.round(perUnitTool * count * (discounts[count] ?? 1))),
-      skill: 'gather',
-      params: {
-        itemName: categoryName,
-        count
-      }
-    });
+    // logカテゴリだけは斧バリアントも用意（コストはさらに低く）
+    if (categoryName === 'log') {
+      const axeDiscount = discounts[count] ?? 1;
+      actions.push({
+        name: `auto_gather_${categoryName}_category_axe_x${count}`,
+        preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}`, 'inventory.category.axe': true },
+        effects: {
+          [`inventory.category.${categoryName}`]: `+${count}`
+        },
+        cost: Math.max(1, Math.round(perUnitTool * count * axeDiscount * 0.8)), // 斧はさらに割引
+        skill: 'gather',
+        params: {
+          itemName: categoryName,
+          count
+        }
+      });
+    }
   }
 
   return actions;

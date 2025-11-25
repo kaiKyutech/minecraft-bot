@@ -10,10 +10,11 @@ actions:
     params:
       itemName: log
       count: 1
-  - name: auto_gather_log_category_tool_x1
+  - name: auto_gather_log_category_axe_x1
     preconditions:
       inventory_space: true
       nearby.category.log: ">= 1"
+      inventory.category.axe: true
     effects:
       inventory.category.log: "+1"
     cost: 1
@@ -32,10 +33,11 @@ actions:
     params:
       itemName: log
       count: 3
-  - name: auto_gather_log_category_tool_x3
+  - name: auto_gather_log_category_axe_x3
     preconditions:
       inventory_space: true
       nearby.category.log: ">= 3"
+      inventory.category.axe: true
     effects:
       inventory.category.log: "+3"
     cost: 1
@@ -54,13 +56,14 @@ actions:
     params:
       itemName: log
       count: 8
-  - name: auto_gather_log_category_tool_x8
+  - name: auto_gather_log_category_axe_x8
     preconditions:
       inventory_space: true
       nearby.category.log: ">= 8"
+      inventory.category.axe: true
     effects:
       inventory.category.log: "+8"
-    cost: 2
+    cost: 1
     skill: gather
     params:
       itemName: log
@@ -1276,17 +1279,6 @@ actions:
     params:
       itemName: plank
       count: 1
-  - name: auto_gather_plank_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.plank: ">= 1"
-    effects:
-      inventory.category.plank: "+1"
-    cost: 1
-    skill: gather
-    params:
-      itemName: plank
-      count: 1
   - name: auto_gather_plank_category_barehand_x3
     preconditions:
       inventory_space: true
@@ -1298,17 +1290,6 @@ actions:
     params:
       itemName: plank
       count: 3
-  - name: auto_gather_plank_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.plank: ">= 3"
-    effects:
-      inventory.category.plank: "+3"
-    cost: 1
-    skill: gather
-    params:
-      itemName: plank
-      count: 3
   - name: auto_gather_plank_category_barehand_x8
     preconditions:
       inventory_space: true
@@ -1316,17 +1297,6 @@ actions:
     effects:
       inventory.category.plank: "+8"
     cost: 8
-    skill: gather
-    params:
-      itemName: plank
-      count: 8
-  - name: auto_gather_plank_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.plank: ">= 8"
-    effects:
-      inventory.category.plank: "+8"
-    cost: 2
     skill: gather
     params:
       itemName: plank
@@ -1760,67 +1730,40 @@ actions:
     params:
       itemName: warped_planks
       count: 8
-  - name: auto_gather_basic_stone_category_barehand_x1
+  - name: auto_gather_basic_stone_category_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby.category.basic_stone: ">= 1"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.basic_stone: "+1"
-    cost: 3
-    skill: gather
-    params:
-      itemName: basic_stone
-      count: 1
-  - name: auto_gather_basic_stone_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.basic_stone: ">= 1"
-    effects:
-      inventory.category.basic_stone: "+1"
+      inventory.cobblestone: "+1"
     cost: 1
     skill: gather
     params:
       itemName: basic_stone
       count: 1
-  - name: auto_gather_basic_stone_category_barehand_x3
+  - name: auto_gather_basic_stone_category_pickaxe_x3
     preconditions:
       inventory_space: true
       nearby.category.basic_stone: ">= 3"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.basic_stone: "+3"
-    cost: 5
-    skill: gather
-    params:
-      itemName: basic_stone
-      count: 3
-  - name: auto_gather_basic_stone_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.basic_stone: ">= 3"
-    effects:
-      inventory.category.basic_stone: "+3"
+      inventory.cobblestone: "+3"
     cost: 1
     skill: gather
     params:
       itemName: basic_stone
       count: 3
-  - name: auto_gather_basic_stone_category_barehand_x8
+  - name: auto_gather_basic_stone_category_pickaxe_x8
     preconditions:
       inventory_space: true
       nearby.category.basic_stone: ">= 8"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.basic_stone: "+8"
-    cost: 8
-    skill: gather
-    params:
-      itemName: basic_stone
-      count: 8
-  - name: auto_gather_basic_stone_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.basic_stone: ">= 8"
-    effects:
-      inventory.category.basic_stone: "+8"
+      inventory.cobblestone: "+8"
     cost: 2
     skill: gather
     params:
@@ -1913,67 +1856,40 @@ actions:
     params:
       itemName: cobblestone
       count: 8
-  - name: auto_gather_iron_ore_category_barehand_x1
+  - name: auto_gather_iron_ore_category_stone_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby.category.iron_ore: ">= 1"
+      inventory.category.stone_or_better_pickaxe: true
     effects:
       inventory.category.iron_ore: "+1"
-    cost: 3
-    skill: gather
-    params:
-      itemName: iron_ore
-      count: 1
-  - name: auto_gather_iron_ore_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.iron_ore: ">= 1"
-    effects:
-      inventory.category.iron_ore: "+1"
+      inventory.raw_iron: "+1"
     cost: 1
     skill: gather
     params:
       itemName: iron_ore
       count: 1
-  - name: auto_gather_iron_ore_category_barehand_x3
+  - name: auto_gather_iron_ore_category_stone_pickaxe_x3
     preconditions:
       inventory_space: true
       nearby.category.iron_ore: ">= 3"
+      inventory.category.stone_or_better_pickaxe: true
     effects:
       inventory.category.iron_ore: "+3"
-    cost: 5
-    skill: gather
-    params:
-      itemName: iron_ore
-      count: 3
-  - name: auto_gather_iron_ore_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.iron_ore: ">= 3"
-    effects:
-      inventory.category.iron_ore: "+3"
+      inventory.raw_iron: "+3"
     cost: 1
     skill: gather
     params:
       itemName: iron_ore
       count: 3
-  - name: auto_gather_iron_ore_category_barehand_x8
+  - name: auto_gather_iron_ore_category_stone_pickaxe_x8
     preconditions:
       inventory_space: true
       nearby.category.iron_ore: ">= 8"
+      inventory.category.stone_or_better_pickaxe: true
     effects:
       inventory.category.iron_ore: "+8"
-    cost: 8
-    skill: gather
-    params:
-      itemName: iron_ore
-      count: 8
-  - name: auto_gather_iron_ore_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.iron_ore: ">= 8"
-    effects:
-      inventory.category.iron_ore: "+8"
+      inventory.raw_iron: "+8"
     cost: 2
     skill: gather
     params:
@@ -2069,67 +1985,40 @@ actions:
     params:
       itemName: deepslate_iron_ore
       count: 8
-  - name: auto_gather_diamond_ore_category_barehand_x1
+  - name: auto_gather_diamond_ore_category_iron_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby.category.diamond_ore: ">= 1"
+      inventory.category.iron_or_better_pickaxe: true
     effects:
       inventory.category.diamond_ore: "+1"
-    cost: 3
-    skill: gather
-    params:
-      itemName: diamond_ore
-      count: 1
-  - name: auto_gather_diamond_ore_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.diamond_ore: ">= 1"
-    effects:
-      inventory.category.diamond_ore: "+1"
+      inventory.diamond: "+1"
     cost: 1
     skill: gather
     params:
       itemName: diamond_ore
       count: 1
-  - name: auto_gather_diamond_ore_category_barehand_x3
+  - name: auto_gather_diamond_ore_category_iron_pickaxe_x3
     preconditions:
       inventory_space: true
       nearby.category.diamond_ore: ">= 3"
+      inventory.category.iron_or_better_pickaxe: true
     effects:
       inventory.category.diamond_ore: "+3"
-    cost: 5
-    skill: gather
-    params:
-      itemName: diamond_ore
-      count: 3
-  - name: auto_gather_diamond_ore_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.diamond_ore: ">= 3"
-    effects:
-      inventory.category.diamond_ore: "+3"
+      inventory.diamond: "+3"
     cost: 1
     skill: gather
     params:
       itemName: diamond_ore
       count: 3
-  - name: auto_gather_diamond_ore_category_barehand_x8
+  - name: auto_gather_diamond_ore_category_iron_pickaxe_x8
     preconditions:
       inventory_space: true
       nearby.category.diamond_ore: ">= 8"
+      inventory.category.iron_or_better_pickaxe: true
     effects:
       inventory.category.diamond_ore: "+8"
-    cost: 8
-    skill: gather
-    params:
-      itemName: diamond_ore
-      count: 8
-  - name: auto_gather_diamond_ore_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.diamond_ore: ">= 8"
-    effects:
-      inventory.category.diamond_ore: "+8"
+      inventory.diamond: "+8"
     cost: 2
     skill: gather
     params:
@@ -2225,67 +2114,40 @@ actions:
     params:
       itemName: deepslate_diamond_ore
       count: 8
-  - name: auto_gather_coal_ore_category_barehand_x1
+  - name: auto_gather_coal_ore_category_pickaxe_x1
     preconditions:
       inventory_space: true
       nearby.category.coal_ore: ">= 1"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.coal_ore: "+1"
-    cost: 3
-    skill: gather
-    params:
-      itemName: coal_ore
-      count: 1
-  - name: auto_gather_coal_ore_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.coal_ore: ">= 1"
-    effects:
-      inventory.category.coal_ore: "+1"
+      inventory.coal: "+1"
     cost: 1
     skill: gather
     params:
       itemName: coal_ore
       count: 1
-  - name: auto_gather_coal_ore_category_barehand_x3
+  - name: auto_gather_coal_ore_category_pickaxe_x3
     preconditions:
       inventory_space: true
       nearby.category.coal_ore: ">= 3"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.coal_ore: "+3"
-    cost: 5
-    skill: gather
-    params:
-      itemName: coal_ore
-      count: 3
-  - name: auto_gather_coal_ore_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.coal_ore: ">= 3"
-    effects:
-      inventory.category.coal_ore: "+3"
+      inventory.coal: "+3"
     cost: 1
     skill: gather
     params:
       itemName: coal_ore
       count: 3
-  - name: auto_gather_coal_ore_category_barehand_x8
+  - name: auto_gather_coal_ore_category_pickaxe_x8
     preconditions:
       inventory_space: true
       nearby.category.coal_ore: ">= 8"
+      inventory.category.pickaxe: true
     effects:
       inventory.category.coal_ore: "+8"
-    cost: 8
-    skill: gather
-    params:
-      itemName: coal_ore
-      count: 8
-  - name: auto_gather_coal_ore_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.coal_ore: ">= 8"
-    effects:
-      inventory.category.coal_ore: "+8"
+      inventory.coal: "+8"
     cost: 2
     skill: gather
     params:
@@ -2392,17 +2254,6 @@ actions:
     params:
       itemName: raw_meat
       count: 1
-  - name: auto_gather_raw_meat_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.raw_meat: ">= 1"
-    effects:
-      inventory.category.raw_meat: "+1"
-    cost: 1
-    skill: gather
-    params:
-      itemName: raw_meat
-      count: 1
   - name: auto_gather_raw_meat_category_barehand_x3
     preconditions:
       inventory_space: true
@@ -2410,17 +2261,6 @@ actions:
     effects:
       inventory.category.raw_meat: "+3"
     cost: 5
-    skill: gather
-    params:
-      itemName: raw_meat
-      count: 3
-  - name: auto_gather_raw_meat_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.raw_meat: ">= 3"
-    effects:
-      inventory.category.raw_meat: "+3"
-    cost: 1
     skill: gather
     params:
       itemName: raw_meat
@@ -2436,17 +2276,6 @@ actions:
     params:
       itemName: raw_meat
       count: 8
-  - name: auto_gather_raw_meat_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.raw_meat: ">= 8"
-    effects:
-      inventory.category.raw_meat: "+8"
-    cost: 2
-    skill: gather
-    params:
-      itemName: raw_meat
-      count: 8
   - name: auto_gather_cooked_meat_category_barehand_x1
     preconditions:
       inventory_space: true
@@ -2454,17 +2283,6 @@ actions:
     effects:
       inventory.category.cooked_meat: "+1"
     cost: 3
-    skill: gather
-    params:
-      itemName: cooked_meat
-      count: 1
-  - name: auto_gather_cooked_meat_category_tool_x1
-    preconditions:
-      inventory_space: true
-      nearby.category.cooked_meat: ">= 1"
-    effects:
-      inventory.category.cooked_meat: "+1"
-    cost: 1
     skill: gather
     params:
       itemName: cooked_meat
@@ -2480,17 +2298,6 @@ actions:
     params:
       itemName: cooked_meat
       count: 3
-  - name: auto_gather_cooked_meat_category_tool_x3
-    preconditions:
-      inventory_space: true
-      nearby.category.cooked_meat: ">= 3"
-    effects:
-      inventory.category.cooked_meat: "+3"
-    cost: 1
-    skill: gather
-    params:
-      itemName: cooked_meat
-      count: 3
   - name: auto_gather_cooked_meat_category_barehand_x8
     preconditions:
       inventory_space: true
@@ -2498,17 +2305,6 @@ actions:
     effects:
       inventory.category.cooked_meat: "+8"
     cost: 8
-    skill: gather
-    params:
-      itemName: cooked_meat
-      count: 8
-  - name: auto_gather_cooked_meat_category_tool_x8
-    preconditions:
-      inventory_space: true
-      nearby.category.cooked_meat: ">= 8"
-    effects:
-      inventory.category.cooked_meat: "+8"
-    cost: 2
     skill: gather
     params:
       itemName: cooked_meat
