@@ -695,7 +695,8 @@ function calculateHeuristic(state, context = {}) {
   }
 
   const memo = new Map()
-  const shortageLog = [] // { key, requirement, deficit }
+  // 外部から収集先を渡された場合はそれを使う（例: collectShortages）
+  const shortageLog = Array.isArray(context.shortageOut) ? context.shortageOut : []
   let estimate = 0
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
@@ -1479,8 +1480,51 @@ function isActionRelevant(action, relevantVars) {
   return false
 }
 
+// ゴール達成に不足しているリソース（ヒューリスティック推定）を取得
+async function collectShortages(goalInput, worldState, logger = null) {
+  if (logger && typeof logger.info === 'function' && typeof logger.warn === 'function') {
+    activeLogger = logger
+  } else {
+    activeLogger = null
+  }
+
+  try {
+    const domainConfig = loadDomain()
+    const actions = domainConfig.actions
+
+    const parsedGoal = parseGoalInput(goalInput)
+    if (!parsedGoal) return []
+
+    let goalAction = null
+    if (parsedGoal.type === 'action' || parsedGoal.type === 'action_with_params') {
+      goalAction = actions.find(a => a.name === parsedGoal.actionName) || null
+      if (!goalAction) return []
+    }
+
+    const goalState = getGoalStateFromParsed(parsedGoal, actions, goalAction)
+    if (!goalState) return []
+
+    const initialState = buildState(worldState)
+    const adjustedGoal = adjustGoalForCurrentState(goalState, initialState, parsedGoal)
+
+    let filteredActions = actions
+    if (process.env.GOAP_DISABLE_ACTION_FILTER !== '1') {
+      const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
+      filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
+    }
+
+    const shortageOut = []
+    const heuristicContext = { ...buildHeuristicContext(adjustedGoal, goalAction, filteredActions), logShortage: false, shortageOut }
+    calculateHeuristic(initialState, heuristicContext)
+    return shortageOut
+  } finally {
+    activeLogger = null
+  }
+}
+
 module.exports = {
   plan,
+  collectShortages,
   loadDomain,
   evaluateCondition,
   arePreconditionsSatisfied

@@ -14,7 +14,7 @@ const { createLogger } = require('../utils/logger')
  * @param {number} maxDepth - 最大再帰深度
  * @param {Array} executionHistory - 実行履歴（内部使用）
  */
-async function handleGoalCommand(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null) {
+async function handleGoalCommand(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null, allowPrep = true) {
   // ルート呼び出しの場合のみ初期化
   if (depth === 0 && !missingPreconditions) {
     missingPreconditions = []
@@ -52,6 +52,22 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   stateManager.silentRefresh = false
   const worldState = await stateManager.getState(bot)
 
+  // ゴール前にピッケルを最低限用意する（ヒューリスティック不足から判断）
+  if (allowPrep && depth === 0) {
+    const pickaxeGoals = await buildPickaxePreparationGoals(goalName, worldState)
+    if (pickaxeGoals.length > 0) {
+      const loggerPrep = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
+      loggerPrep.info(`[GOAP] 事前準備: ピッケル確保 (${pickaxeGoals.join(' -> ')})`)
+      for (const prepGoal of pickaxeGoals) {
+        await handleGoalCommand(bot, username, prepGoal, stateManager, signal, 0, maxDepth, missingPreconditions, attemptedGoals, false)
+        // 再取得して次の判断に使う
+        stateManager.silentRefresh = !bot.shouldLogCommand('goal')
+        await stateManager.refresh(bot)
+        stateManager.silentRefresh = false
+      }
+    }
+  }
+
   // 連続プランニングの前にイベントループに制御を返す
   if (depth > 0) {
     await new Promise((resolve) => setImmediate(resolve))
@@ -81,7 +97,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
       try {
         // 数量削減は深度を消費しない（同じ深度で再試行）
-        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
+        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
 
         const parsedGoal = parseQuantityGoal(goalName)
         if (parsedGoal) {
@@ -102,7 +118,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
             const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
             logger.info(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
             attemptedGoals.delete(goalName)
-            return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
+            return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
           }
         }
 
@@ -112,7 +128,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
         // 元のゴールを再度試す前に、試行済みセットから削除
         attemptedGoals.delete(goalName)
-        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
+        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
       } catch (error) {
         // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
         bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
@@ -178,7 +194,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       loggerPlanInner.info(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
 
       try {
-        await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals)
+        await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals, false)
     } catch (error) {
       // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
       if (error.goalChain) {
@@ -194,7 +210,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
     // 元のゴールを再度試す前に、試行済みセットから削除
     attemptedGoals.delete(goalName)
-    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals)
+    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
   }
 
   // プランニング成功 → 実行
@@ -606,3 +622,46 @@ function logPlanDetails(bot, goalName, plan) {
 module.exports = handleGoalCommand
 module.exports.checkCompositeState = checkCompositeState
 module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
+
+/**
+ * ゴール達成に必要な最弱ピッケルを判定し、所持していなければ事前に作成させる。
+ * - ゴール名に diamond が含まれる → iron_or_better_pickaxe
+ * - それ以外でピッケル系が不足 → stone_or_better_pickaxe または pickaxe
+ * 優先度: pickaxe < stone_or_better_pickaxe < iron_or_better_pickaxe
+ * @param {string} goalName
+ * @param {Object} worldState
+ * @returns {string|null} 事前に満たすべきゴール（例: "inventory.category.pickaxe:true"）、不要ならnull
+ */
+async function buildPickaxePreparationGoals(goalName, worldState) {
+  const inventoryCat = worldState?.inventory?.category || {}
+  const goap = require('../planner/goap')
+
+  // ヒューリスティック不足を取得
+  let shortages = []
+  try {
+    shortages = await goap.collectShortages(goalName, worldState)
+  } catch (error) {
+    return []
+  }
+
+  const needPick = shortages.some(s => s.key === 'inventory.category.pickaxe' && shortagePositive(s))
+  const needStone = shortages.some(s => s.key === 'inventory.category.stone_or_better_pickaxe' && shortagePositive(s))
+  const needIron = shortages.some(s => s.key === 'inventory.category.iron_or_better_pickaxe' && shortagePositive(s))
+
+  const prepGoals = []
+  if (needPick && !inventoryCat.pickaxe) {
+    prepGoals.push('inventory.category.pickaxe:true')
+  }
+  if (needStone && !inventoryCat.stone_or_better_pickaxe) {
+    prepGoals.push('inventory.category.stone_or_better_pickaxe:true')
+  }
+  if (needIron && !inventoryCat.iron_or_better_pickaxe) {
+    prepGoals.push('inventory.category.iron_or_better_pickaxe:true')
+  }
+
+  return prepGoals
+}
+
+function shortagePositive(shortage) {
+  return shortage && Number.isFinite(shortage.deficit) && shortage.deficit > 0
+}
