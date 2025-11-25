@@ -149,10 +149,10 @@ function resolveToolRequirement(mcData, block) {
   if (hasWood) return { precondition: 'inventory.category.pickaxe', label: 'pickaxe' };
 
   const hasStone = toolNames.some((n) => n === 'stone_pickaxe');
-  if (hasStone) return { precondition: 'inventory.category.stone_or_better_pickaxe', label: 'stone_pickaxe' };
+  if (hasStone) return { precondition: 'inventory.category.stone_or_better_pickaxe', label: 'pickaxe' };
 
   const hasIronOrBetter = toolNames.some((n) => n === 'iron_pickaxe' || n === 'diamond_pickaxe' || n === 'netherite_pickaxe');
-  if (hasIronOrBetter) return { precondition: 'inventory.category.iron_or_better_pickaxe', label: 'iron_pickaxe' };
+  if (hasIronOrBetter) return { precondition: 'inventory.category.iron_or_better_pickaxe', label: 'pickaxe' };
 
   const hasAxe = toolNames.some((n) => n && n.endsWith('_axe'));
   if (hasAxe) return { precondition: 'inventory.category.axe', label: 'axe' };
@@ -200,33 +200,15 @@ function buildAction({ categoryName, blockName, count, dropName, toolRequirement
   const name = `auto_gather_${blockName}_${toolLabel}_x${count}`;
 
   const effects = {};
-  // 掘ったブロック（blockName）は必ず増やす
+  // 掘ったブロック（blockName）のみ加算（ドロップはカテゴリ/代表に任せる）
   effects[`inventory.${blockName}`] = `+${count}`;
 
-  // dropsが blockName と異なる場合はドロップも加算
-  if (dropName && dropName !== blockName) {
-    effects[`inventory.${dropName}`] = `+${count}`;
-  }
-
-  const catNames = new Set();
-  const blockCats = itemToCategoryCounts.get(blockName);
-  const dropCats = itemToCategoryCounts.get(dropName);
-  if (blockCats) blockCats.forEach((c) => catNames.add(c));
-  if (dropCats) dropCats.forEach((c) => catNames.add(c));
-  catNames.add(categoryName);
-
-  for (const cat of catNames) {
-    effects[`inventory.category.${cat}`] = `+${count}`;
-  }
+  // 個別ブロックgatherは個別アイテムのみ加算（カテゴリは含めない）
 
   const preconditions = {
-    inventory_space: true
+    inventory_space: true,
+    [`nearby.${blockName}`]: `>= ${count}`
   };
-  // log系はブロック単位でのみ判定し、カテゴリ条件は付けない（枝刈りを強める）
-  if (categoryName !== 'log') {
-    preconditions[`nearby.category.${categoryName}`] = `>= ${count}`;
-  }
-  preconditions[`nearby.${blockName}`] = `>= ${count}`;
   if (toolRequirement?.precondition) {
     preconditions[toolRequirement.precondition] = true;
   }
@@ -266,9 +248,9 @@ function buildCategoryActions(categoryName, toolRequirement, categoryDrop) {
   for (const count of DEFAULT_COUNTS) {
     // ツール要件があるカテゴリ（石/鉱石など）はツール前提のみ
     if (toolRequirement && toolRequirement.precondition) {
-      const toolLabel = toolRequirement.label || 'tool';
+      const label = toolRequirement.label || 'pickaxe'
       actions.push({
-        name: `auto_gather_${categoryName}_category_${toolLabel}_x${count}`,
+        name: `auto_gather_${categoryName}_category_${label}_x${count}`,
         preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}`, [toolRequirement.precondition]: true },
         effects: {
           [`inventory.category.${categoryName}`]: `+${count}`,

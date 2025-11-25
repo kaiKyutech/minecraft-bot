@@ -51,7 +51,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   stateManager.silentRefresh = !bot.shouldLogCommand('goal')
   await stateManager.refresh(bot)
   stateManager.silentRefresh = false
-  const worldState = await stateManager.getState(bot)
+  let worldState = await stateManager.getState(bot)
 
   // gatherアクションを自動生成（初回のみ、bot.versionベース）
   if (depth === 0) {
@@ -71,6 +71,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
         await stateManager.refresh(bot)
         stateManager.silentRefresh = false
       }
+      // 事前準備後、最新状態を取得し直す
+      worldState = await stateManager.getState(bot)
     }
   }
 
