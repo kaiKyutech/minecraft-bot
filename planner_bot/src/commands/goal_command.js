@@ -164,7 +164,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       loggerPlan.info('============================\n')
 
       bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
-      logDiagnosisDetails(diagnosis)
+      logDiagnosisDetails(bot, diagnosis)
 
       const error = new Error(`目標「${goalName}」を実行できません`)
       error.diagnosis = structuredDiagnosis
@@ -199,7 +199,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
   // プランニング成功 → 実行
   if (depth === 0) {
-    logPlanDetails(goalName, plan)
+    logPlanDetails(bot, goalName, plan)
     const startMessage = `目標「${goalName}」を開始します`
     bot.systemLog(startMessage)
   } else {
@@ -298,7 +298,7 @@ function checkCompositeState(key, rawDiagnosis) {
   // rawDiagnosisのsuggestionsから対応する複合状態を探す
   for (const suggestion of rawDiagnosis.suggestions) {
     if (suggestion.target === key && suggestion.isComputedState && suggestion.dependencies) {
-      const logger = createLogger({ bot: null, category: 'goap.plan', commandName: null })
+      const logger = createLogger({ bot: null, category: 'goap.plan', commandName: 'goal' })
       logger.debug(`[DEBUG] Found composite state in checkCompositeState: ${key}`)
       logger.debug(`[DEBUG] Dependencies: ${JSON.stringify(suggestion.dependencies, null, 2)}`)
 
@@ -363,7 +363,7 @@ function createSubgoalFromMissing(missingItem) {
   if (requiredMatch) {
     const requiredValue = parseInt(requiredMatch[1])
     const shortage = requiredValue - currentValue
-    const logger = createLogger({ category: 'goap.plan' })
+    const logger = createLogger({ category: 'goap.plan', commandName: 'goal' })
     logger.debug(`[DEBUG] Creating subgoal: ${key}, current=${currentValue}, required=${requiredValue}, shortage=${shortage}`)
     return `${key}:${shortage}`
   }
@@ -479,7 +479,9 @@ function buildStructuredDiagnosis(diagnosis, goalName) {
  * 診断情報をコンソールに出力（開発者向け詳細ログ）
  * @param {Object} diagnosis - 診断結果
  */
-function logDiagnosisDetails(diagnosis) {
+function logDiagnosisDetails(bot, diagnosis) {
+  const logger = createLogger({ bot, category: 'goap.plan', commandName: bot?.currentCommandName || 'goal' })
+
   if (diagnosis.error) {
     logger.info('=== GOAL DIAGNOSIS ===')
     logger.info(`エラー: ${diagnosis.error}`)
@@ -573,8 +575,8 @@ function formatRequiredValue(required) {
  * @param {string} goalName - 目標名
  * @param {Array} plan - プラン
  */
-function logPlanDetails(goalName, plan) {
-  const logger = createLogger({ category: 'goap.plan' })
+function logPlanDetails(bot, goalName, plan) {
+  const logger = createLogger({ bot, category: 'goap.plan', commandName: bot?.currentCommandName || 'goal' })
   logger.info('=== GOAP PLAN DETAILS ===')
   logger.info(`目標: ${goalName}`)
   logger.info(`プラン長: ${plan.length} ステップ`)

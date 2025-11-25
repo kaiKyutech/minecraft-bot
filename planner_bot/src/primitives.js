@@ -213,6 +213,7 @@ async function findBestTool(bot, block) {
 
 // minecraft-dataを使った手動採掘時間計算（デバッグ用）
 function calculateDigTimeManual(block, tool, mcData) {
+  const logger = createLogger({ category: 'primitive', commandName: 'primitive' })
   try {
     const blockData = mcData.blocks[block.type]
     if (!blockData || typeof blockData.hardness !== 'number') {
@@ -237,7 +238,7 @@ function calculateDigTimeManual(block, tool, mcData) {
       // 適切なツールかチェック（詳細化）
       const isCorrectTool = checkToolSuitability(block.name, toolData.name)
 
-      console.log(`[MANUAL] ${toolData.name} for ${block.name}: isCorrect=${isCorrectTool}, speed=${speed}, hardness=${hardness}`)
+      logger.info(`[MANUAL] ${toolData.name} for ${block.name}: isCorrect=${isCorrectTool}, speed=${speed}, hardness=${hardness}`)
 
       return isCorrectTool ? hardness / speed : (hardness * 5) / speed
     } else {
