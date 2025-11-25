@@ -44,6 +44,9 @@ async function generateGatherActions(version) {
   const actions = [];
 
   for (const [categoryName, categoryConfig] of Object.entries(blockCategories)) {
+    // カテゴリgather（最寄りの任意ブロックを掘る）を追加
+    actions.push(...buildCategoryActions(categoryName));
+
     // フィルタがある場合のみ限定生成
     if (TARGET_CATEGORIES instanceof Set && !TARGET_CATEGORIES.has(categoryName)) continue;
 
@@ -222,9 +225,12 @@ function buildAction({ categoryName, blockName, count, dropName, toolRequirement
     preconditions[toolRequirement.precondition] = true;
   }
 
-  // コスト: ツールありなら1/ブロック、素手なら5/ブロック
+  // コスト: ツールありなら1/ブロック、素手なら5/ブロック + まとめ取り割引
   const perUnit = toolRequirement ? 1 : 5;
-  const cost = Math.max(1, Math.round(perUnit * count));
+  // 割引係数（カテゴリ優先で安くするためにさらに強めにする）
+  const discounts = { 1: 1.0, 3: 0.5, 8: 0.25 };
+  const discount = discounts[count] ?? 1.0;
+  const cost = Math.max(1, Math.round(perUnit * count * discount));
 
   return {
     name,
@@ -237,6 +243,53 @@ function buildAction({ categoryName, blockName, count, dropName, toolRequirement
       count
     }
   };
+}
+
+function buildCategoryActions(categoryName) {
+  // カテゴリを指定して最寄りのブロックを掘るバリエーション（コストは個別より安く設定）
+  const actions = [];
+  const preBase = {
+    inventory_space: true,
+    [`nearby.category.${categoryName}`]: '>= 1'
+  };
+
+  const perUnitTool = 1;
+  const perUnitBare = 5;
+  const discounts = { 1: 0.5, 3: 0.35, 8: 0.2 }; // カテゴリ優先のため個別より安め
+
+  for (const count of DEFAULT_COUNTS) {
+    // 素手
+    actions.push({
+      name: `auto_gather_${categoryName}_category_barehand_x${count}`,
+      preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}` },
+      effects: {
+        [`inventory.category.${categoryName}`]: `+${count}`
+      },
+      cost: Math.max(1, Math.round(perUnitBare * count * (discounts[count] ?? 1))),
+      skill: 'gather',
+      params: {
+        itemName: categoryName,
+        count
+      }
+    });
+
+    // ツール（ピッケル/斧などはカテゴリでは判定できないので、とりあえず一般ツールカテゴリは付けない）
+    actions.push({
+      name: `auto_gather_${categoryName}_category_tool_x${count}`,
+      preconditions: { ...preBase, [`nearby.category.${categoryName}`]: `>= ${count}` },
+      effects: {
+        [`inventory.category.${categoryName}`]: `+${count}`
+      },
+      cost: Math.max(1, Math.round(perUnitTool * count * (discounts[count] ?? 1))),
+      skill: 'gather',
+      params: {
+        itemName: categoryName,
+        count
+      }
+    });
+  }
+
+  return actions;
 }
 
 module.exports = {
