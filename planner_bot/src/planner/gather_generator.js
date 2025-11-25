@@ -41,6 +41,11 @@ async function generateGatherActions(version) {
   const itemCategories = categories?.item_categories || {};
 
   const itemToCategoryCounts = buildItemCategoryLookup(itemCategories);
+  // block_categories に載っているブロックは二重生成を避けるため除外
+  const categoryBlockSet = new Set();
+  for (const cfg of Object.values(blockCategories)) {
+    (cfg.blocks || []).forEach((b) => categoryBlockSet.add(b));
+  }
   const actions = [];
 
   for (const [categoryName, categoryConfig] of Object.entries(blockCategories)) {
@@ -90,6 +95,45 @@ async function generateGatherActions(version) {
         }
       }
     }
+  }
+
+  // 全ブロック個別gather（x1のみ）を追加（掘れるもの＆ドロップあり）
+  const allBlocks = Object.values(mcData.blocksByName || {});
+  const blacklist = new Set(['air', 'cave_air', 'void_air', 'barrier', 'bedrock', 'flowing_water', 'water', 'lava', 'flowing_lava']);
+  for (const block of allBlocks) {
+    if (!block || blacklist.has(block.name)) continue;
+    if (categoryBlockSet.has(block.name)) continue; // 調整済みカテゴリに属するブロックはスキップ
+    if (block.diggable === false) continue;
+    if (!Array.isArray(block.drops) || block.drops.length === 0) continue;
+
+    const dropName = mcData.items[block.drops[0]]?.name || null;
+    const toolReq = resolveToolRequirement(mcData, block);
+    const preconditions = {
+      inventory_space: true,
+      [`nearby.${block.name}`]: '>= 1'
+    };
+    if (toolReq?.precondition) {
+      preconditions[toolReq.precondition] = true;
+    }
+
+    const effects = {};
+    effects[`inventory.${block.name}`] = '+1';
+    if (dropName && dropName !== block.name) {
+      effects[`inventory.${dropName}`] = '+1';
+    }
+
+    const perUnit = toolReq ? 1 : 5;
+    actions.push({
+      name: `auto_gather_${block.name}_x1`,
+      preconditions,
+      effects,
+      cost: perUnit,
+      skill: 'gather',
+      params: {
+        itemName: block.name,
+        count: 1
+      }
+    });
   }
 
   if (actions.length === 0) {
