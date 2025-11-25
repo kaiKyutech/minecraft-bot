@@ -55,6 +55,19 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
 
     if (!preconditionStatus.satisfied) {
+      // 逆転前提（本来false要求だがtrueになっているなど）はスキップ扱いにする
+      const inverted = preconditionStatus.missing.every(m => {
+        if (typeof m.condition === 'boolean') {
+          return m.condition === false && Boolean(m.currentValue) === true
+        }
+        return false
+      })
+      if (inverted) {
+        goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" は前提が逆転(true化)しているためスキップします`)
+        stepIndex++
+        continue
+      }
+
       goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
 
       // サブゴール探索
