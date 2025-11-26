@@ -58,12 +58,14 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     await ensureGatherActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
   }
 
-  // ゴール前にピッケルを最低限用意する（ヒューリスティック不足から判断）
-  if (allowPrep && depth === 0) {
+  // ゴール前にツールを最低限用意する（minecraft-dataから直接判定）
+  // サブゴールでも実行することで、diamond_sword → diamond → diamond_ore のような
+  // 深い依存関係でも、最終的にブロック採掘が必要な時点でツール準備が行われる
+  if (allowPrep) {
     const pickaxeGoals = await buildPickaxePreparationGoals(goalName, worldState)
     if (pickaxeGoals.length > 0) {
       const loggerPrep = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
-      loggerPrep.info(`[GOAP] 事前準備: ピッケル確保 (${pickaxeGoals.join(' -> ')})`)
+      loggerPrep.info(`[GOAP] 事前準備: ツール確保 (${pickaxeGoals.join(' -> ')})`)
       for (const prepGoal of pickaxeGoals) {
         await handleGoalCommand(bot, username, prepGoal, stateManager, signal, 0, maxDepth, missingPreconditions, attemptedGoals, false)
         // 再取得して次の判断に使う
@@ -105,7 +107,8 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
       try {
         // 数量削減は深度を消費しない（同じ深度で再試行）
-        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
+        // ツール準備も有効化（diamond:3 → diamond:1 でも diamond_ore 採掘にツールが必要）
+        await handleGoalCommand(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
 
         const parsedGoal = parseQuantityGoal(goalName)
         if (parsedGoal) {
@@ -126,7 +129,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
             const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
             logger.info(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
             attemptedGoals.delete(goalName)
-            return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
+            return await handleGoalCommand(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
           }
         }
 
@@ -136,7 +139,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
 
         // 元のゴールを再度試す前に、試行済みセットから削除
         attemptedGoals.delete(goalName)
-        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
+        return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
       } catch (error) {
         // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
         bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
@@ -202,7 +205,10 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       loggerPlanInner.info(`サブゴール「${subgoal}」を実行中... (深度: ${depth + 1}/${maxDepth})`)
 
       try {
-        await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals, false)
+        // サブゴールでもツール準備を有効化（allowPrep=true）
+        // これにより、diamond_sword → diamond → diamond_ore のような深い依存で
+        // diamond_ore 採掘時に正しくツール準備が行われる
+        await handleGoalCommand(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals, true)
     } catch (error) {
       // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
       if (error.goalChain) {
@@ -218,7 +224,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
     // 元のゴールを再度試す前に、試行済みセットから削除
     attemptedGoals.delete(goalName)
-    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, false)
+    return await handleGoalCommand(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
   }
 
   // プランニング成功 → 実行
@@ -634,8 +640,10 @@ module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
 /**
  * ゴール達成に必要なツールを判定し、段階的に事前準備する。
  * ヒューリスティック計算ではなく、minecraft-dataから直接ツール要件を取得。
+ * アイテム名がブロック名でない場合（diamond, raw_ironなど）は、
+ * gatherアクションから params.itemName を取得してブロック名に変換する。
  *
- * @param {string} goalName - 目標（例: "inventory.iron_ore:1"）
+ * @param {string} goalName - 目標（例: "inventory.iron_ore:1", "inventory.diamond:1"）
  * @param {Object} worldState - 現在の世界状態
  * @returns {Array<string>} 事前準備ゴールの配列（例: ["inventory.category.pickaxe:true", "inventory.category.stone_or_better_pickaxe:true"]）
  */
@@ -658,21 +666,49 @@ async function buildPickaxePreparationGoals(goalName, worldState) {
     return []
   }
 
-  // アイテムに対応するブロックを探す
-  const block = mcData.blocksByName[itemName]
+  // ステップ1: まずブロックとして検索
+  let block = mcData.blocksByName[itemName]
+  let targetBlockName = itemName
+
+  // ステップ2: ブロックでなければ、このアイテムを生成するgatherアクションを探す
+  if (!block) {
+    const goapModule = require('../planner/goap')
+    const allActions = goapModule.getAllActions()
+
+    // このアイテムを効果として生成するgatherアクションを探す
+    // 例: inventory.diamond → auto_gather_diamond_ore_... → params.itemName: diamond_ore
+    const producingAction = allActions.find(action => {
+      return action.skill === 'gather' &&
+             action.effects &&
+             action.effects[`inventory.${itemName}`] &&
+             action.params &&
+             action.params.itemName
+    })
+
+    if (producingAction) {
+      targetBlockName = producingAction.params.itemName
+      block = mcData.blocksByName[targetBlockName]
+
+      if (process.env.GOAP_DEBUG_PREP === '1') {
+        logger.info(`[PREP DEBUG] ${itemName} はブロックではないが、gatherアクションから取得: ${targetBlockName}`)
+      }
+    }
+  }
+
   if (!block) {
     if (process.env.GOAP_DEBUG_PREP === '1') {
-      logger.info(`[PREP DEBUG] ${itemName} はブロックではないため、ツール不要`)
+      logger.info(`[PREP DEBUG] ${itemName} はブロックでもgatherアクションでも見つからないため、ツール不要`)
     }
     return []
   }
 
-  // ブロックに必要なツールを判定
+  // ステップ3: ブロックに必要なツールを判定
   const requiredTool = determineRequiredTool(block, mcData)
 
   if (process.env.GOAP_DEBUG_PREP === '1') {
     logger.info(`[PREP DEBUG] Goal: ${goalName}`)
-    logger.info(`[PREP DEBUG] Block: ${itemName}`)
+    logger.info(`[PREP DEBUG] Item: ${itemName}`)
+    logger.info(`[PREP DEBUG] Block: ${targetBlockName}`)
     logger.info(`[PREP DEBUG] Required tool: ${requiredTool || 'none'}`)
     logger.info(`[PREP DEBUG] Current inventory.category: ${JSON.stringify(inventoryCat)}`)
   }

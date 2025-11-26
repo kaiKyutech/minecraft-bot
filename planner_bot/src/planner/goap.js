@@ -1604,10 +1604,20 @@ async function collectShortages(goalInput, worldState, logger = null) {
   }
 }
 
+/**
+ * 読み込まれた全アクションを取得
+ * @returns {Array} アクション配列
+ */
+function getAllActions() {
+  const domainConfig = loadDomain()
+  return domainConfig.actions
+}
+
 module.exports = {
   plan,
   collectShortages,
   loadDomain,
+  getAllActions,
   evaluateCondition,
   arePreconditionsSatisfied
 }
