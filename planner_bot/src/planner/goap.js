@@ -303,6 +303,16 @@ async function plan(goalInput, worldState, logger = null) {
       return { plan: current.actions, diagnosis: null }
     }
 
+    // デバッグ: ゴール判定の詳細を出力
+    if (process.env.GOAP_DEBUG_GOAL === '1' && iterations <= 10) {
+      getLogger().info(`[GOAP Debug Iter ${iterations}] Goal check:`)
+      getLogger().info(`  adjustedGoal: ${JSON.stringify(adjustedGoal)}`)
+      for (const [key, target] of Object.entries(adjustedGoal)) {
+        const actual = getStateValue(current.state, key)
+        getLogger().info(`  ${key}: target=${target}, actual=${actual}, satisfied=${evaluateCondition(actual, target)}`)
+      }
+    }
+
     for (const action of filteredActions) {
       if (!arePreconditionsSatisfied(action.preconditions, current.state)) {
         continue
@@ -695,7 +705,22 @@ function extractPositiveEffects(effects) {
 }
 
 function isGoalSatisfied(goalState, state) {
-  return arePreconditionsSatisfied(goalState, state)
+  // ゴール判定は「以上」(>=) で行う
+  // 理由: craft_sticks_from_planks は "+4" を生成するが、ゴールは "2" かもしれない
+  //       相対的な増加（既に持っている場合も追加で作る）をサポートするため
+  return Object.entries(goalState).every(([key, targetValue]) => {
+    const actualValue = getStateValue(state, key)
+
+    // 数値の場合は「以上」でチェック
+    if (typeof targetValue === 'number') {
+      const actual = Number(actualValue)
+      if (isNaN(actual)) return false
+      return actual >= targetValue
+    }
+
+    // Boolean や文字列条件はそのまま評価
+    return evaluateCondition(actualValue, targetValue)
+  })
 }
 
 const HEURISTIC_MAX = MAX_ITERATIONS * 2
@@ -1403,61 +1428,94 @@ function analyzeRelevantVariables(goal, actions, initialState = null) {
       // （既に持っているピッケルを作り直す必要はない）
       const isAlreadySatisfied = initialState && initialState[variable] === true
 
+      if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
+        getLogger().info(`[COMPOSITE] ${variable}: isAlreadySatisfied=${isAlreadySatisfied}, deps=${JSON.stringify(compositeStateDependencies[variable])}`)
+      }
+
       if (!isAlreadySatisfied) {
-        // この複合状態を展開済みとしてマーク
-        for (const depVar of compositeStateDependencies[variable]) {
-          if (!relevant.has(depVar)) {
-            relevant.add(depVar)
-            queue.push(depVar)
-            // 展開された依存変数が複合状態の場合、それを記録
-            if (compositeStateDependencies[depVar]) {
-              expandedCompositeStates.add(depVar)
-            }
+        // 複合状態はOR条件（いずれか1つ）なので、最も安い選択肢のみを展開
+        // 例: inventory.category.pickaxe → wooden_pickaxe のみ（全てのピッケルではない）
+        const deps = compositeStateDependencies[variable]
+        const cheapestDep = deps[0]  // 配列の最初が最も安い（state_schema.yamlで定義順）
+
+        if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
+          getLogger().info(`[COMPOSITE] Expanding ${variable} → ${cheapestDep} (選択: 最初の1つのみ)`)
+        }
+
+        if (cheapestDep && !relevant.has(cheapestDep)) {
+          relevant.add(cheapestDep)
+          queue.push(cheapestDep)
+          // 展開された依存変数が複合状態の場合、それを記録
+          if (compositeStateDependencies[cheapestDep]) {
+            expandedCompositeStates.add(cheapestDep)
           }
         }
       }
     }
 
     // この変数に影響を与えるアクション（正の効果を持つもの）を探す
+    // 複合状態の場合は、最もコストの低いアクションのみを選択
+    const isCompositeState = compositeStateDependencies[variable] && compositeStateDependencies[variable].length > 0
+
+    let actionsToConsider = []
     for (const action of actions) {
-      // このアクションの効果にvariableが含まれているか
       if (action.effects && action.effects[variable] !== undefined) {
         const effectValue = action.effects[variable]
 
         // 正の効果のみを追跡（マイナス効果は無視）
         let isPositiveEffect = false
         if (typeof effectValue === 'string') {
-          // "+1", "+4" などの増加効果
           if (effectValue.startsWith('+')) {
             isPositiveEffect = true
           }
-          // "-1" などの減少効果は無視
         } else if (typeof effectValue === 'number' && effectValue > 0) {
           isPositiveEffect = true
         } else if (effectValue === true || effectValue === 'true') {
           isPositiveEffect = true
         }
 
-        // 正の効果を持つアクションの前提条件のみを追加
-        if (isPositiveEffect && action.preconditions) {
-          for (const [preVar, preCond] of Object.entries(action.preconditions)) {
-            // 初期状態ですでに満たしている前提は関連拡張しない
-            if (initialState) {
-              const currentVal = getStateValue(initialState, preVar)
-              if (evaluateCondition(currentVal, preCond)) {
-                continue
-              }
-              // nearby/visible 系は初期状態で0/未定義なら拡張しない（環境がないものは探さない）
-              if ((preVar.startsWith('nearby.') || preVar.startsWith('visible_')) &&
-                  (currentVal === undefined || currentVal === 0)) {
-                continue
-              }
-            }
+        if (isPositiveEffect) {
+          actionsToConsider.push(action)
+        }
+      }
+    }
 
-            if (!relevant.has(preVar)) {
-              relevant.add(preVar)
-              queue.push(preVar)
+    // 複合状態の場合は最もコストの低いアクションのみ選択
+    if (isCompositeState && actionsToConsider.length > 1) {
+      const originalCount = actionsToConsider.length
+      actionsToConsider.sort((a, b) => {
+        const costA = Number.isFinite(a.cost) ? a.cost : 1
+        const costB = Number.isFinite(b.cost) ? b.cost : 1
+        return costA - costB
+      })
+      const cheapest = actionsToConsider[0]
+      actionsToConsider = [cheapest]  // 最も安いもののみ
+
+      if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
+        getLogger().info(`[COMPOSITE] ${variable}を効果として持つアクション: ${originalCount}個から最安の${cheapest.name}を選択`)
+      }
+    }
+
+    // 選択されたアクションの前提条件のみを追加
+    for (const action of actionsToConsider) {
+      if (action.preconditions) {
+        for (const [preVar, preCond] of Object.entries(action.preconditions)) {
+          // 初期状態ですでに満たしている前提は関連拡張しない
+          if (initialState) {
+            const currentVal = getStateValue(initialState, preVar)
+            if (evaluateCondition(currentVal, preCond)) {
+              continue
             }
+            // nearby/visible 系は初期状態で0/未定義なら拡張しない（環境がないものは探さない）
+            if ((preVar.startsWith('nearby.') || preVar.startsWith('visible_')) &&
+                (currentVal === undefined || currentVal === 0)) {
+              continue
+            }
+          }
+
+          if (!relevant.has(preVar)) {
+            relevant.add(preVar)
+            queue.push(preVar)
           }
         }
       }

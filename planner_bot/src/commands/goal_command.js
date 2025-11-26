@@ -632,39 +632,163 @@ module.exports.checkCompositeState = checkCompositeState
 module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
 
 /**
- * ゴール達成に必要な最弱ピッケルを判定し、所持していなければ事前に作成させる。
- * - ゴール名に diamond が含まれる → iron_or_better_pickaxe
- * - それ以外でピッケル系が不足 → stone_or_better_pickaxe または pickaxe
- * 優先度: pickaxe < stone_or_better_pickaxe < iron_or_better_pickaxe
- * @param {string} goalName
- * @param {Object} worldState
- * @returns {string|null} 事前に満たすべきゴール（例: "inventory.category.pickaxe:true"）、不要ならnull
+ * ゴール達成に必要なツールを判定し、段階的に事前準備する。
+ * ヒューリスティック計算ではなく、minecraft-dataから直接ツール要件を取得。
+ *
+ * @param {string} goalName - 目標（例: "inventory.iron_ore:1"）
+ * @param {Object} worldState - 現在の世界状態
+ * @returns {Array<string>} 事前準備ゴールの配列（例: ["inventory.category.pickaxe:true", "inventory.category.stone_or_better_pickaxe:true"]）
  */
 async function buildPickaxePreparationGoals(goalName, worldState) {
   const inventoryCat = worldState?.inventory?.category || {}
-  const goap = require('../planner/goap')
+  const logger = createLogger({ category: 'goap.prep' })
+  const minecraftData = require('minecraft-data')
 
-  // ヒューリスティック不足を取得
-  let shortages = []
+  // ゴール名から対象アイテムを抽出（例: "inventory.iron_ore:1" → "iron_ore"）
+  const match = goalName.match(/inventory\.([a-z_]+)/)
+  if (!match) return []
+
+  const itemName = match[1]
+
+  let mcData
   try {
-    shortages = await goap.collectShortages(goalName, worldState)
+    mcData = minecraftData(process.env.MC_VERSION || '1.20.1')
   } catch (error) {
+    logger.warn(`[PREP] minecraft-data読み込み失敗: ${error.message}`)
     return []
   }
 
-  const needPick = shortages.some(s => s.key === 'inventory.category.pickaxe' && shortagePositive(s))
-  const needStone = shortages.some(s => s.key === 'inventory.category.stone_or_better_pickaxe' && shortagePositive(s))
-  const needIron = shortages.some(s => s.key === 'inventory.category.iron_or_better_pickaxe' && shortagePositive(s))
+  // アイテムに対応するブロックを探す
+  const block = mcData.blocksByName[itemName]
+  if (!block) {
+    if (process.env.GOAP_DEBUG_PREP === '1') {
+      logger.info(`[PREP DEBUG] ${itemName} はブロックではないため、ツール不要`)
+    }
+    return []
+  }
 
+  // ブロックに必要なツールを判定
+  const requiredTool = determineRequiredTool(block, mcData)
+
+  if (process.env.GOAP_DEBUG_PREP === '1') {
+    logger.info(`[PREP DEBUG] Goal: ${goalName}`)
+    logger.info(`[PREP DEBUG] Block: ${itemName}`)
+    logger.info(`[PREP DEBUG] Required tool: ${requiredTool || 'none'}`)
+    logger.info(`[PREP DEBUG] Current inventory.category: ${JSON.stringify(inventoryCat)}`)
+  }
+
+  if (!requiredTool) {
+    // ツール不要（素手で採掘可能）
+    return []
+  }
+
+  // 必要なツールまでの段階的な依存関係を構築
+  const prepGoals = buildToolDependencyChain(requiredTool, inventoryCat)
+
+  if (process.env.GOAP_DEBUG_PREP === '1') {
+    logger.info(`[PREP DEBUG] Final prep goals: ${JSON.stringify(prepGoals)}`)
+  }
+
+  return prepGoals
+}
+
+/**
+ * ブロックに必要なツールを判定
+ * @param {Object} block - minecraft-dataのブロック情報
+ * @param {Object} mcData - minecraft-data
+ * @returns {string|null} 必要なツールカテゴリ（'pickaxe', 'stone_or_better_pickaxe', 'iron_or_better_pickaxe', 'axe', 'shovel', 'shears', null）
+ */
+function determineRequiredTool(block, mcData) {
+  if (!block.harvestTools || Object.keys(block.harvestTools).length === 0) {
+    return null // 素手で採掘可能
+  }
+
+  const toolIds = Object.keys(block.harvestTools)
+  const toolNames = toolIds
+    .map(id => mcData.items[id]?.name)
+    .filter(Boolean)
+
+  // shears（ハサミ）が必要
+  if (toolNames.some(n => n === 'shears')) {
+    return 'shears'
+  }
+
+  // shovel（シャベル）で高速化
+  if (toolNames.some(n => n && n.endsWith('_shovel'))) {
+    return 'shovel'
+  }
+
+  // axe（斧）で高速化
+  if (toolNames.some(n => n && n.endsWith('_axe'))) {
+    return 'axe'
+  }
+
+  // pickaxe系の判定（重要：最も弱いツールを返す）
+  if (toolNames.some(n => n === 'wooden_pickaxe')) {
+    return 'pickaxe' // 木のピッケルでOK
+  }
+
+  if (toolNames.some(n => n === 'stone_pickaxe')) {
+    return 'stone_or_better_pickaxe' // 石以上必須
+  }
+
+  if (toolNames.some(n => n === 'iron_pickaxe' || n === 'diamond_pickaxe' || n === 'netherite_pickaxe')) {
+    return 'iron_or_better_pickaxe' // 鉄以上必須
+  }
+
+  return null
+}
+
+/**
+ * 必要なツールまでの段階的な依存関係を構築
+ * @param {string} targetTool - 最終的に必要なツール
+ * @param {Object} inventoryCat - 現在のインベントリカテゴリ
+ * @returns {Array<string>} 事前準備ゴールの配列
+ */
+function buildToolDependencyChain(targetTool, inventoryCat) {
   const prepGoals = []
-  if (needPick && !inventoryCat.pickaxe) {
-    prepGoals.push('inventory.category.pickaxe:true')
-  }
-  if (needStone && !inventoryCat.stone_or_better_pickaxe) {
-    prepGoals.push('inventory.category.stone_or_better_pickaxe:true')
-  }
-  if (needIron && !inventoryCat.iron_or_better_pickaxe) {
-    prepGoals.push('inventory.category.iron_or_better_pickaxe:true')
+
+  // ツールの階層: pickaxe → stone_or_better_pickaxe → iron_or_better_pickaxe
+
+  if (targetTool === 'pickaxe') {
+    // 木のピッケルが必要
+    if (!inventoryCat.pickaxe) {
+      prepGoals.push('inventory.category.pickaxe:true')
+    }
+  } else if (targetTool === 'stone_or_better_pickaxe') {
+    // 石のピッケルが必要 → まず木のピッケルを作ってから石のピッケル
+    if (!inventoryCat.pickaxe) {
+      prepGoals.push('inventory.category.pickaxe:true')
+    }
+    if (!inventoryCat.stone_or_better_pickaxe) {
+      prepGoals.push('inventory.category.stone_or_better_pickaxe:true')
+    }
+  } else if (targetTool === 'iron_or_better_pickaxe') {
+    // 鉄のピッケルが必要 → 木 → 石 → 鉄の順
+    if (!inventoryCat.pickaxe) {
+      prepGoals.push('inventory.category.pickaxe:true')
+    }
+    if (!inventoryCat.stone_or_better_pickaxe) {
+      prepGoals.push('inventory.category.stone_or_better_pickaxe:true')
+    }
+    if (!inventoryCat.iron_or_better_pickaxe) {
+      prepGoals.push('inventory.category.iron_or_better_pickaxe:true')
+    }
+  } else if (targetTool === 'axe') {
+    // 斧が必要
+    if (!inventoryCat.axe) {
+      prepGoals.push('inventory.category.axe:true')
+    }
+  } else if (targetTool === 'shovel') {
+    // シャベルが必要
+    if (!inventoryCat.shovel) {
+      prepGoals.push('inventory.category.shovel:true')
+    }
+  } else if (targetTool === 'shears') {
+    // ハサミが必要
+    if (!inventoryCat.shears) {
+      prepGoals.push('inventory.category.shears:true')
+    }
   }
 
   return prepGoals
