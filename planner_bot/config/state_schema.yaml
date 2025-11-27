@@ -24,6 +24,7 @@ inventory_states:
   # - inventory.category.axe (boolean) - 任意の斧を所持
   # - inventory.category.stone_or_better_pickaxe (boolean) - 石以上のピッケル
   # - inventory.category.iron_or_better_pickaxe (boolean) - 鉄以上のピッケル
+  # - inventory.category.diamond_or_better_pickaxe (boolean) - ダイヤ以上のピッケル
 
   # === 個別アイテムは inventory.xxx で参照 ===
   # inventory.crafting_table - 所持しているクラフト台の数

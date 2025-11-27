@@ -147,7 +147,6 @@ item_categories:
     items:
       - stone_pickaxe
       - iron_pickaxe
-      - golden_pickaxe
       - diamond_pickaxe
       - netherite_pickaxe
 
@@ -156,7 +155,13 @@ item_categories:
     type: "boolean"
     items:
       - iron_pickaxe
-      - golden_pickaxe
+      - diamond_pickaxe
+      - netherite_pickaxe
+
+  diamond_or_better_pickaxe:
+    description: "ダイヤ以上のピッケルを所持しているか（ダイヤ/ネザライト）"
+    type: "boolean"
+    items:
       - diamond_pickaxe
       - netherite_pickaxe
 

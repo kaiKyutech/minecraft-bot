@@ -3203,7 +3203,7 @@ actions:
     preconditions:
       inventory_space: true
       nearby.obsidian: ">= 1"
-      inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     effects:
       inventory.obsidian: "+1"
     cost: 1
@@ -9685,7 +9685,7 @@ actions:
     preconditions:
       inventory_space: true
       nearby.netherite_block: ">= 1"
-      inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     effects:
       inventory.netherite_block: "+1"
     cost: 1
@@ -9697,7 +9697,7 @@ actions:
     preconditions:
       inventory_space: true
       nearby.ancient_debris: ">= 1"
-      inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     effects:
       inventory.ancient_debris: "+1"
     cost: 1
@@ -9709,7 +9709,7 @@ actions:
     preconditions:
       inventory_space: true
       nearby.crying_obsidian: ">= 1"
-      inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     effects:
       inventory.crying_obsidian: "+1"
     cost: 1
@@ -9721,7 +9721,7 @@ actions:
     preconditions:
       inventory_space: true
       nearby.respawn_anchor: ">= 1"
-      inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     effects:
       inventory.respawn_anchor: "+1"
     cost: 1

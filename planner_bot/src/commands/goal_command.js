@@ -732,7 +732,7 @@ async function buildPickaxePreparationGoals(goalName, worldState) {
  * ブロックに必要なツールを判定
  * @param {Object} block - minecraft-dataのブロック情報
  * @param {Object} mcData - minecraft-data
- * @returns {string|null} 必要なツールカテゴリ（'pickaxe', 'stone_or_better_pickaxe', 'iron_or_better_pickaxe', 'axe', 'shovel', 'shears', null）
+ * @returns {string|null} 必要なツールカテゴリ（'pickaxe', 'stone_or_better_pickaxe', 'iron_or_better_pickaxe', 'diamond_or_better_pickaxe', 'axe', 'shovel', 'shears', null）
  */
 function determineRequiredTool(block, mcData) {
   if (!block.harvestTools || Object.keys(block.harvestTools).length === 0) {
@@ -760,16 +760,25 @@ function determineRequiredTool(block, mcData) {
   }
 
   // pickaxe系の判定（重要：最も弱いツールを返す）
-  if (toolNames.some(n => n === 'wooden_pickaxe')) {
-    return 'pickaxe' // 木のピッケルでOK
+  const hasWood = toolNames.some(n => n === 'wooden_pickaxe' || n === 'golden_pickaxe')
+  const hasStone = toolNames.some(n => n === 'stone_pickaxe')
+  const hasIron = toolNames.some(n => n === 'iron_pickaxe')
+  const hasDiamond = toolNames.some(n => n === 'diamond_pickaxe' || n === 'netherite_pickaxe')
+
+  if (hasDiamond && !hasIron && !hasStone && !hasWood) {
+    return 'diamond_or_better_pickaxe' // ダイヤ以上必須
   }
 
-  if (toolNames.some(n => n === 'stone_pickaxe')) {
+  if (hasIron && !hasStone && !hasWood) {
+    return 'iron_or_better_pickaxe' // 鉄以上必須
+  }
+
+  if (hasStone && !hasWood) {
     return 'stone_or_better_pickaxe' // 石以上必須
   }
 
-  if (toolNames.some(n => n === 'iron_pickaxe' || n === 'diamond_pickaxe' || n === 'netherite_pickaxe')) {
-    return 'iron_or_better_pickaxe' // 鉄以上必須
+  if (hasWood) {
+    return 'pickaxe' // 木のピッケルでOK
   }
 
   return null
@@ -784,7 +793,7 @@ function determineRequiredTool(block, mcData) {
 function buildToolDependencyChain(targetTool, inventoryCat) {
   const prepGoals = []
 
-  // ツールの階層: pickaxe → stone_or_better_pickaxe → iron_or_better_pickaxe
+  // ツールの階層: pickaxe → stone_or_better_pickaxe → iron_or_better_pickaxe → diamond_or_better_pickaxe
 
   if (targetTool === 'pickaxe') {
     // 木のピッケルが必要
@@ -809,6 +818,20 @@ function buildToolDependencyChain(targetTool, inventoryCat) {
     }
     if (!inventoryCat.iron_or_better_pickaxe) {
       prepGoals.push('inventory.category.iron_or_better_pickaxe:true')
+    }
+  } else if (targetTool === 'diamond_or_better_pickaxe') {
+    // ダイヤ以上が必要 → 木 → 石 → 鉄 → ダイヤ以上の順
+    if (!inventoryCat.pickaxe) {
+      prepGoals.push('inventory.category.pickaxe:true')
+    }
+    if (!inventoryCat.stone_or_better_pickaxe) {
+      prepGoals.push('inventory.category.stone_or_better_pickaxe:true')
+    }
+    if (!inventoryCat.iron_or_better_pickaxe) {
+      prepGoals.push('inventory.category.iron_or_better_pickaxe:true')
+    }
+    if (!inventoryCat.diamond_or_better_pickaxe) {
+      prepGoals.push('inventory.category.diamond_or_better_pickaxe:true')
     }
   } else if (targetTool === 'axe') {
     // 斧が必要

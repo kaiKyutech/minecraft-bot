@@ -311,6 +311,7 @@ actions:
       inventory.category.pickaxe: true
       inventory.category.stone_or_better_pickaxe: true
       inventory.category.iron_or_better_pickaxe: true
+      inventory.category.diamond_or_better_pickaxe: true
     cost: 10
     skill: workbench_craft
     params:

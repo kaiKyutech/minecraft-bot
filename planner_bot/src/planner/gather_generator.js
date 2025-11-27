@@ -144,6 +144,11 @@ async function generateGatherActions(version) {
   // YAMLに出力
   try {
     fs.mkdirSync(GENERATED_DIR, { recursive: true });
+    if (fs.existsSync(GENERATED_FILE)) {
+      const backupPath = path.join(GENERATED_DIR, 'gather_auto.backup.yaml');
+      fs.copyFileSync(GENERATED_FILE, backupPath);
+      logger.info(`[AUTO-GATHER] 既存ファイルをバックアップ: ${path.relative(process.cwd(), backupPath)}`);
+    }
     const yaml = YAML.stringify({ actions });
     fs.writeFileSync(GENERATED_FILE, yaml, 'utf8');
     logger.info(`[AUTO-GATHER] ${actions.length} 個のgatherアクションを自動生成しました → ${path.relative(process.cwd(), GENERATED_FILE)}`);
@@ -188,15 +193,31 @@ function resolveToolRequirement(mcData, block) {
   const hasShovel = toolNames.some((n) => n && n.endsWith('_shovel'));
   if (hasShovel) return { precondition: 'inventory.category.shovel', label: 'shovel' };
 
-  // pickaxe系は最も弱いツールを採用する
-  const hasWood = toolNames.some((n) => n === 'wooden_pickaxe');
-  if (hasWood) return { precondition: 'inventory.category.pickaxe', label: 'pickaxe' };
-
+  // pickaxe系は「必要な最小レベル」を採用する
+  const hasWood = toolNames.some((n) => n === 'wooden_pickaxe' || n === 'golden_pickaxe');
   const hasStone = toolNames.some((n) => n === 'stone_pickaxe');
-  if (hasStone) return { precondition: 'inventory.category.stone_or_better_pickaxe', label: 'pickaxe' };
+  const hasIron = toolNames.some((n) => n === 'iron_pickaxe');
+  const hasDiamond = toolNames.some((n) => n === 'diamond_pickaxe' || n === 'netherite_pickaxe');
 
-  const hasIronOrBetter = toolNames.some((n) => n === 'iron_pickaxe' || n === 'diamond_pickaxe' || n === 'netherite_pickaxe');
-  if (hasIronOrBetter) return { precondition: 'inventory.category.iron_or_better_pickaxe', label: 'pickaxe' };
+  // diamond/netherite のみ指定されている場合はダイヤ以上必須
+  if (hasDiamond && !hasIron && !hasStone && !hasWood) {
+    return { precondition: 'inventory.category.diamond_or_better_pickaxe', label: 'pickaxe' };
+  }
+
+  // iron 以上のみ指定
+  if (hasIron && !hasStone && !hasWood) {
+    return { precondition: 'inventory.category.iron_or_better_pickaxe', label: 'pickaxe' };
+  }
+
+  // stone 以上のみ指定
+  if (hasStone && !hasWood) {
+    return { precondition: 'inventory.category.stone_or_better_pickaxe', label: 'pickaxe' };
+  }
+
+  // 最低レベルのpickaxeでOK
+  if (hasWood) {
+    return { precondition: 'inventory.category.pickaxe', label: 'pickaxe' };
+  }
 
   const hasAxe = toolNames.some((n) => n && n.endsWith('_axe'));
   if (hasAxe) return { precondition: 'inventory.category.axe', label: 'axe' };
