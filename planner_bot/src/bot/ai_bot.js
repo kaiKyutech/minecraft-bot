@@ -175,10 +175,13 @@ function buildLogFilter() {
 /**
  * AI Botを作成
  * @param {number} id - ボットID
- * @param {Object} config - 設定
- * @returns {Object} Mineflayerボットインスタンス
+ * @param {Object} config - Mineflayer設定 (host, port, username, version, aiBotCount)
+ * @param {Object} options - オプション設定
+ * @param {boolean} options.autoHandleWhisper - whisperイベントを自動処理するか（デフォルト: true）
+ * @param {Function} options.onNaturalMessage - 自然言語メッセージのカスタムハンドラー (bot, username, message) => Promise<void>
+ * @returns {Object} Mineflayerボットインスタンス（bot.stateManager を含む）
  */
-function createAIBot(id, config) {
+function createAIBot(id, config, options = {}) {
   // AI_BOT_COUNT=1の場合は番号を付けない（マルチプロセス対応）
   const botName = config.aiBotCount === 1 ? config.username : `${config.username}${id}`
 
@@ -199,59 +202,74 @@ function createAIBot(id, config) {
   // 統一されたログシステムを追加
   addLoggingSystem(bot)
 
+  // stateManagerを外部からアクセス可能にする
+  bot.stateManager = stateManager
+
   // スポーン時
   bot.once('spawn', () => {
     console.log(`[AI-BOT] ${botName} spawned`)
     debugLog(`${botName} spawned, ready to receive goals`)
   })
 
-  // ウィスパーコマンド受付
-  bot.on('whisper', async (username, message) => {
-    if (username === bot.username) return
+  // デフォルトでwhisperイベントを自動処理（無効化可能）
+  if (options.autoHandleWhisper !== false) {
+    bot.on('whisper', async (username, message) => {
+      if (username === bot.username) return
 
-    bot.systemLog(`Whisper from ${username}: ${message}`)
-    debugLog(`whisper from ${username}: ${message}`)
+      bot.systemLog(`Whisper from ${username}: ${message}`)
+      debugLog(`whisper from ${username}: ${message}`)
 
-    // !で始まるメッセージ: コマンド（会話履歴に入れない）
-    if (message.startsWith('!')) {
-      try {
-        const result = await handleChatCommand(bot, username, message, stateManager)
+      // !で始まるメッセージ: コマンド（会話履歴に入れない）
+      if (message.startsWith('!')) {
+        try {
+          const result = await handleChatCommand(bot, username, message, stateManager)
 
-        // コマンドの最終的な返り値をログ出力
-        if (result !== undefined && bot.shouldLogCommand(bot.lastCommandName)) {
+          // コマンドの最終的な返り値をログ出力
+          if (result !== undefined && bot.shouldLogCommand(bot.lastCommandName)) {
+            console.log('='.repeat(80))
+            console.log(`[${bot.username}] [COMMAND_RESULT] 最終的なコマンドの返り値:`)
+            console.log(JSON.stringify(result, null, 2))
+            console.log('='.repeat(80))
+          }
+        } catch (error) {
+          // エラーをキャッチして統一的に出力
+          const errorResult = {
+            success: false,
+            error: error.message,
+            stack: error.stack
+          }
           console.log('='.repeat(80))
-          console.log(`[${bot.username}] [COMMAND_RESULT] 最終的なコマンドの返り値:`)
-          console.log(JSON.stringify(result, null, 2))
+          console.log(`[${bot.username}] [COMMAND_ERROR] 最終的なコマンドの返り値:`)
+          console.log(JSON.stringify(errorResult, null, 2))
           console.log('='.repeat(80))
+          bot.systemLog(`Command error: ${error.message}`)
+          bot.systemLog(`Stack trace: ${error.stack}`)
         }
-      } catch (error) {
-        // エラーをキャッチして統一的に出力
-        const errorResult = {
-          success: false,
-          error: error.message,
-          stack: error.stack
-        }
-        console.log('='.repeat(80))
-        console.log(`[${bot.username}] [COMMAND_ERROR] 最終的なコマンドの返り値:`)
-        console.log(JSON.stringify(errorResult, null, 2))
-        console.log('='.repeat(80))
-        bot.systemLog(`Command error: ${error.message}`)
-        bot.systemLog(`Stack trace: ${error.stack}`)
+        return
       }
-      return
-    }
 
-    // 自然言語メッセージ: 会話履歴に追加
-    bot.addMessage(username, message, 'conversation')
-    bot.systemLog(`Natural language message added to conversation history`)
+      // 自然言語メッセージ: 会話履歴に追加
+      bot.addMessage(username, message, 'conversation')
+      bot.systemLog(`Natural language message added to conversation history`)
 
-    // 即時通知イベントを発火（LLMプロジェクトで使用）
-    bot.emit('newNaturalMessage', {
-      from: username,
-      content: message,
-      timestamp: Date.now()
+      // カスタムハンドラーが提供されていればそれを使う
+      if (options.onNaturalMessage && typeof options.onNaturalMessage === 'function') {
+        try {
+          await options.onNaturalMessage(bot, username, message)
+        } catch (error) {
+          bot.systemLog(`Error in onNaturalMessage handler: ${error.message}`)
+          console.error(`[AI-BOT] ${botName} onNaturalMessage error:`, error)
+        }
+      } else {
+        // デフォルト: イベント発火のみ（LLMプロジェクトで購読可能）
+        bot.emit('newNaturalMessage', {
+          from: username,
+          content: message,
+          timestamp: Date.now()
+        })
+      }
     })
-  })
+  }
 
   // 公開チャット無視
   bot.on('chat', (username, message) => {
