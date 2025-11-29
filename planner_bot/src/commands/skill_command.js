@@ -13,7 +13,6 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   if (!body) {
     const errorMsg = 'スキル名を指定してください'
     bot.systemLog(errorMsg)
-    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -24,7 +23,6 @@ async function handleSkillCommand(bot, username, message, stateManager) {
   if (typeof skillFn !== 'function') {
     const errorMsg = `未知のスキルです: ${nameToken}`
     bot.systemLog(errorMsg)
-    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -35,7 +33,6 @@ async function handleSkillCommand(bot, username, message, stateManager) {
     } catch (error) {
       const errorMsg = 'パラメータはJSON形式で指定してください'
       bot.systemLog(errorMsg)
-      bot.addMessage(bot.username, errorMsg, 'system_info')
       return
     }
   }

@@ -13,7 +13,6 @@ async function handlePrimitiveCommand(bot, username, message, stateManager) {
   if (!body) {
     const errorMsg = 'プリミティブ名を指定してください'
     bot.systemLog(errorMsg)
-    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -26,7 +25,6 @@ async function handlePrimitiveCommand(bot, username, message, stateManager) {
   if (typeof primitiveFn !== 'function') {
     const errorMsg = `未知のプリミティブです: ${nameToken}`
     bot.systemLog(errorMsg)
-    bot.addMessage(bot.username, errorMsg, 'system_info')
     return
   }
 
@@ -37,7 +35,6 @@ async function handlePrimitiveCommand(bot, username, message, stateManager) {
     } catch (error) {
       const errorMsg = 'パラメータはJSON形式で指定してください'
       bot.systemLog(errorMsg)
-      bot.addMessage(bot.username, errorMsg, 'system_info')
       return
     }
   }

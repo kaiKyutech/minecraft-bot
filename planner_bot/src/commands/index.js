@@ -248,16 +248,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
     const targetPlayer = bot.players[targetUsername]
     if (!targetPlayer) {
       bot.systemLog(`[CHAT] Player ${targetUsername} not found`)
-
-      // 会話履歴に記録（発話を試みた事実として）
-      bot.addMessage(bot.username, {
-        message: message,
-        delivered: false,
-        reason: 'player_not_found',
-        targetUsername: targetUsername,
-        maxDistance: maxDistance
-      }, 'conversation')
-
       return {
         success: false,
         reason: 'player_not_found',
@@ -268,16 +258,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
     // エンティティ情報の確認（距離計算に必要）
     if (!targetPlayer.entity) {
       bot.systemLog(`[CHAT] Player ${targetUsername} entity not available`)
-
-      // 会話履歴に記録（発話を試みた事実として）
-      bot.addMessage(bot.username, {
-        message: message,
-        delivered: false,
-        reason: 'entity_not_available',
-        targetUsername: targetUsername,
-        maxDistance: maxDistance
-      }, 'conversation')
-
       return {
         success: false,
         reason: 'entity_not_available',
@@ -291,17 +271,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
 
     if (distance > maxDistance) {
       bot.systemLog(`[CHAT] ${targetUsername} is too far (${distanceRounded} blocks, max=${maxDistance})`)
-
-      // 送信失敗でも会話履歴に記録（発話を試みた事実として）
-      bot.addMessage(bot.username, {
-        message: message,
-        delivered: false,
-        reason: 'out_of_range',
-        targetUsername: targetUsername,
-        distance: distanceRounded,
-        maxDistance: maxDistance
-      }, 'conversation')
-
       return {
         success: false,
         reason: 'out_of_range',
@@ -314,15 +283,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
     // 距離内なので送信
     bot.systemLog(`[CHAT] Sending to ${targetUsername} (${distanceRounded} blocks): ${message}`)
     await bot.speak(targetUsername, message)
-
-    // 会話履歴に構造化データとして記録
-    bot.addMessage(bot.username, {
-      message: message,
-      delivered: true,
-      targetUsername: targetUsername,
-      distance: distanceRounded,
-      maxDistance: maxDistance
-    }, 'conversation')
 
     return {
       success: true,
@@ -338,7 +298,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
     const echoMessage = trimmed.replace('!echo ', '').trim()
     bot.systemLog(`Echo: ${echoMessage}`)
     await bot.speak(username, echoMessage)
-    bot.addMessage(bot.username, echoMessage, 'conversation')
     return {
       success: true,
       message: echoMessage

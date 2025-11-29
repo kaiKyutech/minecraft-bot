@@ -34,7 +34,7 @@ const bot = createAIBot(1, {
 
 // これだけで完全に動作！
 // - !goal, !skill, !primitive などのコマンドを自動処理
-// - 自然言語メッセージは会話履歴に追加され、'newNaturalMessage' イベントが発火
+// - 自然言語メッセージは 'newNaturalMessage' イベントが発火（会話履歴への追加は外部で制御）
 ```
 
 ### パターンB: LLM連携（カスタムハンドラー使用）
@@ -52,12 +52,16 @@ const bot = createAIBot(1, {
 }, {
   // 自然言語メッセージのカスタム処理
   onNaturalMessage: async (bot, username, message) => {
+    // 会話履歴にユーザーメッセージを追加
+    bot.addMessage(username, message, 'conversation');
+
     // LLMに会話履歴を送る
     const llmResponse = await queryLLM(bot.conversationHistory);
 
     // LLMがコマンドを返した場合は実行（ゲーム内からのコマンドと同じ挙動）
     if (llmResponse.startsWith('!')) {
       await handleChatCommand(bot, username, llmResponse, bot.stateManager);
+      // コマンド実行結果は返り値で取得可能（会話履歴には自動保存されない）
       return;
     }
 
@@ -66,8 +70,8 @@ const bot = createAIBot(1, {
     // または
     // await bot.speak(username, llmResponse);  // このプロジェクトのラッパー
 
-    // （オプション）会話履歴に追加（LLMの応答を記録したい場合）
-    // bot.addMessage(bot.username, llmResponse, 'conversation');
+    // LLM応答を会話履歴に追加
+    bot.addMessage(bot.username, llmResponse, 'conversation');
   }
 });
 
@@ -124,6 +128,9 @@ bot.on('whisper', async (username, message) => {
 
 - `bot.stateManager` - 状態マネージャー（世界状態の取得・更新）
 - `bot.conversationHistory` - 会話履歴配列（LLM連携用）
+  - **このプロジェクト内では自動保存なし**: 完全に外部プロジェクト側で制御
+  - **外部プロジェクトでの使用**: `bot.addMessage()` を使用して会話履歴を管理
+  - **コマンド実行結果・エラー**: 会話履歴には保存せず、返り値で取得する設計
 - `bot.systemLog(message)` - システムログ出力
 
 ### メソッド
@@ -136,11 +143,26 @@ bot.on('whisper', async (username, message) => {
   - 将来的な拡張（遅延、キュー、ログなど）を想定した抽象化
   - **どちらを使ってもOK**
 
-- `bot.addMessage(speaker, content, type)` - 会話履歴に追加（主にLLM連携用）
+- `bot.speakNearby(message, radius)` - 範囲内の全プレイヤーへwhisper送信
+  - Minecraftセレクター構文 `/w @a[distance=..radius]` を使用
+  - `message`: string - 送信するメッセージ
+  - `radius`: number - 半径（ブロック単位、デフォルト15）
+  - 使用例: `bot.speakNearby('みんな聞いて！', 20)` - 20ブロック以内の全員に送信
+
+- `bot.addMessage(speaker, content, type)` - 会話履歴に手動追加（外部プロジェクト用）
   - `speaker`: string - 発言者名
   - `content`: string | Object - メッセージ内容
   - `type`: 'conversation' | 'system_info'
-  - **注意**: このプロジェクト内では主にエラー情報の記録に使用。LLM連携プロジェクトで積極的に活用。
+  - **使用例**:
+    ```javascript
+    // ユーザーメッセージを追加
+    bot.addMessage(username, userMessage, 'conversation')
+    // LLM応答を追加
+    bot.addMessage(bot.username, llmResponse, 'conversation')
+    // システム情報を追加
+    bot.addMessage('system', { error: 'connection lost' }, 'system_info')
+    ```
+  - **このプロジェクト内では自動呼び出しなし**: 完全に外部プロジェクト側で制御
 
 ### イベント
 
@@ -167,6 +189,51 @@ bot.on('whisper', async (username, message) => {
 **options (オプション)**:
 - `autoHandleWhisper`: boolean - whisper 自動処理（デフォルト: true）
 - `onNaturalMessage`: (bot, username, message) => Promise<void> - 自然言語ハンドラー
+
+---
+
+## 会話履歴の管理
+
+### このプロジェクトでの設計方針
+
+**会話履歴は完全に外部プロジェクト側で管理**
+
+- ✅ このプロジェクト内では `bot.addMessage()` の自動呼び出しは一切なし
+- ✅ コマンド実行結果・エラーは全て返り値で取得可能
+- ✅ 外部プロジェクトが `bot.addMessage()` を使って会話履歴を完全制御
+
+### 会話履歴管理の例
+
+```javascript
+// LLM連携プロジェクトでの典型的な使用例
+onNaturalMessage: async (bot, username, message) => {
+  // 1. ユーザーメッセージを履歴に追加
+  bot.addMessage(username, message, 'conversation');
+
+  // 2. LLMに会話履歴を送信
+  const llmResponse = await queryLLM(bot.conversationHistory);
+
+  // 3. LLM応答を履歴に追加
+  bot.addMessage(bot.username, llmResponse, 'conversation');
+
+  // 4. 応答を送信
+  bot.whisper(username, llmResponse);
+}
+```
+
+### コマンド実行結果の取得
+
+```javascript
+// コマンド実行結果は返り値で取得（会話履歴には保存されない）
+const result = await handleChatCommand(bot, username, '!goal inventory.wooden_pickaxe:1', bot.stateManager);
+
+if (result.success) {
+  console.log('Goal completed:', result.goal);
+} else {
+  console.log('Goal failed:', result.error);
+  console.log('Missing:', result.missingPreconditions);
+}
+```
 
 ---
 

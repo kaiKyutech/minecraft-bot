@@ -59,6 +59,18 @@ function addLoggingSystem(bot) {
   }
 
   /**
+   * 2-2. 範囲内の全プレイヤーへの発言（whisper broadcast）
+   * Minecraftセレクター構文を使用: /w @a[distance=..radius]
+   * @param {string} message - メッセージ
+   * @param {number} radius - 半径（ブロック単位）。デフォルト15
+   */
+  bot.speakNearby = async (message, radius = 15) => {
+    const command = `/w @a[distance=..${radius}] ${message}`
+    console.log(`[${bot.username}] [SPEAK_NEARBY] Sending command: ${command}`)
+    bot.chat(command)
+  }
+
+  /**
    * 3. 会話履歴への追加（唯一の履歴追加ポイント）
    * @param {string} speaker - 発言者の実名（Bot1, Bot2, player など）
    * @param {string|Object} content - メッセージ内容（文字列 or 構造化データ）
@@ -248,10 +260,7 @@ function createAIBot(id, config, options = {}) {
         return
       }
 
-      // 自然言語メッセージ: 会話履歴に追加
-      bot.addMessage(username, message, 'conversation')
-      bot.systemLog(`Natural language message added to conversation history`)
-
+      // 自然言語メッセージ: 外部プロジェクトで処理
       // カスタムハンドラーが提供されていればそれを使う
       if (options.onNaturalMessage && typeof options.onNaturalMessage === 'function') {
         try {

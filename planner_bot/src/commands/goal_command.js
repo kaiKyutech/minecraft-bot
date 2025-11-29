@@ -168,10 +168,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       loggerPlan.info(JSON.stringify(structuredDiagnosis, null, 2))
       loggerPlan.info('========================\n')
 
-      // 会話履歴に記録
-      bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
-
-      // エラーとして投げる
+      // エラーとして投げる（会話履歴には保存しない - LLMプロジェクトで必要なら手動保存）
       const finalError = new Error(`目標「${goalName}」を実行できません: ${error.missingEnvironment} が見つかりません`)
       finalError.diagnosis = structuredDiagnosis
       finalError.needsLLM = true
@@ -190,7 +187,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
       loggerPlan.info(JSON.stringify(structuredDiagnosis, null, 2))
       loggerPlan.info('============================\n')
 
-      bot.addMessage(bot.username, structuredDiagnosis, 'system_info')
+      // 会話履歴には保存しない - LLMプロジェクトで必要なら手動保存
       logDiagnosisDetails(bot, diagnosis)
 
       const error = new Error(`目標「${goalName}」を実行できません`)
