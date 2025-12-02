@@ -103,9 +103,10 @@ function loadDomain() {
   // 複数のアクションファイルを読み込んでマージ
   let allActions = []
 
-  // 1) 自動生成されたアクションを優先して読み込む
+  // 1) 自動生成されたアクションを優先して読み込む（backup.yamlは除外）
   if (fs.existsSync(GENERATED_ACTIONS_DIR)) {
-    const generatedFiles = fs.readdirSync(GENERATED_ACTIONS_DIR).filter(f => f.endsWith('.yaml'))
+    const generatedFiles = fs.readdirSync(GENERATED_ACTIONS_DIR)
+      .filter(f => f.endsWith('.yaml') && !f.includes('.backup.'))
     for (const filename of generatedFiles) {
       const filepath = path.join(GENERATED_ACTIONS_DIR, filename)
       try {
@@ -314,14 +315,41 @@ async function plan(goalInput, worldState, logger = null) {
     }
 
     for (const action of filteredActions) {
-      if (!arePreconditionsSatisfied(action.preconditions, current.state)) {
+      const satisfied = arePreconditionsSatisfied(action.preconditions, current.state)
+
+      // デバッグ: 初回イテレーションのみ前提条件チェックの詳細を出力
+      if (process.env.GOAP_DEBUG_PRECONDITIONS === '1' && iterations === 1) {
+        getLogger().info(`[PRECOND] ${action.name}: ${satisfied ? 'OK' : 'FAILED'}`)
+        if (!satisfied && action.preconditions) {
+          for (const [key, condition] of Object.entries(action.preconditions)) {
+            const value = getStateValue(current.state, key)
+            const result = evaluateCondition(value, condition)
+            getLogger().info(`  ${key}: value=${JSON.stringify(value)}, condition=${JSON.stringify(condition)}, result=${result}`)
+          }
+        }
+      }
+
+      if (!satisfied) {
         continue
       }
 
       // リソース収集の合理的上限チェック（探索空間の爆発を防ぐ）
       const nextState = applyEffects(action.effects, current.state)
 
+      // デバッグ: effectsと状態遷移の詳細
+      if (process.env.GOAP_DEBUG_EFFECTS === '1' && iterations === 1 && action.name.includes('dirt')) {
+        getLogger().info(`[EFFECTS] ${action.name}:`)
+        getLogger().info(`  effects: ${JSON.stringify(action.effects)}`)
+        getLogger().info(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
+        getLogger().info(`  current.state.inventory.category.log: ${getStateValue(current.state, 'inventory.category.log')}`)
+        getLogger().info(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
+        getLogger().info(`  nextState.inventory.category.log: ${getStateValue(nextState, 'inventory.category.log')}`)
+      }
+
       // 各リソースの合理的な上限（Minecraftの1スタック = 64個を基準）
+      // TODO: このチェックは誤検知が多いため一時的に無効化
+      // inventory.category.log が既に多い場合、dirt採取でも除外されてしまう問題がある
+      /*
       const RESOURCE_LIMITS = {
         'inventory.category.log': 32,
         'inventory.category.plank': 64,
@@ -331,23 +359,41 @@ async function plan(goalInput, worldState, logger = null) {
 
       // 上限を超えるリソース収集は行わない
       let exceedsLimit = false
+      let exceedReason = ''
       for (const [key, limit] of Object.entries(RESOURCE_LIMITS)) {
         const value = getStateValue(nextState, key)
         if (typeof value === 'number' && value > limit) {
           exceedsLimit = true
+          exceedReason = `${key}=${value} > ${limit}`
           break
         }
       }
 
       if (exceedsLimit) {
+        if (process.env.GOAP_DEBUG_LIMIT === '1' && iterations === 1) {
+          getLogger().info(`[LIMIT] ${action.name}: EXCEEDED - ${exceedReason}`)
+        }
         continue
       }
+      */
 
       const stepCost = Number.isFinite(action.cost) ? action.cost : 1
       const totalCost = current.cost + stepCost
       const signature = serializeState(nextState)
 
+      // デバッグ: 初回イテレーションのみ状態遷移の詳細を出力
+      if (process.env.GOAP_DEBUG_STATE === '1' && iterations === 1) {
+        getLogger().info(`[STATE] ${action.name}:`)
+        getLogger().info(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
+        getLogger().info(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
+        getLogger().info(`  signature: ${signature.substring(0, 100)}...`)
+        getLogger().info(`  visited: ${visited.has(signature)}, cost: current=${current.cost}, total=${totalCost}, visited=${visited.get(signature)}`)
+      }
+
       if (visited.has(signature) && visited.get(signature) <= totalCost) {
+        if (process.env.GOAP_DEBUG_STATE === '1' && iterations === 1) {
+          getLogger().info(`  SKIPPED: already visited with lower cost`)
+        }
         continue
       }
 
