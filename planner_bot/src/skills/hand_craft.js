@@ -45,6 +45,8 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
  * インベントリの内容に基づいて実際に作成するアイテムを決定
  */
 function resolveDynamicRecipe(bot, recipeType) {
+  const mcData = bot.version ? require('minecraft-data')(bot.version) : null
+
   const inventory = bot.inventory.items()
 
   switch (recipeType) {
@@ -76,7 +78,18 @@ function resolveDynamicRecipe(bot, recipeType) {
       // 作業台も常に同じ
       return 'crafting_table'
 
+    case 'torch_from_charcoal':
+    case 'torch_from_coal':
+      return 'torch'
+
+    case 'bread':
+      return 'bread'
+
     default:
+      // レシピ名がそのままアイテム名として存在すれば直接クラフト
+      if (mcData && mcData.itemsByName[recipeType]) {
+        return recipeType
+      }
       throw new Error(`未知のレシピタイプ: ${recipeType}`)
   }
 }

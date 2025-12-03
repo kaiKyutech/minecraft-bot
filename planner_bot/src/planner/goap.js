@@ -6,6 +6,9 @@ const { createLogger } = require('../utils/logger')
 
 const ACTIONS_DIR = path.join(__dirname, '../../config/actions')
 const GENERATED_ACTIONS_DIR = path.join(__dirname, '../../config/actions_generated')
+// 自動生成アクションを使うかどうか（手動で切り替えやすいように固定値にしています）
+const USE_AUTO_GATHER = true
+const USE_AUTO_CRAFT = true
 const ACTION_FILES = [
   'gather_actions.yaml',
   'hand_craft_actions.yaml',
@@ -102,18 +105,32 @@ function loadDomain() {
 
   // 複数のアクションファイルを読み込んでマージ
   let allActions = []
+  let hasGeneratedGather = false
+  let hasGeneratedHandCraft = false
+  let hasGeneratedWorkbenchCraft = false
 
   // 1) 自動生成されたアクションを優先して読み込む（backup.yamlは除外）
   if (fs.existsSync(GENERATED_ACTIONS_DIR)) {
     const generatedFiles = fs.readdirSync(GENERATED_ACTIONS_DIR)
       .filter(f => f.endsWith('.yaml') && !f.includes('.backup.'))
     for (const filename of generatedFiles) {
+      const lower = filename.toLowerCase()
+      if (!USE_AUTO_GATHER && lower.includes('gather')) continue
+      if (!USE_AUTO_CRAFT && (lower.includes('hand_craft') || lower.includes('workbench_craft'))) continue
       const filepath = path.join(GENERATED_ACTIONS_DIR, filename)
       try {
         const raw = fs.readFileSync(filepath, 'utf8')
         const parsed = YAML.parse(raw)
         if (parsed && Array.isArray(parsed.actions)) {
           allActions = allActions.concat(parsed.actions)
+          const lower = filename.toLowerCase()
+          if (lower.includes('gather')) hasGeneratedGather = true
+          if (lower.includes('hand_craft')) hasGeneratedHandCraft = true
+          if (lower.includes('workbench_craft')) hasGeneratedWorkbenchCraft = true
+          const skillSet = new Set(parsed.actions.map(a => a && a.skill))
+          if (skillSet.has('gather')) hasGeneratedGather = true
+          if (skillSet.has('hand_craft')) hasGeneratedHandCraft = true
+          if (skillSet.has('workbench_craft')) hasGeneratedWorkbenchCraft = true
           getLogger().info(`[GOAP] ${filename} (generated) から ${parsed.actions.length} 個のアクションを読み込みました`)
         }
       } catch (error) {
@@ -122,12 +139,18 @@ function loadDomain() {
     }
   }
 
-  const hasGeneratedGather = allActions.some(a => typeof a.name === 'string' && a.name.startsWith('auto_gather_'))
-
   // 2) 静的ファイルを読み込む（生成済みgatherがある場合は元のgather_actions.yamlをスキップ）
   for (const filename of ACTION_FILES) {
-    if (filename === 'gather_actions.yaml' && hasGeneratedGather) {
+    if (filename === 'gather_actions.yaml' && hasGeneratedGather && USE_AUTO_GATHER) {
       getLogger().info('[GOAP] 自動生成されたgatherアクションを優先するため gather_actions.yaml はスキップしました')
+      continue
+    }
+    if (filename === 'hand_craft_actions.yaml' && hasGeneratedHandCraft && USE_AUTO_CRAFT) {
+      getLogger().info('[GOAP] 自動生成されたhand_craftアクションを優先するため hand_craft_actions.yaml はスキップしました')
+      continue
+    }
+    if (filename === 'workbench_craft_actions.yaml' && hasGeneratedWorkbenchCraft && USE_AUTO_CRAFT) {
+      getLogger().info('[GOAP] 自動生成されたworkbench_craftアクションを優先するため workbench_craft_actions.yaml はスキップしました')
       continue
     }
     const filepath = path.join(ACTIONS_DIR, filename)
@@ -1665,5 +1688,7 @@ module.exports = {
   loadDomain,
   getAllActions,
   evaluateCondition,
-  arePreconditionsSatisfied
+  arePreconditionsSatisfied,
+  USE_AUTO_GATHER,
+  USE_AUTO_CRAFT
 }

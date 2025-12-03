@@ -1,0 +1,195 @@
+actions:
+  - name: auto_hand_craft_planks_from_logs_category
+    preconditions:
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.category.log: "-1"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: log_to_planks
+      count: 1
+  - name: auto_hand_craft_oak_planks
+    preconditions:
+      inventory.oak_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.oak_log: "-1"
+      inventory.category.log: "-1"
+      inventory.oak_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oak_planks
+      count: 1
+  - name: auto_hand_craft_spruce_planks
+    preconditions:
+      inventory.spruce_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.spruce_log: "-1"
+      inventory.category.log: "-1"
+      inventory.spruce_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: spruce_planks
+      count: 1
+  - name: auto_hand_craft_birch_planks
+    preconditions:
+      inventory.birch_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.birch_log: "-1"
+      inventory.category.log: "-1"
+      inventory.birch_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: birch_planks
+      count: 1
+  - name: auto_hand_craft_jungle_planks
+    preconditions:
+      inventory.jungle_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.jungle_log: "-1"
+      inventory.category.log: "-1"
+      inventory.jungle_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jungle_planks
+      count: 1
+  - name: auto_hand_craft_acacia_planks
+    preconditions:
+      inventory.acacia_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.acacia_log: "-1"
+      inventory.category.log: "-1"
+      inventory.acacia_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: acacia_planks
+      count: 1
+  - name: auto_hand_craft_cherry_planks
+    preconditions:
+      inventory.cherry_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.cherry_log: "-1"
+      inventory.category.log: "-1"
+      inventory.cherry_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cherry_planks
+      count: 1
+  - name: auto_hand_craft_dark_oak_planks
+    preconditions:
+      inventory.dark_oak_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.dark_oak_log: "-1"
+      inventory.category.log: "-1"
+      inventory.dark_oak_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dark_oak_planks
+      count: 1
+  - name: auto_hand_craft_mangrove_planks
+    preconditions:
+      inventory.mangrove_log: ">= 1"
+      inventory.category.log: ">= 1"
+    effects:
+      inventory.mangrove_log: "-1"
+      inventory.category.log: "-1"
+      inventory.mangrove_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mangrove_planks
+      count: 1
+  - name: auto_hand_craft_bamboo_planks
+    preconditions:
+      inventory.bamboo_block: ">= 1"
+    effects:
+      inventory.bamboo_block: "-1"
+      inventory.bamboo_planks: "+2"
+      inventory.category.plank: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bamboo_planks
+      count: 1
+  - name: auto_hand_craft_crimson_planks
+    preconditions:
+      inventory.crimson_stem: ">= 1"
+    effects:
+      inventory.crimson_stem: "-1"
+      inventory.crimson_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: crimson_planks
+      count: 1
+  - name: auto_hand_craft_warped_planks
+    preconditions:
+      inventory.warped_stem: ">= 1"
+    effects:
+      inventory.warped_stem: "-1"
+      inventory.warped_planks: "+4"
+      inventory.category.plank: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: warped_planks
+      count: 1
+  - name: auto_hand_craft_torch
+    preconditions:
+      inventory.coal: ">= 1"
+      inventory.stick: ">= 1"
+    effects:
+      inventory.coal: "-1"
+      inventory.stick: "-1"
+      inventory.torch: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: torch
+      count: 1
+  - name: auto_hand_craft_crafting_table
+    preconditions:
+      inventory.category.plank: ">= 4"
+    effects:
+      inventory.category.plank: "-4"
+      inventory.crafting_table: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: crafting_table
+      count: 1
+  - name: auto_hand_craft_stick
+    preconditions:
+      inventory.category.plank: ">= 2"
+    effects:
+      inventory.category.plank: "-2"
+      inventory.stick: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stick
+      count: 1
