@@ -18,7 +18,6 @@ actions:
       inventory.oak_log: "-1"
       inventory.category.log: "-1"
       inventory.oak_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -32,7 +31,6 @@ actions:
       inventory.spruce_log: "-1"
       inventory.category.log: "-1"
       inventory.spruce_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -46,7 +44,6 @@ actions:
       inventory.birch_log: "-1"
       inventory.category.log: "-1"
       inventory.birch_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -60,7 +57,6 @@ actions:
       inventory.jungle_log: "-1"
       inventory.category.log: "-1"
       inventory.jungle_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -74,7 +70,6 @@ actions:
       inventory.acacia_log: "-1"
       inventory.category.log: "-1"
       inventory.acacia_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -88,7 +83,6 @@ actions:
       inventory.cherry_log: "-1"
       inventory.category.log: "-1"
       inventory.cherry_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -102,7 +96,6 @@ actions:
       inventory.dark_oak_log: "-1"
       inventory.category.log: "-1"
       inventory.dark_oak_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -116,7 +109,6 @@ actions:
       inventory.mangrove_log: "-1"
       inventory.category.log: "-1"
       inventory.mangrove_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -128,7 +120,6 @@ actions:
     effects:
       inventory.bamboo_block: "-1"
       inventory.bamboo_planks: "+2"
-      inventory.category.plank: "+2"
     cost: 10
     skill: hand_craft
     params:
@@ -140,7 +131,6 @@ actions:
     effects:
       inventory.crimson_stem: "-1"
       inventory.crimson_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:
@@ -152,7 +142,6 @@ actions:
     effects:
       inventory.warped_stem: "-1"
       inventory.warped_planks: "+4"
-      inventory.category.plank: "+4"
     cost: 10
     skill: hand_craft
     params:

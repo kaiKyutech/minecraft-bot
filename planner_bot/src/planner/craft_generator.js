@@ -99,7 +99,8 @@ async function generateCraftActions(version) {
         resultCount,
         craftingType,
         itemToCountCategories,
-        itemToBooleanCategories
+        itemToBooleanCategories,
+        includeCountCategoryEffects: false
       });
 
       const actionName = `auto_${craftingType}_craft_${resultName}`;
@@ -181,7 +182,8 @@ function buildActionParts({
   resultCount,
   craftingType,
   itemToCountCategories,
-  itemToBooleanCategories = new Map()
+  itemToBooleanCategories = new Map(),
+  includeCountCategoryEffects = false
 }) {
   const numericEffects = new Map();
   const preconditions = {};
@@ -219,8 +221,10 @@ function buildActionParts({
 
   // 成果物の追加
   addNumericEffect(numericEffects, `inventory.${resultName}`, resultCount);
-  for (const cat of itemToCountCategories.get(resultName) || []) {
-    addNumericEffect(numericEffects, `inventory.category.${cat}`, resultCount);
+  if (includeCountCategoryEffects) {
+    for (const cat of itemToCountCategories.get(resultName) || []) {
+      addNumericEffect(numericEffects, `inventory.category.${cat}`, resultCount);
+    }
   }
 
   const effects = {};
