@@ -42,6 +42,7 @@ async function generateCraftActions(version) {
   const itemCategories = categories?.item_categories || {};
   const itemToCountCategories = buildItemCategoryLookup(itemCategories, "count");
   const itemToBooleanCategories = buildItemCategoryLookup(itemCategories, "boolean");
+  const categoryVariantResults = findCategoryVariantResults(mcData.recipes || {}, mcData, itemToCountCategories);
 
   const recipes = mcData.recipes || {};
   const handActions = [];
@@ -81,6 +82,9 @@ async function generateCraftActions(version) {
       const resultCount = Math.max(1, recipe?.result?.count || 1);
       const targetList = craftingType === "hand" ? handActions : workbenchActions;
       const targetSeen = seen[craftingType];
+      const allowCategory = categoryVariantResults.has(resultName);
+      const hasAllowedCategoryIngredient = allowCategory && hasAnyAllowedIngredientCategory(ingredients, itemToCountCategories);
+      const useItemCategories = allowCategory && hasAllowedCategoryIngredient;
 
       // 生成対象フィルタ（最小構成用）
       if (craftingType === "hand") {
@@ -100,7 +104,8 @@ async function generateCraftActions(version) {
         craftingType,
         itemToCountCategories,
         itemToBooleanCategories,
-        includeCountCategoryEffects: false
+        includeCountCategoryEffects: false,
+        useItemCategories
       });
 
       const actionName = `auto_${craftingType}_craft_${resultName}`;
@@ -183,18 +188,22 @@ function buildActionParts({
   craftingType,
   itemToCountCategories,
   itemToBooleanCategories = new Map(),
-  includeCountCategoryEffects = false
+  includeCountCategoryEffects = false,
+  useItemCategories = false,
+  includeResultBooleanCategories = true
 }) {
   const numericEffects = new Map();
   const preconditions = {};
-  const categoryNeeds = new Map(); // category名 -> 必要数
+  const categoryNeeds = useItemCategories ? new Map() : null; // category名 -> 必要数
 
   // 前提: 材料の所持
   for (const [itemName, qty] of ingredients.entries()) {
-    const countCats = Array.from(itemToCountCategories.get(itemName) || []);
-    const categoryForIngredient = countCats.find((cat) => CATEGORY_INGREDIENTS_ALLOWED.has(cat));
+    const countCats = useItemCategories ? Array.from(itemToCountCategories.get(itemName) || []) : [];
+    const categoryForIngredient = useItemCategories
+      ? countCats.find((cat) => CATEGORY_INGREDIENTS_ALLOWED.has(cat))
+      : null;
 
-    if (categoryForIngredient) {
+    if (useItemCategories && categoryForIngredient) {
       // plankなど任意種で代用できる材料はカテゴリ前提に置き換える
       preconditions[`inventory.category.${categoryForIngredient}`] = `>= ${qty}`;
       addNumericEffect(numericEffects, `inventory.category.${categoryForIngredient}`, -qty);
@@ -204,10 +213,12 @@ function buildActionParts({
       addNumericEffect(numericEffects, `inventory.${itemName}`, -qty);
     }
 
-    for (const cat of countCats) {
-      if (categoryForIngredient && cat === categoryForIngredient) continue;
-      categoryNeeds.set(cat, (categoryNeeds.get(cat) || 0) + qty);
-      addNumericEffect(numericEffects, `inventory.category.${cat}`, -qty);
+    if (useItemCategories) {
+      for (const cat of countCats) {
+        if (categoryForIngredient && cat === categoryForIngredient) continue;
+        categoryNeeds.set(cat, (categoryNeeds.get(cat) || 0) + qty);
+        addNumericEffect(numericEffects, `inventory.category.${cat}`, -qty);
+      }
     }
   }
 
@@ -215,13 +226,15 @@ function buildActionParts({
     preconditions.nearby_workbench = true;
   }
 
-  for (const [cat, need] of categoryNeeds.entries()) {
-    preconditions[`inventory.category.${cat}`] = `>= ${need}`;
+  if (useItemCategories && categoryNeeds) {
+    for (const [cat, need] of categoryNeeds.entries()) {
+      preconditions[`inventory.category.${cat}`] = `>= ${need}`;
+    }
   }
 
   // 成果物の追加
   addNumericEffect(numericEffects, `inventory.${resultName}`, resultCount);
-  if (includeCountCategoryEffects) {
+  if (useItemCategories && includeCountCategoryEffects) {
     for (const cat of itemToCountCategories.get(resultName) || []) {
       addNumericEffect(numericEffects, `inventory.category.${cat}`, resultCount);
     }
@@ -233,8 +246,10 @@ function buildActionParts({
     if (delta === 0) continue;
     effects[key] = delta > 0 ? `+${delta}` : `${delta}`;
   }
-  for (const cat of itemToBooleanCategories.get(resultName) || []) {
-    effects[`inventory.category.${cat}`] = true;
+  if (includeResultBooleanCategories) {
+    for (const cat of itemToBooleanCategories.get(resultName) || []) {
+      effects[`inventory.category.${cat}`] = true;
+    }
   }
 
   return { preconditions, effects };
@@ -262,6 +277,15 @@ function hasIngredientCategory(ingredients, itemToCountCategories, targetCategor
   for (const itemName of ingredients.keys()) {
     const cats = itemToCountCategories.get(itemName) || [];
     if (cats instanceof Set ? cats.has(targetCategory) : Array.isArray(cats) ? cats.includes(targetCategory) : false) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasAnyAllowedIngredientCategory(ingredients, itemToCountCategories) {
+  for (const allowed of CATEGORY_INGREDIENTS_ALLOWED) {
+    if (hasIngredientCategory(ingredients, itemToCountCategories, allowed)) {
       return true;
     }
   }
@@ -302,6 +326,41 @@ module.exports = {
   ensureCraftActionsGenerated,
   generateCraftActions
 };
+
+// 同一成果物で CATEGORY_INGREDIENTS_ALLOWED に属する材料が複数種存在する場合、
+// カテゴリ前提でまとめられる成果物名を収集する
+function findCategoryVariantResults(recipes, mcData, itemToCountCategories) {
+  const results = new Set();
+
+  for (const [resultIdStr, recipeList] of Object.entries(recipes)) {
+    if (!Array.isArray(recipeList) || recipeList.length === 0) continue;
+    const resultItem = mcData.items[Number(resultIdStr)];
+    if (!resultItem) continue;
+
+    const categoryToItems = new Map(); // category -> Set(itemName)
+
+    for (const recipe of recipeList) {
+      const parsed = parseRecipe(recipe, mcData);
+      if (!parsed) continue;
+      for (const itemName of parsed.ingredients.keys()) {
+        for (const cat of itemToCountCategories.get(itemName) || []) {
+          if (!CATEGORY_INGREDIENTS_ALLOWED.has(cat)) continue;
+          if (!categoryToItems.has(cat)) categoryToItems.set(cat, new Set());
+          categoryToItems.get(cat).add(itemName);
+        }
+      }
+    }
+
+    for (const items of categoryToItems.values()) {
+      if (items.size > 1) {
+        results.add(resultItem.name);
+        break;
+      }
+    }
+  }
+
+  return results;
+}
 
 // 既存の静的 YAML から生成対象レシピ名を収集し、最小構成で自動生成する
 function loadAllowedRecipesFromStatic() {

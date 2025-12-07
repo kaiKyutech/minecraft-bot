@@ -13,10 +13,8 @@ actions:
   - name: auto_hand_craft_oak_planks
     preconditions:
       inventory.oak_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.oak_log: "-1"
-      inventory.category.log: "-1"
       inventory.oak_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -26,10 +24,8 @@ actions:
   - name: auto_hand_craft_spruce_planks
     preconditions:
       inventory.spruce_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.spruce_log: "-1"
-      inventory.category.log: "-1"
       inventory.spruce_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -39,10 +35,8 @@ actions:
   - name: auto_hand_craft_birch_planks
     preconditions:
       inventory.birch_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.birch_log: "-1"
-      inventory.category.log: "-1"
       inventory.birch_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -52,10 +46,8 @@ actions:
   - name: auto_hand_craft_jungle_planks
     preconditions:
       inventory.jungle_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.jungle_log: "-1"
-      inventory.category.log: "-1"
       inventory.jungle_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -65,10 +57,8 @@ actions:
   - name: auto_hand_craft_acacia_planks
     preconditions:
       inventory.acacia_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.acacia_log: "-1"
-      inventory.category.log: "-1"
       inventory.acacia_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -78,10 +68,8 @@ actions:
   - name: auto_hand_craft_cherry_planks
     preconditions:
       inventory.cherry_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.cherry_log: "-1"
-      inventory.category.log: "-1"
       inventory.cherry_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -91,10 +79,8 @@ actions:
   - name: auto_hand_craft_dark_oak_planks
     preconditions:
       inventory.dark_oak_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.dark_oak_log: "-1"
-      inventory.category.log: "-1"
       inventory.dark_oak_planks: "+4"
     cost: 10
     skill: hand_craft
@@ -104,10 +90,8 @@ actions:
   - name: auto_hand_craft_mangrove_planks
     preconditions:
       inventory.mangrove_log: ">= 1"
-      inventory.category.log: ">= 1"
     effects:
       inventory.mangrove_log: "-1"
-      inventory.category.log: "-1"
       inventory.mangrove_planks: "+4"
     cost: 10
     skill: hand_craft
