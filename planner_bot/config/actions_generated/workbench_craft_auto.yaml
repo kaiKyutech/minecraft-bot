@@ -1,4 +1,730 @@
 actions:
+  - name: auto_workbench_craft_coal_block
+    preconditions:
+      inventory.coal: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.coal: "-9"
+      inventory.coal_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: coal_block
+      count: 1
+  - name: auto_workbench_craft_raw_iron_block
+    preconditions:
+      inventory.raw_iron: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.raw_iron: "-9"
+      inventory.raw_iron_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: raw_iron_block
+      count: 1
+  - name: auto_workbench_craft_raw_copper_block
+    preconditions:
+      inventory.raw_copper: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.raw_copper: "-9"
+      inventory.raw_copper_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: raw_copper_block
+      count: 1
+  - name: auto_workbench_craft_raw_gold_block
+    preconditions:
+      inventory.raw_gold: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.raw_gold: "-9"
+      inventory.raw_gold_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: raw_gold_block
+      count: 1
+  - name: auto_workbench_craft_iron_block
+    preconditions:
+      inventory.iron_ingot: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-9"
+      inventory.iron_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: iron_block
+      count: 1
+  - name: auto_workbench_craft_copper_block
+    preconditions:
+      inventory.copper_ingot: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.copper_ingot: "-9"
+      inventory.copper_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: copper_block
+      count: 1
+  - name: auto_workbench_craft_gold_block
+    preconditions:
+      inventory.gold_ingot: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-9"
+      inventory.gold_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gold_block
+      count: 1
+  - name: auto_workbench_craft_diamond_block
+    preconditions:
+      inventory.diamond: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-9"
+      inventory.diamond_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: diamond_block
+      count: 1
+  - name: auto_workbench_craft_netherite_block
+    preconditions:
+      inventory.netherite_ingot: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.netherite_ingot: "-9"
+      inventory.netherite_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: netherite_block
+      count: 1
+  - name: auto_workbench_craft_cut_copper_stairs
+    preconditions:
+      inventory.cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cut_copper: "-6"
+      inventory.cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_exposed_cut_copper_stairs
+    preconditions:
+      inventory.exposed_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.exposed_cut_copper: "-6"
+      inventory.exposed_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: exposed_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_weathered_cut_copper_stairs
+    preconditions:
+      inventory.weathered_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.weathered_cut_copper: "-6"
+      inventory.weathered_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: weathered_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_oxidized_cut_copper_stairs
+    preconditions:
+      inventory.oxidized_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.oxidized_cut_copper: "-6"
+      inventory.oxidized_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oxidized_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_cut_copper_slab
+    preconditions:
+      inventory.cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cut_copper: "-3"
+      inventory.cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_exposed_cut_copper_slab
+    preconditions:
+      inventory.exposed_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.exposed_cut_copper: "-3"
+      inventory.exposed_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: exposed_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_weathered_cut_copper_slab
+    preconditions:
+      inventory.weathered_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.weathered_cut_copper: "-3"
+      inventory.weathered_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: weathered_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_oxidized_cut_copper_slab
+    preconditions:
+      inventory.oxidized_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.oxidized_cut_copper: "-3"
+      inventory.oxidized_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oxidized_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_waxed_cut_copper_stairs
+    preconditions:
+      inventory.waxed_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_cut_copper: "-6"
+      inventory.waxed_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_waxed_exposed_cut_copper_stairs
+    preconditions:
+      inventory.waxed_exposed_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_exposed_cut_copper: "-6"
+      inventory.waxed_exposed_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_exposed_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_waxed_weathered_cut_copper_stairs
+    preconditions:
+      inventory.waxed_weathered_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_weathered_cut_copper: "-6"
+      inventory.waxed_weathered_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_weathered_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_waxed_oxidized_cut_copper_stairs
+    preconditions:
+      inventory.waxed_oxidized_cut_copper: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_oxidized_cut_copper: "-6"
+      inventory.waxed_oxidized_cut_copper_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_oxidized_cut_copper_stairs
+      count: 1
+  - name: auto_workbench_craft_waxed_cut_copper_slab
+    preconditions:
+      inventory.waxed_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_cut_copper: "-3"
+      inventory.waxed_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_waxed_exposed_cut_copper_slab
+    preconditions:
+      inventory.waxed_exposed_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_exposed_cut_copper: "-3"
+      inventory.waxed_exposed_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_exposed_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_waxed_weathered_cut_copper_slab
+    preconditions:
+      inventory.waxed_weathered_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_weathered_cut_copper: "-3"
+      inventory.waxed_weathered_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_weathered_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_waxed_oxidized_cut_copper_slab
+    preconditions:
+      inventory.waxed_oxidized_cut_copper: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.waxed_oxidized_cut_copper: "-3"
+      inventory.waxed_oxidized_cut_copper_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: waxed_oxidized_cut_copper_slab
+      count: 1
+  - name: auto_workbench_craft_bamboo_block
+    preconditions:
+      inventory.bamboo: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo: "-9"
+      inventory.bamboo_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_block
+      count: 1
+  - name: auto_workbench_craft_tinted_glass
+    preconditions:
+      inventory.amethyst_shard: ">= 4"
+      inventory.glass: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.amethyst_shard: "-4"
+      inventory.glass: "-1"
+      inventory.tinted_glass: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: tinted_glass
+      count: 1
+  - name: auto_workbench_craft_lapis_block
+    preconditions:
+      inventory.lapis_lazuli: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.lapis_lazuli: "-9"
+      inventory.lapis_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lapis_block
+      count: 1
+  - name: auto_workbench_craft_oak_slab
+    preconditions:
+      inventory.oak_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-3"
+      inventory.oak_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_slab
+      count: 1
+  - name: auto_workbench_craft_spruce_slab
+    preconditions:
+      inventory.spruce_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-3"
+      inventory.spruce_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_slab
+      count: 1
+  - name: auto_workbench_craft_birch_slab
+    preconditions:
+      inventory.birch_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-3"
+      inventory.birch_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_slab
+      count: 1
+  - name: auto_workbench_craft_jungle_slab
+    preconditions:
+      inventory.jungle_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-3"
+      inventory.jungle_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_slab
+      count: 1
+  - name: auto_workbench_craft_acacia_slab
+    preconditions:
+      inventory.acacia_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-3"
+      inventory.acacia_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_slab
+      count: 1
+  - name: auto_workbench_craft_cherry_slab
+    preconditions:
+      inventory.cherry_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-3"
+      inventory.cherry_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_slab
+      count: 1
+  - name: auto_workbench_craft_dark_oak_slab
+    preconditions:
+      inventory.dark_oak_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-3"
+      inventory.dark_oak_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_slab
+      count: 1
+  - name: auto_workbench_craft_mangrove_slab
+    preconditions:
+      inventory.mangrove_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-3"
+      inventory.mangrove_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_slab
+      count: 1
+  - name: auto_workbench_craft_bamboo_slab
+    preconditions:
+      inventory.bamboo_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-3"
+      inventory.bamboo_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_slab
+      count: 1
+  - name: auto_workbench_craft_bamboo_mosaic_slab
+    preconditions:
+      inventory.bamboo_mosaic: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_mosaic: "-3"
+      inventory.bamboo_mosaic_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_mosaic_slab
+      count: 1
+  - name: auto_workbench_craft_crimson_slab
+    preconditions:
+      inventory.crimson_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-3"
+      inventory.crimson_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_slab
+      count: 1
+  - name: auto_workbench_craft_warped_slab
+    preconditions:
+      inventory.warped_planks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-3"
+      inventory.warped_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_slab
+      count: 1
+  - name: auto_workbench_craft_stone_slab
+    preconditions:
+      inventory.stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.stone: "-3"
+      inventory.stone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stone_slab
+      count: 1
+  - name: auto_workbench_craft_smooth_stone_slab
+    preconditions:
+      inventory.smooth_stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_stone: "-3"
+      inventory.smooth_stone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_stone_slab
+      count: 1
+  - name: auto_workbench_craft_sandstone_slab
+    preconditions:
+      inventory.sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.sandstone: "-3"
+      inventory.sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_cut_sandstone_slab
+    preconditions:
+      inventory.cut_sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cut_sandstone: "-3"
+      inventory.cut_sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cut_sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_cobblestone_slab
+    preconditions:
+      inventory.cobblestone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-3"
+      inventory.cobblestone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobblestone_slab
+      count: 1
+  - name: auto_workbench_craft_brick_slab
+    preconditions:
+      inventory.bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.bricks: "-3"
+      inventory.brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brick_slab
+      count: 1
+  - name: auto_workbench_craft_stone_brick_slab
+    preconditions:
+      inventory.stone_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.stone_bricks: "-3"
+      inventory.stone_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stone_brick_slab
+      count: 1
+  - name: auto_workbench_craft_mud_brick_slab
+    preconditions:
+      inventory.mud_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.mud_bricks: "-3"
+      inventory.mud_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mud_brick_slab
+      count: 1
+  - name: auto_workbench_craft_nether_brick_slab
+    preconditions:
+      inventory.nether_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.nether_bricks: "-3"
+      inventory.nether_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: nether_brick_slab
+      count: 1
+  - name: auto_workbench_craft_quartz_slab
+    preconditions:
+      inventory.chiseled_quartz_block: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.chiseled_quartz_block: "-3"
+      inventory.quartz_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: quartz_slab
+      count: 1
+  - name: auto_workbench_craft_red_sandstone_slab
+    preconditions:
+      inventory.red_sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.red_sandstone: "-3"
+      inventory.red_sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_cut_red_sandstone_slab
+    preconditions:
+      inventory.cut_red_sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cut_red_sandstone: "-3"
+      inventory.cut_red_sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cut_red_sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_purpur_slab
+    preconditions:
+      inventory.purpur_block: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.purpur_block: "-3"
+      inventory.purpur_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purpur_slab
+      count: 1
+  - name: auto_workbench_craft_prismarine_slab
+    preconditions:
+      inventory.prismarine: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine: "-3"
+      inventory.prismarine_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_slab
+      count: 1
+  - name: auto_workbench_craft_prismarine_brick_slab
+    preconditions:
+      inventory.prismarine_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine_bricks: "-3"
+      inventory.prismarine_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_brick_slab
+      count: 1
+  - name: auto_workbench_craft_dark_prismarine_slab
+    preconditions:
+      inventory.dark_prismarine: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.dark_prismarine: "-3"
+      inventory.dark_prismarine_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_prismarine_slab
+      count: 1
+  - name: auto_workbench_craft_bookshelf
+    preconditions:
+      inventory.category.plank: ">= 6"
+      inventory.book: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-6"
+      inventory.book: "-3"
+      inventory.bookshelf: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bookshelf
+      count: 1
+  - name: auto_workbench_craft_chiseled_bookshelf
+    preconditions:
+      inventory.category.plank: ">= 6"
+      inventory.oak_slab: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-6"
+      inventory.oak_slab: "-3"
+      inventory.chiseled_bookshelf: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: chiseled_bookshelf
+      count: 1
+  - name: auto_workbench_craft_decorated_pot
+    preconditions:
+      inventory.brick: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.brick: "-4"
+      inventory.decorated_pot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: decorated_pot
+      count: 1
+  - name: auto_workbench_craft_purpur_stairs
+    preconditions:
+      inventory.purpur_block: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.purpur_block: "-6"
+      inventory.purpur_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purpur_stairs
+      count: 1
   - name: auto_workbench_craft_chest
     preconditions:
       inventory.category.plank: ">= 8"
@@ -22,6 +748,3302 @@ actions:
     skill: workbench_craft
     params:
       recipe: furnace
+      count: 1
+  - name: auto_workbench_craft_ladder
+    preconditions:
+      inventory.stick: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-7"
+      inventory.ladder: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: ladder
+      count: 1
+  - name: auto_workbench_craft_cobblestone_stairs
+    preconditions:
+      inventory.cobblestone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-6"
+      inventory.cobblestone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobblestone_stairs
+      count: 1
+  - name: auto_workbench_craft_snow
+    preconditions:
+      inventory.snow_block: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.snow_block: "-3"
+      inventory.snow: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: snow
+      count: 1
+  - name: auto_workbench_craft_jukebox
+    preconditions:
+      inventory.category.plank: ">= 8"
+      inventory.diamond: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-8"
+      inventory.diamond: "-1"
+      inventory.jukebox: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jukebox
+      count: 1
+  - name: auto_workbench_craft_oak_fence
+    preconditions:
+      inventory.oak_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-4"
+      inventory.stick: "-2"
+      inventory.oak_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_fence
+      count: 1
+  - name: auto_workbench_craft_spruce_fence
+    preconditions:
+      inventory.spruce_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-4"
+      inventory.stick: "-2"
+      inventory.spruce_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_fence
+      count: 1
+  - name: auto_workbench_craft_birch_fence
+    preconditions:
+      inventory.birch_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-4"
+      inventory.stick: "-2"
+      inventory.birch_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_fence
+      count: 1
+  - name: auto_workbench_craft_jungle_fence
+    preconditions:
+      inventory.jungle_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-4"
+      inventory.stick: "-2"
+      inventory.jungle_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_fence
+      count: 1
+  - name: auto_workbench_craft_acacia_fence
+    preconditions:
+      inventory.acacia_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-4"
+      inventory.stick: "-2"
+      inventory.acacia_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_fence
+      count: 1
+  - name: auto_workbench_craft_cherry_fence
+    preconditions:
+      inventory.cherry_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-4"
+      inventory.stick: "-2"
+      inventory.cherry_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_fence
+      count: 1
+  - name: auto_workbench_craft_dark_oak_fence
+    preconditions:
+      inventory.dark_oak_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-4"
+      inventory.stick: "-2"
+      inventory.dark_oak_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_fence
+      count: 1
+  - name: auto_workbench_craft_mangrove_fence
+    preconditions:
+      inventory.mangrove_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-4"
+      inventory.stick: "-2"
+      inventory.mangrove_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_fence
+      count: 1
+  - name: auto_workbench_craft_bamboo_fence
+    preconditions:
+      inventory.bamboo_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-4"
+      inventory.stick: "-2"
+      inventory.bamboo_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_fence
+      count: 1
+  - name: auto_workbench_craft_crimson_fence
+    preconditions:
+      inventory.crimson_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-4"
+      inventory.stick: "-2"
+      inventory.crimson_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_fence
+      count: 1
+  - name: auto_workbench_craft_warped_fence
+    preconditions:
+      inventory.warped_planks: ">= 4"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-4"
+      inventory.stick: "-2"
+      inventory.warped_fence: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_fence
+      count: 1
+  - name: auto_workbench_craft_soul_torch
+    preconditions:
+      inventory.coal: ">= 1"
+      inventory.stick: ">= 1"
+      inventory.soul_sand: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.coal: "-1"
+      inventory.stick: "-1"
+      inventory.soul_sand: "-1"
+      inventory.soul_torch: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: soul_torch
+      count: 1
+  - name: auto_workbench_craft_iron_bars
+    preconditions:
+      inventory.iron_ingot: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-6"
+      inventory.iron_bars: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: iron_bars
+      count: 1
+  - name: auto_workbench_craft_chain
+    preconditions:
+      inventory.iron_nugget: ">= 2"
+      inventory.iron_ingot: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_nugget: "-2"
+      inventory.iron_ingot: "-1"
+      inventory.chain: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: chain
+      count: 1
+  - name: auto_workbench_craft_glass_pane
+    preconditions:
+      inventory.glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-6"
+      inventory.glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: glass_pane
+      count: 1
+  - name: auto_workbench_craft_melon
+    preconditions:
+      inventory.melon_slice: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.melon_slice: "-9"
+      inventory.melon: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: melon
+      count: 1
+  - name: auto_workbench_craft_brick_stairs
+    preconditions:
+      inventory.bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bricks: "-6"
+      inventory.brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brick_stairs
+      count: 1
+  - name: auto_workbench_craft_stone_brick_stairs
+    preconditions:
+      inventory.stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.stone_bricks: "-6"
+      inventory.stone_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stone_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_mud_brick_stairs
+    preconditions:
+      inventory.mud_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mud_bricks: "-6"
+      inventory.mud_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mud_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_nether_brick_fence
+    preconditions:
+      inventory.nether_bricks: ">= 4"
+      inventory.nether_brick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.nether_bricks: "-4"
+      inventory.nether_brick: "-2"
+      inventory.nether_brick_fence: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: nether_brick_fence
+      count: 1
+  - name: auto_workbench_craft_nether_brick_stairs
+    preconditions:
+      inventory.nether_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.nether_bricks: "-6"
+      inventory.nether_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: nether_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_enchanting_table
+    preconditions:
+      inventory.book: ">= 1"
+      inventory.diamond: ">= 2"
+      inventory.obsidian: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.book: "-1"
+      inventory.diamond: "-2"
+      inventory.obsidian: "-4"
+      inventory.enchanting_table: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: enchanting_table
+      count: 1
+  - name: auto_workbench_craft_sandstone_stairs
+    preconditions:
+      inventory.sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.sandstone: "-6"
+      inventory.sandstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: sandstone_stairs
+      count: 1
+  - name: auto_workbench_craft_ender_chest
+    preconditions:
+      inventory.obsidian: ">= 8"
+      inventory.ender_eye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.obsidian: "-8"
+      inventory.ender_eye: "-1"
+      inventory.ender_chest: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: ender_chest
+      count: 1
+  - name: auto_workbench_craft_emerald_block
+    preconditions:
+      inventory.emerald: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.emerald: "-9"
+      inventory.emerald_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: emerald_block
+      count: 1
+  - name: auto_workbench_craft_oak_stairs
+    preconditions:
+      inventory.oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-6"
+      inventory.oak_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_stairs
+      count: 1
+  - name: auto_workbench_craft_spruce_stairs
+    preconditions:
+      inventory.spruce_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-6"
+      inventory.spruce_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_stairs
+      count: 1
+  - name: auto_workbench_craft_birch_stairs
+    preconditions:
+      inventory.birch_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-6"
+      inventory.birch_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_stairs
+      count: 1
+  - name: auto_workbench_craft_jungle_stairs
+    preconditions:
+      inventory.jungle_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-6"
+      inventory.jungle_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_stairs
+      count: 1
+  - name: auto_workbench_craft_acacia_stairs
+    preconditions:
+      inventory.acacia_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-6"
+      inventory.acacia_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_stairs
+      count: 1
+  - name: auto_workbench_craft_cherry_stairs
+    preconditions:
+      inventory.cherry_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-6"
+      inventory.cherry_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_stairs
+      count: 1
+  - name: auto_workbench_craft_dark_oak_stairs
+    preconditions:
+      inventory.dark_oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-6"
+      inventory.dark_oak_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_stairs
+      count: 1
+  - name: auto_workbench_craft_mangrove_stairs
+    preconditions:
+      inventory.mangrove_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-6"
+      inventory.mangrove_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_stairs
+      count: 1
+  - name: auto_workbench_craft_bamboo_stairs
+    preconditions:
+      inventory.bamboo_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-6"
+      inventory.bamboo_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_stairs
+      count: 1
+  - name: auto_workbench_craft_bamboo_mosaic_stairs
+    preconditions:
+      inventory.bamboo_mosaic: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_mosaic: "-6"
+      inventory.bamboo_mosaic_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_mosaic_stairs
+      count: 1
+  - name: auto_workbench_craft_crimson_stairs
+    preconditions:
+      inventory.crimson_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-6"
+      inventory.crimson_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_stairs
+      count: 1
+  - name: auto_workbench_craft_warped_stairs
+    preconditions:
+      inventory.warped_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-6"
+      inventory.warped_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_stairs
+      count: 1
+  - name: auto_workbench_craft_beacon
+    preconditions:
+      inventory.glass: ">= 5"
+      inventory.nether_star: ">= 1"
+      inventory.obsidian: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-5"
+      inventory.nether_star: "-1"
+      inventory.obsidian: "-3"
+      inventory.beacon: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: beacon
+      count: 1
+  - name: auto_workbench_craft_cobblestone_wall
+    preconditions:
+      inventory.cobblestone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-6"
+      inventory.cobblestone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobblestone_wall
+      count: 1
+  - name: auto_workbench_craft_mossy_cobblestone_wall
+    preconditions:
+      inventory.mossy_cobblestone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_cobblestone: "-6"
+      inventory.mossy_cobblestone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_cobblestone_wall
+      count: 1
+  - name: auto_workbench_craft_brick_wall
+    preconditions:
+      inventory.bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bricks: "-6"
+      inventory.brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brick_wall
+      count: 1
+  - name: auto_workbench_craft_prismarine_wall
+    preconditions:
+      inventory.prismarine: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine: "-6"
+      inventory.prismarine_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_wall
+      count: 1
+  - name: auto_workbench_craft_red_sandstone_wall
+    preconditions:
+      inventory.red_sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.red_sandstone: "-6"
+      inventory.red_sandstone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_sandstone_wall
+      count: 1
+  - name: auto_workbench_craft_mossy_stone_brick_wall
+    preconditions:
+      inventory.mossy_stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_stone_bricks: "-6"
+      inventory.mossy_stone_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_stone_brick_wall
+      count: 1
+  - name: auto_workbench_craft_granite_wall
+    preconditions:
+      inventory.granite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.granite: "-6"
+      inventory.granite_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: granite_wall
+      count: 1
+  - name: auto_workbench_craft_stone_brick_wall
+    preconditions:
+      inventory.stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.stone_bricks: "-6"
+      inventory.stone_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stone_brick_wall
+      count: 1
+  - name: auto_workbench_craft_mud_brick_wall
+    preconditions:
+      inventory.mud_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mud_bricks: "-6"
+      inventory.mud_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mud_brick_wall
+      count: 1
+  - name: auto_workbench_craft_nether_brick_wall
+    preconditions:
+      inventory.nether_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.nether_bricks: "-6"
+      inventory.nether_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: nether_brick_wall
+      count: 1
+  - name: auto_workbench_craft_andesite_wall
+    preconditions:
+      inventory.andesite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.andesite: "-6"
+      inventory.andesite_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: andesite_wall
+      count: 1
+  - name: auto_workbench_craft_red_nether_brick_wall
+    preconditions:
+      inventory.red_nether_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.red_nether_bricks: "-6"
+      inventory.red_nether_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_nether_brick_wall
+      count: 1
+  - name: auto_workbench_craft_sandstone_wall
+    preconditions:
+      inventory.sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.sandstone: "-6"
+      inventory.sandstone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: sandstone_wall
+      count: 1
+  - name: auto_workbench_craft_end_stone_brick_wall
+    preconditions:
+      inventory.end_stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.end_stone_bricks: "-6"
+      inventory.end_stone_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: end_stone_brick_wall
+      count: 1
+  - name: auto_workbench_craft_diorite_wall
+    preconditions:
+      inventory.diorite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.diorite: "-6"
+      inventory.diorite_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: diorite_wall
+      count: 1
+  - name: auto_workbench_craft_blackstone_wall
+    preconditions:
+      inventory.blackstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.blackstone: "-6"
+      inventory.blackstone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blackstone_wall
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_wall
+    preconditions:
+      inventory.polished_blackstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone: "-6"
+      inventory.polished_blackstone_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_wall
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_brick_wall
+    preconditions:
+      inventory.polished_blackstone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone_bricks: "-6"
+      inventory.polished_blackstone_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_brick_wall
+      count: 1
+  - name: auto_workbench_craft_cobbled_deepslate_wall
+    preconditions:
+      inventory.cobbled_deepslate: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cobbled_deepslate: "-6"
+      inventory.cobbled_deepslate_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobbled_deepslate_wall
+      count: 1
+  - name: auto_workbench_craft_polished_deepslate_wall
+    preconditions:
+      inventory.polished_deepslate: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_deepslate: "-6"
+      inventory.polished_deepslate_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_deepslate_wall
+      count: 1
+  - name: auto_workbench_craft_deepslate_brick_wall
+    preconditions:
+      inventory.deepslate_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_bricks: "-6"
+      inventory.deepslate_brick_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_brick_wall
+      count: 1
+  - name: auto_workbench_craft_deepslate_tile_wall
+    preconditions:
+      inventory.deepslate_tiles: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_tiles: "-6"
+      inventory.deepslate_tile_wall: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_tile_wall
+      count: 1
+  - name: auto_workbench_craft_anvil
+    preconditions:
+      inventory.iron_block: ">= 3"
+      inventory.iron_ingot: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.iron_block: "-3"
+      inventory.iron_ingot: "-4"
+      inventory.anvil: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: anvil
+      count: 1
+  - name: auto_workbench_craft_quartz_stairs
+    preconditions:
+      inventory.chiseled_quartz_block: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chiseled_quartz_block: "-6"
+      inventory.quartz_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: quartz_stairs
+      count: 1
+  - name: auto_workbench_craft_white_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.white_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.white_dye: "-1"
+      inventory.white_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_terracotta
+      count: 1
+  - name: auto_workbench_craft_orange_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.orange_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.orange_dye: "-1"
+      inventory.orange_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_terracotta
+      count: 1
+  - name: auto_workbench_craft_magenta_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.magenta_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.magenta_dye: "-1"
+      inventory.magenta_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_terracotta
+      count: 1
+  - name: auto_workbench_craft_light_blue_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.light_blue_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.light_blue_dye: "-1"
+      inventory.light_blue_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_terracotta
+      count: 1
+  - name: auto_workbench_craft_yellow_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.yellow_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.yellow_dye: "-1"
+      inventory.yellow_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_terracotta
+      count: 1
+  - name: auto_workbench_craft_lime_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.lime_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.lime_dye: "-1"
+      inventory.lime_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_terracotta
+      count: 1
+  - name: auto_workbench_craft_pink_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.pink_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.pink_dye: "-1"
+      inventory.pink_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_terracotta
+      count: 1
+  - name: auto_workbench_craft_gray_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.gray_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.gray_dye: "-1"
+      inventory.gray_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_terracotta
+      count: 1
+  - name: auto_workbench_craft_light_gray_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.light_gray_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.light_gray_dye: "-1"
+      inventory.light_gray_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_terracotta
+      count: 1
+  - name: auto_workbench_craft_cyan_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.cyan_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.cyan_dye: "-1"
+      inventory.cyan_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_terracotta
+      count: 1
+  - name: auto_workbench_craft_purple_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.purple_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.purple_dye: "-1"
+      inventory.purple_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_terracotta
+      count: 1
+  - name: auto_workbench_craft_blue_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.blue_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.blue_dye: "-1"
+      inventory.blue_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_terracotta
+      count: 1
+  - name: auto_workbench_craft_brown_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.brown_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.brown_dye: "-1"
+      inventory.brown_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_terracotta
+      count: 1
+  - name: auto_workbench_craft_green_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.green_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.green_dye: "-1"
+      inventory.green_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_terracotta
+      count: 1
+  - name: auto_workbench_craft_red_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.red_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.red_dye: "-1"
+      inventory.red_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_terracotta
+      count: 1
+  - name: auto_workbench_craft_black_terracotta
+    preconditions:
+      inventory.terracotta: ">= 8"
+      inventory.black_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.terracotta: "-8"
+      inventory.black_dye: "-1"
+      inventory.black_terracotta: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_terracotta
+      count: 1
+  - name: auto_workbench_craft_hay_block
+    preconditions:
+      inventory.wheat: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.wheat: "-9"
+      inventory.hay_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: hay_block
+      count: 1
+  - name: auto_workbench_craft_packed_ice
+    preconditions:
+      inventory.ice: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.ice: "-9"
+      inventory.packed_ice: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: packed_ice
+      count: 1
+  - name: auto_workbench_craft_white_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.white_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.white_dye: "-1"
+      inventory.white_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_stained_glass
+      count: 1
+  - name: auto_workbench_craft_orange_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.orange_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.orange_dye: "-1"
+      inventory.orange_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_stained_glass
+      count: 1
+  - name: auto_workbench_craft_magenta_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.magenta_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.magenta_dye: "-1"
+      inventory.magenta_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_stained_glass
+      count: 1
+  - name: auto_workbench_craft_light_blue_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.light_blue_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.light_blue_dye: "-1"
+      inventory.light_blue_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_stained_glass
+      count: 1
+  - name: auto_workbench_craft_yellow_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.yellow_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.yellow_dye: "-1"
+      inventory.yellow_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_stained_glass
+      count: 1
+  - name: auto_workbench_craft_lime_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.lime_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.lime_dye: "-1"
+      inventory.lime_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_stained_glass
+      count: 1
+  - name: auto_workbench_craft_pink_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.pink_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.pink_dye: "-1"
+      inventory.pink_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_stained_glass
+      count: 1
+  - name: auto_workbench_craft_gray_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.gray_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.gray_dye: "-1"
+      inventory.gray_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_stained_glass
+      count: 1
+  - name: auto_workbench_craft_light_gray_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.light_gray_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.light_gray_dye: "-1"
+      inventory.light_gray_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_stained_glass
+      count: 1
+  - name: auto_workbench_craft_cyan_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.cyan_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.cyan_dye: "-1"
+      inventory.cyan_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_stained_glass
+      count: 1
+  - name: auto_workbench_craft_purple_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.purple_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.purple_dye: "-1"
+      inventory.purple_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_stained_glass
+      count: 1
+  - name: auto_workbench_craft_blue_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.blue_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.blue_dye: "-1"
+      inventory.blue_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_stained_glass
+      count: 1
+  - name: auto_workbench_craft_brown_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.brown_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.brown_dye: "-1"
+      inventory.brown_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_stained_glass
+      count: 1
+  - name: auto_workbench_craft_green_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.green_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.green_dye: "-1"
+      inventory.green_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_stained_glass
+      count: 1
+  - name: auto_workbench_craft_red_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.red_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.red_dye: "-1"
+      inventory.red_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_stained_glass
+      count: 1
+  - name: auto_workbench_craft_black_stained_glass
+    preconditions:
+      inventory.glass: ">= 8"
+      inventory.black_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-8"
+      inventory.black_dye: "-1"
+      inventory.black_stained_glass: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_stained_glass
+      count: 1
+  - name: auto_workbench_craft_white_stained_glass_pane
+    preconditions:
+      inventory.white_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.white_stained_glass: "-6"
+      inventory.white_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_orange_stained_glass_pane
+    preconditions:
+      inventory.orange_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.orange_stained_glass: "-6"
+      inventory.orange_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_magenta_stained_glass_pane
+    preconditions:
+      inventory.magenta_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.magenta_stained_glass: "-6"
+      inventory.magenta_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_light_blue_stained_glass_pane
+    preconditions:
+      inventory.light_blue_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.light_blue_stained_glass: "-6"
+      inventory.light_blue_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_yellow_stained_glass_pane
+    preconditions:
+      inventory.yellow_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.yellow_stained_glass: "-6"
+      inventory.yellow_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_lime_stained_glass_pane
+    preconditions:
+      inventory.lime_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.lime_stained_glass: "-6"
+      inventory.lime_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_pink_stained_glass_pane
+    preconditions:
+      inventory.pink_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.pink_stained_glass: "-6"
+      inventory.pink_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_gray_stained_glass_pane
+    preconditions:
+      inventory.gray_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.gray_stained_glass: "-6"
+      inventory.gray_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_light_gray_stained_glass_pane
+    preconditions:
+      inventory.light_gray_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.light_gray_stained_glass: "-6"
+      inventory.light_gray_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_cyan_stained_glass_pane
+    preconditions:
+      inventory.cyan_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cyan_stained_glass: "-6"
+      inventory.cyan_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_purple_stained_glass_pane
+    preconditions:
+      inventory.purple_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.purple_stained_glass: "-6"
+      inventory.purple_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_blue_stained_glass_pane
+    preconditions:
+      inventory.blue_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.blue_stained_glass: "-6"
+      inventory.blue_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_brown_stained_glass_pane
+    preconditions:
+      inventory.brown_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.brown_stained_glass: "-6"
+      inventory.brown_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_green_stained_glass_pane
+    preconditions:
+      inventory.green_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.green_stained_glass: "-6"
+      inventory.green_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_red_stained_glass_pane
+    preconditions:
+      inventory.red_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.red_stained_glass: "-6"
+      inventory.red_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_black_stained_glass_pane
+    preconditions:
+      inventory.black_stained_glass: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.black_stained_glass: "-6"
+      inventory.black_stained_glass_pane: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_stained_glass_pane
+      count: 1
+  - name: auto_workbench_craft_prismarine_bricks
+    preconditions:
+      inventory.prismarine_shard: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine_shard: "-9"
+      inventory.prismarine_bricks: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_bricks
+      count: 1
+  - name: auto_workbench_craft_dark_prismarine
+    preconditions:
+      inventory.prismarine_shard: ">= 8"
+      inventory.black_dye: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine_shard: "-8"
+      inventory.black_dye: "-1"
+      inventory.dark_prismarine: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_prismarine
+      count: 1
+  - name: auto_workbench_craft_prismarine_stairs
+    preconditions:
+      inventory.prismarine: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine: "-6"
+      inventory.prismarine_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_stairs
+      count: 1
+  - name: auto_workbench_craft_prismarine_brick_stairs
+    preconditions:
+      inventory.prismarine_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine_bricks: "-6"
+      inventory.prismarine_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: prismarine_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_dark_prismarine_stairs
+    preconditions:
+      inventory.dark_prismarine: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.dark_prismarine: "-6"
+      inventory.dark_prismarine_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_prismarine_stairs
+      count: 1
+  - name: auto_workbench_craft_sea_lantern
+    preconditions:
+      inventory.prismarine_shard: ">= 4"
+      inventory.prismarine_crystals: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.prismarine_shard: "-4"
+      inventory.prismarine_crystals: "-5"
+      inventory.sea_lantern: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: sea_lantern
+      count: 1
+  - name: auto_workbench_craft_red_sandstone_stairs
+    preconditions:
+      inventory.red_sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.red_sandstone: "-6"
+      inventory.red_sandstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_sandstone_stairs
+      count: 1
+  - name: auto_workbench_craft_nether_wart_block
+    preconditions:
+      inventory.nether_wart: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.nether_wart: "-9"
+      inventory.nether_wart_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: nether_wart_block
+      count: 1
+  - name: auto_workbench_craft_bone_block
+    preconditions:
+      inventory.bone_meal: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.bone_meal: "-9"
+      inventory.bone_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bone_block
+      count: 1
+  - name: auto_workbench_craft_shulker_box
+    preconditions:
+      inventory.shulker_shell: ">= 2"
+      inventory.chest: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.shulker_shell: "-2"
+      inventory.chest: "-1"
+      inventory.shulker_box: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: shulker_box
+      count: 1
+  - name: auto_workbench_craft_white_concrete_powder
+    preconditions:
+      inventory.white_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.white_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.white_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_orange_concrete_powder
+    preconditions:
+      inventory.orange_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.orange_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.orange_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_magenta_concrete_powder
+    preconditions:
+      inventory.magenta_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.magenta_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.magenta_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_light_blue_concrete_powder
+    preconditions:
+      inventory.light_blue_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.light_blue_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.light_blue_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_yellow_concrete_powder
+    preconditions:
+      inventory.yellow_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.yellow_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.yellow_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_lime_concrete_powder
+    preconditions:
+      inventory.lime_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.lime_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.lime_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_pink_concrete_powder
+    preconditions:
+      inventory.pink_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.pink_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.pink_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_gray_concrete_powder
+    preconditions:
+      inventory.gray_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.gray_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.gray_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_light_gray_concrete_powder
+    preconditions:
+      inventory.light_gray_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.light_gray_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.light_gray_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_cyan_concrete_powder
+    preconditions:
+      inventory.cyan_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.cyan_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.cyan_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_purple_concrete_powder
+    preconditions:
+      inventory.purple_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.purple_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.purple_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_blue_concrete_powder
+    preconditions:
+      inventory.blue_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.blue_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.blue_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_brown_concrete_powder
+    preconditions:
+      inventory.brown_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.brown_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.brown_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_green_concrete_powder
+    preconditions:
+      inventory.green_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.green_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.green_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_red_concrete_powder
+    preconditions:
+      inventory.red_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.red_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.red_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_black_concrete_powder
+    preconditions:
+      inventory.black_dye: ">= 1"
+      inventory.sand: ">= 4"
+      inventory.gravel: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.black_dye: "-1"
+      inventory.sand: "-4"
+      inventory.gravel: "-4"
+      inventory.black_concrete_powder: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_concrete_powder
+      count: 1
+  - name: auto_workbench_craft_blue_ice
+    preconditions:
+      inventory.packed_ice: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.packed_ice: "-9"
+      inventory.blue_ice: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_ice
+      count: 1
+  - name: auto_workbench_craft_conduit
+    preconditions:
+      inventory.nautilus_shell: ">= 8"
+      inventory.heart_of_the_sea: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.nautilus_shell: "-8"
+      inventory.heart_of_the_sea: "-1"
+      inventory.conduit: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: conduit
+      count: 1
+  - name: auto_workbench_craft_polished_granite_stairs
+    preconditions:
+      inventory.polished_granite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_granite: "-6"
+      inventory.polished_granite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_granite_stairs
+      count: 1
+  - name: auto_workbench_craft_smooth_red_sandstone_stairs
+    preconditions:
+      inventory.smooth_red_sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_red_sandstone: "-6"
+      inventory.smooth_red_sandstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_red_sandstone_stairs
+      count: 1
+  - name: auto_workbench_craft_mossy_stone_brick_stairs
+    preconditions:
+      inventory.mossy_stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_stone_bricks: "-6"
+      inventory.mossy_stone_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_stone_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_diorite_stairs
+    preconditions:
+      inventory.polished_diorite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_diorite: "-6"
+      inventory.polished_diorite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_diorite_stairs
+      count: 1
+  - name: auto_workbench_craft_mossy_cobblestone_stairs
+    preconditions:
+      inventory.mossy_cobblestone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_cobblestone: "-6"
+      inventory.mossy_cobblestone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_cobblestone_stairs
+      count: 1
+  - name: auto_workbench_craft_end_stone_brick_stairs
+    preconditions:
+      inventory.end_stone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.end_stone_bricks: "-6"
+      inventory.end_stone_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: end_stone_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_stone_stairs
+    preconditions:
+      inventory.stone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.stone: "-6"
+      inventory.stone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stone_stairs
+      count: 1
+  - name: auto_workbench_craft_smooth_sandstone_stairs
+    preconditions:
+      inventory.smooth_sandstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_sandstone: "-6"
+      inventory.smooth_sandstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_sandstone_stairs
+      count: 1
+  - name: auto_workbench_craft_smooth_quartz_stairs
+    preconditions:
+      inventory.smooth_quartz: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_quartz: "-6"
+      inventory.smooth_quartz_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_quartz_stairs
+      count: 1
+  - name: auto_workbench_craft_granite_stairs
+    preconditions:
+      inventory.granite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.granite: "-6"
+      inventory.granite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: granite_stairs
+      count: 1
+  - name: auto_workbench_craft_andesite_stairs
+    preconditions:
+      inventory.andesite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.andesite: "-6"
+      inventory.andesite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: andesite_stairs
+      count: 1
+  - name: auto_workbench_craft_red_nether_brick_stairs
+    preconditions:
+      inventory.red_nether_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.red_nether_bricks: "-6"
+      inventory.red_nether_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_nether_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_andesite_stairs
+    preconditions:
+      inventory.polished_andesite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_andesite: "-6"
+      inventory.polished_andesite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_andesite_stairs
+      count: 1
+  - name: auto_workbench_craft_diorite_stairs
+    preconditions:
+      inventory.diorite: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.diorite: "-6"
+      inventory.diorite_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: diorite_stairs
+      count: 1
+  - name: auto_workbench_craft_cobbled_deepslate_stairs
+    preconditions:
+      inventory.cobbled_deepslate: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cobbled_deepslate: "-6"
+      inventory.cobbled_deepslate_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobbled_deepslate_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_deepslate_stairs
+    preconditions:
+      inventory.polished_deepslate: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_deepslate: "-6"
+      inventory.polished_deepslate_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_deepslate_stairs
+      count: 1
+  - name: auto_workbench_craft_deepslate_brick_stairs
+    preconditions:
+      inventory.deepslate_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_bricks: "-6"
+      inventory.deepslate_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_deepslate_tile_stairs
+    preconditions:
+      inventory.deepslate_tiles: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_tiles: "-6"
+      inventory.deepslate_tile_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_tile_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_granite_slab
+    preconditions:
+      inventory.polished_granite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_granite: "-3"
+      inventory.polished_granite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_granite_slab
+      count: 1
+  - name: auto_workbench_craft_smooth_red_sandstone_slab
+    preconditions:
+      inventory.smooth_red_sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_red_sandstone: "-3"
+      inventory.smooth_red_sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_red_sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_mossy_stone_brick_slab
+    preconditions:
+      inventory.mossy_stone_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_stone_bricks: "-3"
+      inventory.mossy_stone_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_stone_brick_slab
+      count: 1
+  - name: auto_workbench_craft_polished_diorite_slab
+    preconditions:
+      inventory.polished_diorite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_diorite: "-3"
+      inventory.polished_diorite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_diorite_slab
+      count: 1
+  - name: auto_workbench_craft_mossy_cobblestone_slab
+    preconditions:
+      inventory.mossy_cobblestone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.mossy_cobblestone: "-3"
+      inventory.mossy_cobblestone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mossy_cobblestone_slab
+      count: 1
+  - name: auto_workbench_craft_end_stone_brick_slab
+    preconditions:
+      inventory.end_stone_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.end_stone_bricks: "-3"
+      inventory.end_stone_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: end_stone_brick_slab
+      count: 1
+  - name: auto_workbench_craft_smooth_sandstone_slab
+    preconditions:
+      inventory.smooth_sandstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_sandstone: "-3"
+      inventory.smooth_sandstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_sandstone_slab
+      count: 1
+  - name: auto_workbench_craft_smooth_quartz_slab
+    preconditions:
+      inventory.smooth_quartz: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.smooth_quartz: "-3"
+      inventory.smooth_quartz_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smooth_quartz_slab
+      count: 1
+  - name: auto_workbench_craft_granite_slab
+    preconditions:
+      inventory.granite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.granite: "-3"
+      inventory.granite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: granite_slab
+      count: 1
+  - name: auto_workbench_craft_andesite_slab
+    preconditions:
+      inventory.andesite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.andesite: "-3"
+      inventory.andesite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: andesite_slab
+      count: 1
+  - name: auto_workbench_craft_red_nether_brick_slab
+    preconditions:
+      inventory.red_nether_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.red_nether_bricks: "-3"
+      inventory.red_nether_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_nether_brick_slab
+      count: 1
+  - name: auto_workbench_craft_polished_andesite_slab
+    preconditions:
+      inventory.polished_andesite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_andesite: "-3"
+      inventory.polished_andesite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_andesite_slab
+      count: 1
+  - name: auto_workbench_craft_diorite_slab
+    preconditions:
+      inventory.diorite: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.diorite: "-3"
+      inventory.diorite_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: diorite_slab
+      count: 1
+  - name: auto_workbench_craft_cobbled_deepslate_slab
+    preconditions:
+      inventory.cobbled_deepslate: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cobbled_deepslate: "-3"
+      inventory.cobbled_deepslate_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cobbled_deepslate_slab
+      count: 1
+  - name: auto_workbench_craft_polished_deepslate_slab
+    preconditions:
+      inventory.polished_deepslate: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_deepslate: "-3"
+      inventory.polished_deepslate_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_deepslate_slab
+      count: 1
+  - name: auto_workbench_craft_deepslate_brick_slab
+    preconditions:
+      inventory.deepslate_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_bricks: "-3"
+      inventory.deepslate_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_brick_slab
+      count: 1
+  - name: auto_workbench_craft_deepslate_tile_slab
+    preconditions:
+      inventory.deepslate_tiles: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.deepslate_tiles: "-3"
+      inventory.deepslate_tile_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: deepslate_tile_slab
+      count: 1
+  - name: auto_workbench_craft_scaffolding
+    preconditions:
+      inventory.bamboo: ">= 6"
+      inventory.string: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo: "-6"
+      inventory.string: "-1"
+      inventory.scaffolding: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: scaffolding
+      count: 1
+  - name: auto_workbench_craft_redstone_block
+    preconditions:
+      inventory.redstone: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.redstone: "-9"
+      inventory.redstone_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: redstone_block
+      count: 1
+  - name: auto_workbench_craft_repeater
+    preconditions:
+      inventory.redstone_torch: ">= 2"
+      inventory.redstone: ">= 1"
+      inventory.stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.redstone_torch: "-2"
+      inventory.redstone: "-1"
+      inventory.stone: "-3"
+      inventory.repeater: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: repeater
+      count: 1
+  - name: auto_workbench_craft_comparator
+    preconditions:
+      inventory.redstone_torch: ">= 3"
+      inventory.quartz: ">= 1"
+      inventory.stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.redstone_torch: "-3"
+      inventory.quartz: "-1"
+      inventory.stone: "-3"
+      inventory.comparator: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: comparator
+      count: 1
+  - name: auto_workbench_craft_piston
+    preconditions:
+      inventory.category.plank: ">= 3"
+      inventory.cobblestone: ">= 4"
+      inventory.iron_ingot: ">= 1"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-3"
+      inventory.cobblestone: "-4"
+      inventory.iron_ingot: "-1"
+      inventory.redstone: "-1"
+      inventory.piston: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: piston
+      count: 1
+  - name: auto_workbench_craft_slime_block
+    preconditions:
+      inventory.slime_ball: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.slime_ball: "-9"
+      inventory.slime_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: slime_block
+      count: 1
+  - name: auto_workbench_craft_observer
+    preconditions:
+      inventory.cobblestone: ">= 6"
+      inventory.redstone: ">= 2"
+      inventory.quartz: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-6"
+      inventory.redstone: "-2"
+      inventory.quartz: "-1"
+      inventory.observer: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: observer
+      count: 1
+  - name: auto_workbench_craft_hopper
+    preconditions:
+      inventory.iron_ingot: ">= 5"
+      inventory.chest: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-5"
+      inventory.chest: "-1"
+      inventory.hopper: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: hopper
+      count: 1
+  - name: auto_workbench_craft_dispenser
+    preconditions:
+      inventory.cobblestone: ">= 7"
+      inventory.bow: ">= 1"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-7"
+      inventory.bow: "-1"
+      inventory.redstone: "-1"
+      inventory.dispenser: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dispenser
+      count: 1
+  - name: auto_workbench_craft_dropper
+    preconditions:
+      inventory.cobblestone: ">= 7"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.cobblestone: "-7"
+      inventory.redstone: "-1"
+      inventory.dropper: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dropper
+      count: 1
+  - name: auto_workbench_craft_lectern
+    preconditions:
+      inventory.oak_slab: ">= 4"
+      inventory.bookshelf: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.oak_slab: "-4"
+      inventory.bookshelf: "-1"
+      inventory.lectern: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lectern
+      count: 1
+  - name: auto_workbench_craft_target
+    preconditions:
+      inventory.redstone: ">= 4"
+      inventory.hay_block: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.redstone: "-4"
+      inventory.hay_block: "-1"
+      inventory.target: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: target
+      count: 1
+  - name: auto_workbench_craft_lightning_rod
+    preconditions:
+      inventory.copper_ingot: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.copper_ingot: "-3"
+      inventory.lightning_rod: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lightning_rod
+      count: 1
+  - name: auto_workbench_craft_daylight_detector
+    preconditions:
+      inventory.glass: ">= 3"
+      inventory.quartz: ">= 3"
+      inventory.oak_slab: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-3"
+      inventory.quartz: "-3"
+      inventory.oak_slab: "-3"
+      inventory.daylight_detector: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: daylight_detector
+      count: 1
+  - name: auto_workbench_craft_calibrated_sculk_sensor
+    preconditions:
+      inventory.amethyst_shard: ">= 3"
+      inventory.sculk_sensor: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.amethyst_shard: "-3"
+      inventory.sculk_sensor: "-1"
+      inventory.calibrated_sculk_sensor: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: calibrated_sculk_sensor
+      count: 1
+  - name: auto_workbench_craft_tripwire_hook
+    preconditions:
+      inventory.iron_ingot: ">= 1"
+      inventory.stick: ">= 1"
+      inventory.category.plank: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-1"
+      inventory.stick: "-1"
+      inventory.category.plank: "-1"
+      inventory.tripwire_hook: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: tripwire_hook
+      count: 1
+  - name: auto_workbench_craft_tnt
+    preconditions:
+      inventory.gunpowder: ">= 5"
+      inventory.sand: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.gunpowder: "-5"
+      inventory.sand: "-4"
+      inventory.tnt: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: tnt
+      count: 1
+  - name: auto_workbench_craft_redstone_lamp
+    preconditions:
+      inventory.redstone: ">= 4"
+      inventory.glowstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.redstone: "-4"
+      inventory.glowstone: "-1"
+      inventory.redstone_lamp: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: redstone_lamp
+      count: 1
+  - name: auto_workbench_craft_note_block
+    preconditions:
+      inventory.category.plank: ">= 8"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-8"
+      inventory.redstone: "-1"
+      inventory.note_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: note_block
+      count: 1
+  - name: auto_workbench_craft_iron_door
+    preconditions:
+      inventory.iron_ingot: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-6"
+      inventory.iron_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: iron_door
+      count: 1
+  - name: auto_workbench_craft_oak_door
+    preconditions:
+      inventory.oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-6"
+      inventory.oak_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_door
+      count: 1
+  - name: auto_workbench_craft_spruce_door
+    preconditions:
+      inventory.spruce_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-6"
+      inventory.spruce_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_door
+      count: 1
+  - name: auto_workbench_craft_birch_door
+    preconditions:
+      inventory.birch_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-6"
+      inventory.birch_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_door
+      count: 1
+  - name: auto_workbench_craft_jungle_door
+    preconditions:
+      inventory.jungle_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-6"
+      inventory.jungle_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_door
+      count: 1
+  - name: auto_workbench_craft_acacia_door
+    preconditions:
+      inventory.acacia_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-6"
+      inventory.acacia_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_door
+      count: 1
+  - name: auto_workbench_craft_cherry_door
+    preconditions:
+      inventory.cherry_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-6"
+      inventory.cherry_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_door
+      count: 1
+  - name: auto_workbench_craft_dark_oak_door
+    preconditions:
+      inventory.dark_oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-6"
+      inventory.dark_oak_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_door
+      count: 1
+  - name: auto_workbench_craft_mangrove_door
+    preconditions:
+      inventory.mangrove_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-6"
+      inventory.mangrove_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_door
+      count: 1
+  - name: auto_workbench_craft_bamboo_door
+    preconditions:
+      inventory.bamboo_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-6"
+      inventory.bamboo_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_door
+      count: 1
+  - name: auto_workbench_craft_crimson_door
+    preconditions:
+      inventory.crimson_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-6"
+      inventory.crimson_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_door
+      count: 1
+  - name: auto_workbench_craft_warped_door
+    preconditions:
+      inventory.warped_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-6"
+      inventory.warped_door: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_door
+      count: 1
+  - name: auto_workbench_craft_oak_trapdoor
+    preconditions:
+      inventory.oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-6"
+      inventory.oak_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_trapdoor
+      count: 1
+  - name: auto_workbench_craft_spruce_trapdoor
+    preconditions:
+      inventory.spruce_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-6"
+      inventory.spruce_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_trapdoor
+      count: 1
+  - name: auto_workbench_craft_birch_trapdoor
+    preconditions:
+      inventory.birch_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-6"
+      inventory.birch_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_trapdoor
+      count: 1
+  - name: auto_workbench_craft_jungle_trapdoor
+    preconditions:
+      inventory.jungle_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-6"
+      inventory.jungle_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_trapdoor
+      count: 1
+  - name: auto_workbench_craft_acacia_trapdoor
+    preconditions:
+      inventory.acacia_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-6"
+      inventory.acacia_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_trapdoor
+      count: 1
+  - name: auto_workbench_craft_cherry_trapdoor
+    preconditions:
+      inventory.cherry_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-6"
+      inventory.cherry_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_trapdoor
+      count: 1
+  - name: auto_workbench_craft_dark_oak_trapdoor
+    preconditions:
+      inventory.dark_oak_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-6"
+      inventory.dark_oak_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_trapdoor
+      count: 1
+  - name: auto_workbench_craft_mangrove_trapdoor
+    preconditions:
+      inventory.mangrove_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-6"
+      inventory.mangrove_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_trapdoor
+      count: 1
+  - name: auto_workbench_craft_bamboo_trapdoor
+    preconditions:
+      inventory.bamboo_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-6"
+      inventory.bamboo_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_trapdoor
+      count: 1
+  - name: auto_workbench_craft_crimson_trapdoor
+    preconditions:
+      inventory.crimson_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-6"
+      inventory.crimson_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_trapdoor
+      count: 1
+  - name: auto_workbench_craft_warped_trapdoor
+    preconditions:
+      inventory.warped_planks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-6"
+      inventory.warped_trapdoor: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_trapdoor
+      count: 1
+  - name: auto_workbench_craft_oak_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.oak_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.oak_planks: "-2"
+      inventory.oak_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_fence_gate
+      count: 1
+  - name: auto_workbench_craft_spruce_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.spruce_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.spruce_planks: "-2"
+      inventory.spruce_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_fence_gate
+      count: 1
+  - name: auto_workbench_craft_birch_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.birch_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.birch_planks: "-2"
+      inventory.birch_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_fence_gate
+      count: 1
+  - name: auto_workbench_craft_jungle_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.jungle_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.jungle_planks: "-2"
+      inventory.jungle_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_fence_gate
+      count: 1
+  - name: auto_workbench_craft_acacia_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.acacia_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.acacia_planks: "-2"
+      inventory.acacia_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_fence_gate
+      count: 1
+  - name: auto_workbench_craft_cherry_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.cherry_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.cherry_planks: "-2"
+      inventory.cherry_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_fence_gate
+      count: 1
+  - name: auto_workbench_craft_dark_oak_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.dark_oak_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.dark_oak_planks: "-2"
+      inventory.dark_oak_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_fence_gate
+      count: 1
+  - name: auto_workbench_craft_mangrove_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.mangrove_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.mangrove_planks: "-2"
+      inventory.mangrove_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_fence_gate
+      count: 1
+  - name: auto_workbench_craft_bamboo_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.bamboo_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.bamboo_planks: "-2"
+      inventory.bamboo_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_fence_gate
+      count: 1
+  - name: auto_workbench_craft_crimson_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.crimson_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.crimson_planks: "-2"
+      inventory.crimson_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_fence_gate
+      count: 1
+  - name: auto_workbench_craft_warped_fence_gate
+    preconditions:
+      inventory.stick: ">= 4"
+      inventory.warped_planks: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-4"
+      inventory.warped_planks: "-2"
+      inventory.warped_fence_gate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_fence_gate
+      count: 1
+  - name: auto_workbench_craft_powered_rail
+    preconditions:
+      inventory.gold_ingot: ">= 6"
+      inventory.stick: ">= 1"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-6"
+      inventory.stick: "-1"
+      inventory.redstone: "-1"
+      inventory.powered_rail: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: powered_rail
+      count: 1
+  - name: auto_workbench_craft_detector_rail
+    preconditions:
+      inventory.iron_ingot: ">= 6"
+      inventory.stone_pressure_plate: ">= 1"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-6"
+      inventory.stone_pressure_plate: "-1"
+      inventory.redstone: "-1"
+      inventory.detector_rail: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: detector_rail
+      count: 1
+  - name: auto_workbench_craft_rail
+    preconditions:
+      inventory.iron_ingot: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-6"
+      inventory.stick: "-1"
+      inventory.rail: "+16"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: rail
+      count: 1
+  - name: auto_workbench_craft_activator_rail
+    preconditions:
+      inventory.iron_ingot: ">= 6"
+      inventory.stick: ">= 2"
+      inventory.redstone_torch: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-6"
+      inventory.stick: "-2"
+      inventory.redstone_torch: "-1"
+      inventory.activator_rail: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: activator_rail
+      count: 1
+  - name: auto_workbench_craft_minecart
+    preconditions:
+      inventory.iron_ingot: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-5"
+      inventory.minecart: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: minecart
+      count: 1
+  - name: auto_workbench_craft_oak_boat
+    preconditions:
+      inventory.oak_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-5"
+      inventory.oak_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_boat
+      count: 1
+  - name: auto_workbench_craft_spruce_boat
+    preconditions:
+      inventory.spruce_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-5"
+      inventory.spruce_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_boat
+      count: 1
+  - name: auto_workbench_craft_birch_boat
+    preconditions:
+      inventory.birch_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-5"
+      inventory.birch_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_boat
+      count: 1
+  - name: auto_workbench_craft_jungle_boat
+    preconditions:
+      inventory.jungle_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-5"
+      inventory.jungle_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_boat
+      count: 1
+  - name: auto_workbench_craft_acacia_boat
+    preconditions:
+      inventory.acacia_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-5"
+      inventory.acacia_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_boat
+      count: 1
+  - name: auto_workbench_craft_cherry_boat
+    preconditions:
+      inventory.cherry_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-5"
+      inventory.cherry_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_boat
+      count: 1
+  - name: auto_workbench_craft_dark_oak_boat
+    preconditions:
+      inventory.dark_oak_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-5"
+      inventory.dark_oak_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_boat
+      count: 1
+  - name: auto_workbench_craft_mangrove_boat
+    preconditions:
+      inventory.mangrove_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-5"
+      inventory.mangrove_boat: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_boat
+      count: 1
+  - name: auto_workbench_craft_bamboo_raft
+    preconditions:
+      inventory.bamboo_planks: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-5"
+      inventory.bamboo_raft: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_raft
+      count: 1
+  - name: auto_workbench_craft_turtle_helmet
+    preconditions:
+      inventory.scute: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.scute: "-5"
+      inventory.turtle_helmet: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: turtle_helmet
+      count: 1
+  - name: auto_workbench_craft_bow
+    preconditions:
+      inventory.stick: ">= 3"
+      inventory.string: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-3"
+      inventory.string: "-3"
+      inventory.bow: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bow
+      count: 1
+  - name: auto_workbench_craft_arrow
+    preconditions:
+      inventory.flint: ">= 1"
+      inventory.stick: ">= 1"
+      inventory.feather: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.flint: "-1"
+      inventory.stick: "-1"
+      inventory.feather: "-1"
+      inventory.arrow: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: arrow
+      count: 1
+  - name: auto_workbench_craft_iron_ingot
+    preconditions:
+      inventory.iron_nugget: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.iron_nugget: "-9"
+      inventory.iron_ingot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: iron_ingot
+      count: 1
+  - name: auto_workbench_craft_gold_ingot
+    preconditions:
+      inventory.gold_nugget: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.gold_nugget: "-9"
+      inventory.gold_ingot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gold_ingot
+      count: 1
+  - name: auto_workbench_craft_netherite_ingot
+    preconditions:
+      inventory.netherite_scrap: ">= 4"
+      inventory.gold_ingot: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.netherite_scrap: "-4"
+      inventory.gold_ingot: "-4"
+      inventory.netherite_ingot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: netherite_ingot
       count: 1
   - name: auto_workbench_craft_wooden_sword
     preconditions:
@@ -169,6 +4191,79 @@ actions:
     skill: workbench_craft
     params:
       recipe: stone_hoe
+      count: 1
+  - name: auto_workbench_craft_golden_sword
+    preconditions:
+      inventory.gold_ingot: ">= 2"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-2"
+      inventory.stick: "-1"
+      inventory.golden_sword: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_sword
+      count: 1
+  - name: auto_workbench_craft_golden_shovel
+    preconditions:
+      inventory.gold_ingot: ">= 1"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-1"
+      inventory.stick: "-2"
+      inventory.golden_shovel: "+1"
+      inventory.category.shovel: true
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_shovel
+      count: 1
+  - name: auto_workbench_craft_golden_pickaxe
+    preconditions:
+      inventory.gold_ingot: ">= 3"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-3"
+      inventory.stick: "-2"
+      inventory.golden_pickaxe: "+1"
+      inventory.category.pickaxe: true
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_pickaxe
+      count: 1
+  - name: auto_workbench_craft_golden_axe
+    preconditions:
+      inventory.gold_ingot: ">= 3"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-3"
+      inventory.stick: "-2"
+      inventory.golden_axe: "+1"
+      inventory.category.axe: true
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_axe
+      count: 1
+  - name: auto_workbench_craft_golden_hoe
+    preconditions:
+      inventory.gold_ingot: ">= 2"
+      inventory.stick: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-2"
+      inventory.stick: "-2"
+      inventory.golden_hoe: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_hoe
       count: 1
   - name: auto_workbench_craft_iron_sword
     preconditions:
@@ -321,6 +4416,78 @@ actions:
     params:
       recipe: diamond_hoe
       count: 1
+  - name: auto_workbench_craft_bowl
+    preconditions:
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-3"
+      inventory.bowl: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bowl
+      count: 1
+  - name: auto_workbench_craft_bread
+    preconditions:
+      inventory.wheat: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.wheat: "-3"
+      inventory.bread: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bread
+      count: 1
+  - name: auto_workbench_craft_leather_helmet
+    preconditions:
+      inventory.leather: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.leather: "-5"
+      inventory.leather_helmet: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: leather_helmet
+      count: 1
+  - name: auto_workbench_craft_leather_chestplate
+    preconditions:
+      inventory.leather: ">= 8"
+      nearby_workbench: true
+    effects:
+      inventory.leather: "-8"
+      inventory.leather_chestplate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: leather_chestplate
+      count: 1
+  - name: auto_workbench_craft_leather_leggings
+    preconditions:
+      inventory.leather: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.leather: "-7"
+      inventory.leather_leggings: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: leather_leggings
+      count: 1
+  - name: auto_workbench_craft_leather_boots
+    preconditions:
+      inventory.leather: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.leather: "-4"
+      inventory.leather_boots: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: leather_boots
+      count: 1
   - name: auto_workbench_craft_iron_helmet
     preconditions:
       inventory.iron_ingot: ">= 5"
@@ -416,4 +4583,1815 @@ actions:
     skill: workbench_craft
     params:
       recipe: diamond_boots
+      count: 1
+  - name: auto_workbench_craft_golden_helmet
+    preconditions:
+      inventory.gold_ingot: ">= 5"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-5"
+      inventory.golden_helmet: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_helmet
+      count: 1
+  - name: auto_workbench_craft_golden_chestplate
+    preconditions:
+      inventory.gold_ingot: ">= 8"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-8"
+      inventory.golden_chestplate: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_chestplate
+      count: 1
+  - name: auto_workbench_craft_golden_leggings
+    preconditions:
+      inventory.gold_ingot: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-7"
+      inventory.golden_leggings: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_leggings
+      count: 1
+  - name: auto_workbench_craft_golden_boots
+    preconditions:
+      inventory.gold_ingot: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-4"
+      inventory.golden_boots: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_boots
+      count: 1
+  - name: auto_workbench_craft_painting
+    preconditions:
+      inventory.stick: ">= 8"
+      inventory.white_wool: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-8"
+      inventory.white_wool: "-1"
+      inventory.painting: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: painting
+      count: 1
+  - name: auto_workbench_craft_golden_apple
+    preconditions:
+      inventory.gold_ingot: ">= 8"
+      inventory.apple: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-8"
+      inventory.apple: "-1"
+      inventory.golden_apple: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_apple
+      count: 1
+  - name: auto_workbench_craft_oak_sign
+    preconditions:
+      inventory.oak_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.oak_planks: "-6"
+      inventory.stick: "-1"
+      inventory.oak_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_sign
+      count: 1
+  - name: auto_workbench_craft_spruce_sign
+    preconditions:
+      inventory.spruce_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.spruce_planks: "-6"
+      inventory.stick: "-1"
+      inventory.spruce_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_sign
+      count: 1
+  - name: auto_workbench_craft_birch_sign
+    preconditions:
+      inventory.birch_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.birch_planks: "-6"
+      inventory.stick: "-1"
+      inventory.birch_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_sign
+      count: 1
+  - name: auto_workbench_craft_jungle_sign
+    preconditions:
+      inventory.jungle_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.jungle_planks: "-6"
+      inventory.stick: "-1"
+      inventory.jungle_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_sign
+      count: 1
+  - name: auto_workbench_craft_acacia_sign
+    preconditions:
+      inventory.acacia_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.acacia_planks: "-6"
+      inventory.stick: "-1"
+      inventory.acacia_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_sign
+      count: 1
+  - name: auto_workbench_craft_cherry_sign
+    preconditions:
+      inventory.cherry_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.cherry_planks: "-6"
+      inventory.stick: "-1"
+      inventory.cherry_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_sign
+      count: 1
+  - name: auto_workbench_craft_dark_oak_sign
+    preconditions:
+      inventory.dark_oak_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_planks: "-6"
+      inventory.stick: "-1"
+      inventory.dark_oak_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_sign
+      count: 1
+  - name: auto_workbench_craft_mangrove_sign
+    preconditions:
+      inventory.mangrove_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.mangrove_planks: "-6"
+      inventory.stick: "-1"
+      inventory.mangrove_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_sign
+      count: 1
+  - name: auto_workbench_craft_bamboo_sign
+    preconditions:
+      inventory.bamboo_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.bamboo_planks: "-6"
+      inventory.stick: "-1"
+      inventory.bamboo_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_sign
+      count: 1
+  - name: auto_workbench_craft_crimson_sign
+    preconditions:
+      inventory.crimson_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.crimson_planks: "-6"
+      inventory.stick: "-1"
+      inventory.crimson_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_sign
+      count: 1
+  - name: auto_workbench_craft_warped_sign
+    preconditions:
+      inventory.warped_planks: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.warped_planks: "-6"
+      inventory.stick: "-1"
+      inventory.warped_sign: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_sign
+      count: 1
+  - name: auto_workbench_craft_oak_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_oak_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_oak_log: "-6"
+      inventory.oak_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: oak_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_spruce_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_spruce_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_spruce_log: "-6"
+      inventory.spruce_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spruce_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_birch_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_birch_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_birch_log: "-6"
+      inventory.birch_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: birch_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_jungle_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_jungle_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_jungle_log: "-6"
+      inventory.jungle_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: jungle_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_acacia_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_acacia_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_acacia_log: "-6"
+      inventory.acacia_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: acacia_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_cherry_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_cherry_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_cherry_log: "-6"
+      inventory.cherry_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cherry_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_dark_oak_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_dark_oak_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_dark_oak_log: "-6"
+      inventory.dark_oak_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dark_oak_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_mangrove_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_mangrove_log: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_mangrove_log: "-6"
+      inventory.mangrove_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: mangrove_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_bamboo_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_bamboo_block: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_bamboo_block: "-6"
+      inventory.bamboo_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bamboo_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_crimson_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_crimson_stem: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_crimson_stem: "-6"
+      inventory.crimson_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crimson_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_warped_hanging_sign
+    preconditions:
+      inventory.chain: ">= 2"
+      inventory.stripped_warped_stem: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.chain: "-2"
+      inventory.stripped_warped_stem: "-6"
+      inventory.warped_hanging_sign: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: warped_hanging_sign
+      count: 1
+  - name: auto_workbench_craft_bucket
+    preconditions:
+      inventory.iron_ingot: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-3"
+      inventory.bucket: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: bucket
+      count: 1
+  - name: auto_workbench_craft_dried_kelp_block
+    preconditions:
+      inventory.dried_kelp: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.dried_kelp: "-9"
+      inventory.dried_kelp_block: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dried_kelp_block
+      count: 1
+  - name: auto_workbench_craft_paper
+    preconditions:
+      inventory.sugar_cane: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.sugar_cane: "-3"
+      inventory.paper: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: paper
+      count: 1
+  - name: auto_workbench_craft_compass
+    preconditions:
+      inventory.iron_ingot: ">= 4"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-4"
+      inventory.redstone: "-1"
+      inventory.compass: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: compass
+      count: 1
+  - name: auto_workbench_craft_recovery_compass
+    preconditions:
+      inventory.echo_shard: ">= 8"
+      inventory.compass: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.echo_shard: "-8"
+      inventory.compass: "-1"
+      inventory.recovery_compass: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: recovery_compass
+      count: 1
+  - name: auto_workbench_craft_fishing_rod
+    preconditions:
+      inventory.stick: ">= 3"
+      inventory.string: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-3"
+      inventory.string: "-2"
+      inventory.fishing_rod: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: fishing_rod
+      count: 1
+  - name: auto_workbench_craft_clock
+    preconditions:
+      inventory.gold_ingot: ">= 4"
+      inventory.redstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_ingot: "-4"
+      inventory.redstone: "-1"
+      inventory.clock: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: clock
+      count: 1
+  - name: auto_workbench_craft_spyglass
+    preconditions:
+      inventory.amethyst_shard: ">= 1"
+      inventory.copper_ingot: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.amethyst_shard: "-1"
+      inventory.copper_ingot: "-2"
+      inventory.spyglass: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spyglass
+      count: 1
+  - name: auto_workbench_craft_cake
+    preconditions:
+      inventory.milk_bucket: ">= 3"
+      inventory.sugar: ">= 2"
+      inventory.egg: ">= 1"
+      inventory.wheat: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.milk_bucket: "-3"
+      inventory.sugar: "-2"
+      inventory.egg: "-1"
+      inventory.wheat: "-3"
+      inventory.cake: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cake
+      count: 1
+  - name: auto_workbench_craft_white_bed
+    preconditions:
+      inventory.white_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.white_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.white_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_bed
+      count: 1
+  - name: auto_workbench_craft_orange_bed
+    preconditions:
+      inventory.orange_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.orange_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.orange_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_bed
+      count: 1
+  - name: auto_workbench_craft_magenta_bed
+    preconditions:
+      inventory.magenta_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.magenta_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.magenta_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_bed
+      count: 1
+  - name: auto_workbench_craft_light_blue_bed
+    preconditions:
+      inventory.light_blue_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.light_blue_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.light_blue_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_bed
+      count: 1
+  - name: auto_workbench_craft_yellow_bed
+    preconditions:
+      inventory.yellow_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.yellow_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.yellow_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_bed
+      count: 1
+  - name: auto_workbench_craft_lime_bed
+    preconditions:
+      inventory.lime_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.lime_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.lime_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_bed
+      count: 1
+  - name: auto_workbench_craft_pink_bed
+    preconditions:
+      inventory.pink_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.pink_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.pink_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_bed
+      count: 1
+  - name: auto_workbench_craft_gray_bed
+    preconditions:
+      inventory.gray_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.gray_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.gray_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_bed
+      count: 1
+  - name: auto_workbench_craft_light_gray_bed
+    preconditions:
+      inventory.light_gray_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.light_gray_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.light_gray_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_bed
+      count: 1
+  - name: auto_workbench_craft_cyan_bed
+    preconditions:
+      inventory.cyan_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.cyan_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.cyan_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_bed
+      count: 1
+  - name: auto_workbench_craft_purple_bed
+    preconditions:
+      inventory.purple_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.purple_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.purple_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_bed
+      count: 1
+  - name: auto_workbench_craft_blue_bed
+    preconditions:
+      inventory.blue_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.blue_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.blue_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_bed
+      count: 1
+  - name: auto_workbench_craft_brown_bed
+    preconditions:
+      inventory.brown_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.brown_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.brown_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_bed
+      count: 1
+  - name: auto_workbench_craft_green_bed
+    preconditions:
+      inventory.green_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.green_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.green_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_bed
+      count: 1
+  - name: auto_workbench_craft_red_bed
+    preconditions:
+      inventory.red_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.red_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.red_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_bed
+      count: 1
+  - name: auto_workbench_craft_black_bed
+    preconditions:
+      inventory.black_wool: ">= 3"
+      inventory.category.plank: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.black_wool: "-3"
+      inventory.category.plank: "-3"
+      inventory.black_bed: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_bed
+      count: 1
+  - name: auto_workbench_craft_cookie
+    preconditions:
+      inventory.wheat: ">= 2"
+      inventory.cocoa_beans: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.wheat: "-2"
+      inventory.cocoa_beans: "-1"
+      inventory.cookie: "+8"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cookie
+      count: 1
+  - name: auto_workbench_craft_glass_bottle
+    preconditions:
+      inventory.glass: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-3"
+      inventory.glass_bottle: "+3"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: glass_bottle
+      count: 1
+  - name: auto_workbench_craft_brewing_stand
+    preconditions:
+      inventory.blaze_rod: ">= 1"
+      inventory.cobblestone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.blaze_rod: "-1"
+      inventory.cobblestone: "-3"
+      inventory.brewing_stand: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brewing_stand
+      count: 1
+  - name: auto_workbench_craft_cauldron
+    preconditions:
+      inventory.iron_ingot: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-7"
+      inventory.cauldron: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cauldron
+      count: 1
+  - name: auto_workbench_craft_glistering_melon_slice
+    preconditions:
+      inventory.gold_nugget: ">= 8"
+      inventory.melon_slice: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_nugget: "-8"
+      inventory.melon_slice: "-1"
+      inventory.glistering_melon_slice: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: glistering_melon_slice
+      count: 1
+  - name: auto_workbench_craft_item_frame
+    preconditions:
+      inventory.stick: ">= 8"
+      inventory.leather: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-8"
+      inventory.leather: "-1"
+      inventory.item_frame: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: item_frame
+      count: 1
+  - name: auto_workbench_craft_flower_pot
+    preconditions:
+      inventory.brick: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.brick: "-3"
+      inventory.flower_pot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: flower_pot
+      count: 1
+  - name: auto_workbench_craft_map
+    preconditions:
+      inventory.paper: ">= 8"
+      inventory.compass: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.paper: "-8"
+      inventory.compass: "-1"
+      inventory.map: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: map
+      count: 1
+  - name: auto_workbench_craft_golden_carrot
+    preconditions:
+      inventory.gold_nugget: ">= 8"
+      inventory.carrot: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gold_nugget: "-8"
+      inventory.carrot: "-1"
+      inventory.golden_carrot: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: golden_carrot
+      count: 1
+  - name: auto_workbench_craft_rabbit_stew
+    preconditions:
+      inventory.baked_potato: ">= 1"
+      inventory.cooked_rabbit: ">= 1"
+      inventory.bowl: ">= 1"
+      inventory.carrot: ">= 1"
+      inventory.brown_mushroom: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.baked_potato: "-1"
+      inventory.cooked_rabbit: "-1"
+      inventory.bowl: "-1"
+      inventory.carrot: "-1"
+      inventory.brown_mushroom: "-1"
+      inventory.rabbit_stew: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: rabbit_stew
+      count: 1
+  - name: auto_workbench_craft_armor_stand
+    preconditions:
+      inventory.stick: ">= 6"
+      inventory.smooth_stone_slab: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-6"
+      inventory.smooth_stone_slab: "-1"
+      inventory.armor_stand: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: armor_stand
+      count: 1
+  - name: auto_workbench_craft_leather_horse_armor
+    preconditions:
+      inventory.leather: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.leather: "-7"
+      inventory.leather_horse_armor: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: leather_horse_armor
+      count: 1
+  - name: auto_workbench_craft_lead
+    preconditions:
+      inventory.string: ">= 4"
+      inventory.slime_ball: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.string: "-4"
+      inventory.slime_ball: "-1"
+      inventory.lead: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lead
+      count: 1
+  - name: auto_workbench_craft_white_banner
+    preconditions:
+      inventory.white_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.white_wool: "-6"
+      inventory.stick: "-1"
+      inventory.white_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: white_banner
+      count: 1
+  - name: auto_workbench_craft_orange_banner
+    preconditions:
+      inventory.orange_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.orange_wool: "-6"
+      inventory.stick: "-1"
+      inventory.orange_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: orange_banner
+      count: 1
+  - name: auto_workbench_craft_magenta_banner
+    preconditions:
+      inventory.magenta_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.magenta_wool: "-6"
+      inventory.stick: "-1"
+      inventory.magenta_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: magenta_banner
+      count: 1
+  - name: auto_workbench_craft_light_blue_banner
+    preconditions:
+      inventory.light_blue_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.light_blue_wool: "-6"
+      inventory.stick: "-1"
+      inventory.light_blue_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_blue_banner
+      count: 1
+  - name: auto_workbench_craft_yellow_banner
+    preconditions:
+      inventory.yellow_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.yellow_wool: "-6"
+      inventory.stick: "-1"
+      inventory.yellow_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: yellow_banner
+      count: 1
+  - name: auto_workbench_craft_lime_banner
+    preconditions:
+      inventory.lime_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.lime_wool: "-6"
+      inventory.stick: "-1"
+      inventory.lime_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lime_banner
+      count: 1
+  - name: auto_workbench_craft_pink_banner
+    preconditions:
+      inventory.pink_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.pink_wool: "-6"
+      inventory.stick: "-1"
+      inventory.pink_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: pink_banner
+      count: 1
+  - name: auto_workbench_craft_gray_banner
+    preconditions:
+      inventory.gray_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.gray_wool: "-6"
+      inventory.stick: "-1"
+      inventory.gray_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: gray_banner
+      count: 1
+  - name: auto_workbench_craft_light_gray_banner
+    preconditions:
+      inventory.light_gray_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.light_gray_wool: "-6"
+      inventory.stick: "-1"
+      inventory.light_gray_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: light_gray_banner
+      count: 1
+  - name: auto_workbench_craft_cyan_banner
+    preconditions:
+      inventory.cyan_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.cyan_wool: "-6"
+      inventory.stick: "-1"
+      inventory.cyan_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cyan_banner
+      count: 1
+  - name: auto_workbench_craft_purple_banner
+    preconditions:
+      inventory.purple_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.purple_wool: "-6"
+      inventory.stick: "-1"
+      inventory.purple_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: purple_banner
+      count: 1
+  - name: auto_workbench_craft_blue_banner
+    preconditions:
+      inventory.blue_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.blue_wool: "-6"
+      inventory.stick: "-1"
+      inventory.blue_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blue_banner
+      count: 1
+  - name: auto_workbench_craft_brown_banner
+    preconditions:
+      inventory.brown_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.brown_wool: "-6"
+      inventory.stick: "-1"
+      inventory.brown_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brown_banner
+      count: 1
+  - name: auto_workbench_craft_green_banner
+    preconditions:
+      inventory.green_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.green_wool: "-6"
+      inventory.stick: "-1"
+      inventory.green_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: green_banner
+      count: 1
+  - name: auto_workbench_craft_red_banner
+    preconditions:
+      inventory.red_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.red_wool: "-6"
+      inventory.stick: "-1"
+      inventory.red_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: red_banner
+      count: 1
+  - name: auto_workbench_craft_black_banner
+    preconditions:
+      inventory.black_wool: ">= 6"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.black_wool: "-6"
+      inventory.stick: "-1"
+      inventory.black_banner: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: black_banner
+      count: 1
+  - name: auto_workbench_craft_end_crystal
+    preconditions:
+      inventory.glass: ">= 7"
+      inventory.ender_eye: ">= 1"
+      inventory.ghast_tear: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glass: "-7"
+      inventory.ender_eye: "-1"
+      inventory.ghast_tear: "-1"
+      inventory.end_crystal: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: end_crystal
+      count: 1
+  - name: auto_workbench_craft_beetroot_soup
+    preconditions:
+      inventory.bowl: ">= 1"
+      inventory.beetroot: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.bowl: "-1"
+      inventory.beetroot: "-6"
+      inventory.beetroot_soup: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: beetroot_soup
+      count: 1
+  - name: auto_workbench_craft_spectral_arrow
+    preconditions:
+      inventory.glowstone_dust: ">= 4"
+      inventory.arrow: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.glowstone_dust: "-4"
+      inventory.arrow: "-1"
+      inventory.spectral_arrow: "+2"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spectral_arrow
+      count: 1
+  - name: auto_workbench_craft_shield
+    preconditions:
+      inventory.category.plank: ">= 6"
+      inventory.iron_ingot: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-6"
+      inventory.iron_ingot: "-1"
+      inventory.shield: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: shield
+      count: 1
+  - name: auto_workbench_craft_music_disc_5
+    preconditions:
+      inventory.disc_fragment_5: ">= 9"
+      nearby_workbench: true
+    effects:
+      inventory.disc_fragment_5: "-9"
+      inventory.music_disc_5: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: music_disc_5
+      count: 1
+  - name: auto_workbench_craft_crossbow
+    preconditions:
+      inventory.stick: ">= 3"
+      inventory.iron_ingot: ">= 1"
+      inventory.string: ">= 2"
+      inventory.tripwire_hook: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-3"
+      inventory.iron_ingot: "-1"
+      inventory.string: "-2"
+      inventory.tripwire_hook: "-1"
+      inventory.crossbow: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: crossbow
+      count: 1
+  - name: auto_workbench_craft_composter
+    preconditions:
+      inventory.oak_slab: ">= 7"
+      nearby_workbench: true
+    effects:
+      inventory.oak_slab: "-7"
+      inventory.composter: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: composter
+      count: 1
+  - name: auto_workbench_craft_barrel
+    preconditions:
+      inventory.category.plank: ">= 6"
+      inventory.oak_slab: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-6"
+      inventory.oak_slab: "-2"
+      inventory.barrel: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: barrel
+      count: 1
+  - name: auto_workbench_craft_smoker
+    preconditions:
+      inventory.dark_oak_log: ">= 4"
+      inventory.furnace: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.dark_oak_log: "-4"
+      inventory.furnace: "-1"
+      inventory.smoker: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smoker
+      count: 1
+  - name: auto_workbench_craft_blast_furnace
+    preconditions:
+      inventory.iron_ingot: ">= 5"
+      inventory.furnace: ">= 1"
+      inventory.smooth_stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-5"
+      inventory.furnace: "-1"
+      inventory.smooth_stone: "-3"
+      inventory.blast_furnace: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blast_furnace
+      count: 1
+  - name: auto_workbench_craft_cartography_table
+    preconditions:
+      inventory.paper: ">= 2"
+      inventory.category.plank: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.paper: "-2"
+      inventory.category.plank: "-4"
+      inventory.cartography_table: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: cartography_table
+      count: 1
+  - name: auto_workbench_craft_fletching_table
+    preconditions:
+      inventory.flint: ">= 2"
+      inventory.category.plank: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.flint: "-2"
+      inventory.category.plank: "-4"
+      inventory.fletching_table: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: fletching_table
+      count: 1
+  - name: auto_workbench_craft_grindstone
+    preconditions:
+      inventory.stick: ">= 2"
+      inventory.stone_slab: ">= 1"
+      inventory.category.plank: ">= 2"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-2"
+      inventory.stone_slab: "-1"
+      inventory.category.plank: "-2"
+      inventory.grindstone: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: grindstone
+      count: 1
+  - name: auto_workbench_craft_smithing_table
+    preconditions:
+      inventory.iron_ingot: ">= 2"
+      inventory.category.plank: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-2"
+      inventory.category.plank: "-4"
+      inventory.smithing_table: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: smithing_table
+      count: 1
+  - name: auto_workbench_craft_stonecutter
+    preconditions:
+      inventory.iron_ingot: ">= 1"
+      inventory.stone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.iron_ingot: "-1"
+      inventory.stone: "-3"
+      inventory.stonecutter: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: stonecutter
+      count: 1
+  - name: auto_workbench_craft_lantern
+    preconditions:
+      inventory.iron_nugget: ">= 8"
+      inventory.torch: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_nugget: "-8"
+      inventory.torch: "-1"
+      inventory.lantern: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lantern
+      count: 1
+  - name: auto_workbench_craft_soul_lantern
+    preconditions:
+      inventory.iron_nugget: ">= 8"
+      inventory.soul_torch: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.iron_nugget: "-8"
+      inventory.soul_torch: "-1"
+      inventory.soul_lantern: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: soul_lantern
+      count: 1
+  - name: auto_workbench_craft_campfire
+    preconditions:
+      inventory.stick: ">= 3"
+      inventory.coal: ">= 1"
+      inventory.dark_oak_log: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-3"
+      inventory.coal: "-1"
+      inventory.dark_oak_log: "-3"
+      inventory.campfire: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: campfire
+      count: 1
+  - name: auto_workbench_craft_soul_campfire
+    preconditions:
+      inventory.stick: ">= 3"
+      inventory.soul_sand: ">= 1"
+      inventory.dark_oak_log: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.stick: "-3"
+      inventory.soul_sand: "-1"
+      inventory.dark_oak_log: "-3"
+      inventory.soul_campfire: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: soul_campfire
+      count: 1
+  - name: auto_workbench_craft_beehive
+    preconditions:
+      inventory.category.plank: ">= 6"
+      inventory.honeycomb: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.category.plank: "-6"
+      inventory.honeycomb: "-3"
+      inventory.beehive: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: beehive
+      count: 1
+  - name: auto_workbench_craft_honey_bottle
+    preconditions:
+      inventory.honey_block: ">= 1"
+      inventory.glass_bottle: ">= 4"
+      nearby_workbench: true
+    effects:
+      inventory.honey_block: "-1"
+      inventory.glass_bottle: "-4"
+      inventory.honey_bottle: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: honey_bottle
+      count: 1
+  - name: auto_workbench_craft_lodestone
+    preconditions:
+      inventory.chiseled_stone_bricks: ">= 8"
+      inventory.netherite_ingot: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.chiseled_stone_bricks: "-8"
+      inventory.netherite_ingot: "-1"
+      inventory.lodestone: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: lodestone
+      count: 1
+  - name: auto_workbench_craft_blackstone_slab
+    preconditions:
+      inventory.blackstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.blackstone: "-3"
+      inventory.blackstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blackstone_slab
+      count: 1
+  - name: auto_workbench_craft_blackstone_stairs
+    preconditions:
+      inventory.blackstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.blackstone: "-6"
+      inventory.blackstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: blackstone_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_slab
+    preconditions:
+      inventory.polished_blackstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone: "-3"
+      inventory.polished_blackstone_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_slab
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_stairs
+    preconditions:
+      inventory.polished_blackstone: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone: "-6"
+      inventory.polished_blackstone_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_stairs
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_brick_slab
+    preconditions:
+      inventory.polished_blackstone_bricks: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone_bricks: "-3"
+      inventory.polished_blackstone_brick_slab: "+6"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_brick_slab
+      count: 1
+  - name: auto_workbench_craft_polished_blackstone_brick_stairs
+    preconditions:
+      inventory.polished_blackstone_bricks: ">= 6"
+      nearby_workbench: true
+    effects:
+      inventory.polished_blackstone_bricks: "-6"
+      inventory.polished_blackstone_brick_stairs: "+4"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: polished_blackstone_brick_stairs
+      count: 1
+  - name: auto_workbench_craft_respawn_anchor
+    preconditions:
+      inventory.crying_obsidian: ">= 6"
+      inventory.glowstone: ">= 3"
+      nearby_workbench: true
+    effects:
+      inventory.crying_obsidian: "-6"
+      inventory.glowstone: "-3"
+      inventory.respawn_anchor: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: respawn_anchor
+      count: 1
+  - name: auto_workbench_craft_brush
+    preconditions:
+      inventory.feather: ">= 1"
+      inventory.copper_ingot: ">= 1"
+      inventory.stick: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.feather: "-1"
+      inventory.copper_ingot: "-1"
+      inventory.stick: "-1"
+      inventory.brush: "+1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: brush
+      count: 1
+  - name: auto_workbench_craft_netherite_upgrade_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.netherite_upgrade_smithing_template: ">= 1"
+      inventory.netherrack: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.netherite_upgrade_smithing_template: "+1"
+      inventory.netherrack: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: netherite_upgrade_smithing_template
+      count: 1
+  - name: auto_workbench_craft_sentry_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.sentry_armor_trim_smithing_template: ">= 1"
+      inventory.cobblestone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.sentry_armor_trim_smithing_template: "+1"
+      inventory.cobblestone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: sentry_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_dune_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.dune_armor_trim_smithing_template: ">= 1"
+      inventory.sandstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.dune_armor_trim_smithing_template: "+1"
+      inventory.sandstone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: dune_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_coast_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.coast_armor_trim_smithing_template: ">= 1"
+      inventory.cobblestone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.coast_armor_trim_smithing_template: "+1"
+      inventory.cobblestone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: coast_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_wild_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.wild_armor_trim_smithing_template: ">= 1"
+      inventory.mossy_cobblestone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.wild_armor_trim_smithing_template: "+1"
+      inventory.mossy_cobblestone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: wild_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_ward_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.ward_armor_trim_smithing_template: ">= 1"
+      inventory.cobbled_deepslate: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.ward_armor_trim_smithing_template: "+1"
+      inventory.cobbled_deepslate: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: ward_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_eye_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.eye_armor_trim_smithing_template: ">= 1"
+      inventory.end_stone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.eye_armor_trim_smithing_template: "+1"
+      inventory.end_stone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: eye_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_vex_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.vex_armor_trim_smithing_template: ">= 1"
+      inventory.cobblestone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.vex_armor_trim_smithing_template: "+1"
+      inventory.cobblestone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: vex_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_tide_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.tide_armor_trim_smithing_template: ">= 1"
+      inventory.prismarine: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.tide_armor_trim_smithing_template: "+1"
+      inventory.prismarine: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: tide_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_snout_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.snout_armor_trim_smithing_template: ">= 1"
+      inventory.blackstone: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.snout_armor_trim_smithing_template: "+1"
+      inventory.blackstone: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: snout_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_rib_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.rib_armor_trim_smithing_template: ">= 1"
+      inventory.netherrack: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.rib_armor_trim_smithing_template: "+1"
+      inventory.netherrack: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: rib_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_spire_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.spire_armor_trim_smithing_template: ">= 1"
+      inventory.purpur_block: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.spire_armor_trim_smithing_template: "+1"
+      inventory.purpur_block: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: spire_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_wayfinder_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.wayfinder_armor_trim_smithing_template: ">= 1"
+      inventory.terracotta: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.wayfinder_armor_trim_smithing_template: "+1"
+      inventory.terracotta: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: wayfinder_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_shaper_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.shaper_armor_trim_smithing_template: ">= 1"
+      inventory.terracotta: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.shaper_armor_trim_smithing_template: "+1"
+      inventory.terracotta: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: shaper_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_silence_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.silence_armor_trim_smithing_template: ">= 1"
+      inventory.cobbled_deepslate: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.silence_armor_trim_smithing_template: "+1"
+      inventory.cobbled_deepslate: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: silence_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_raiser_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.raiser_armor_trim_smithing_template: ">= 1"
+      inventory.terracotta: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.raiser_armor_trim_smithing_template: "+1"
+      inventory.terracotta: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: raiser_armor_trim_smithing_template
+      count: 1
+  - name: auto_workbench_craft_host_armor_trim_smithing_template
+    preconditions:
+      inventory.diamond: ">= 7"
+      inventory.host_armor_trim_smithing_template: ">= 1"
+      inventory.terracotta: ">= 1"
+      nearby_workbench: true
+    effects:
+      inventory.diamond: "-7"
+      inventory.host_armor_trim_smithing_template: "+1"
+      inventory.terracotta: "-1"
+    cost: 10
+    skill: workbench_craft
+    params:
+      recipe: host_armor_trim_smithing_template
       count: 1

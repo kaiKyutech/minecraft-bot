@@ -1,4 +1,111 @@
 actions:
+  - name: auto_hand_craft_granite
+    preconditions:
+      inventory.diorite: ">= 1"
+      inventory.quartz: ">= 1"
+    effects:
+      inventory.diorite: "-1"
+      inventory.quartz: "-1"
+      inventory.granite: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: granite
+      count: 1
+  - name: auto_hand_craft_polished_granite
+    preconditions:
+      inventory.granite: ">= 4"
+    effects:
+      inventory.granite: "-4"
+      inventory.polished_granite: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_granite
+      count: 1
+  - name: auto_hand_craft_diorite
+    preconditions:
+      inventory.cobblestone: ">= 2"
+      inventory.quartz: ">= 2"
+    effects:
+      inventory.cobblestone: "-2"
+      inventory.quartz: "-2"
+      inventory.diorite: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: diorite
+      count: 1
+  - name: auto_hand_craft_polished_diorite
+    preconditions:
+      inventory.diorite: ">= 4"
+    effects:
+      inventory.diorite: "-4"
+      inventory.polished_diorite: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_diorite
+      count: 1
+  - name: auto_hand_craft_andesite
+    preconditions:
+      inventory.diorite: ">= 1"
+      inventory.cobblestone: ">= 1"
+    effects:
+      inventory.diorite: "-1"
+      inventory.cobblestone: "-1"
+      inventory.andesite: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: andesite
+      count: 1
+  - name: auto_hand_craft_polished_andesite
+    preconditions:
+      inventory.andesite: ">= 4"
+    effects:
+      inventory.andesite: "-4"
+      inventory.polished_andesite: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_andesite
+      count: 1
+  - name: auto_hand_craft_polished_deepslate
+    preconditions:
+      inventory.cobbled_deepslate: ">= 4"
+    effects:
+      inventory.cobbled_deepslate: "-4"
+      inventory.polished_deepslate: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_deepslate
+      count: 1
+  - name: auto_hand_craft_dripstone_block
+    preconditions:
+      inventory.pointed_dripstone: ">= 4"
+    effects:
+      inventory.pointed_dripstone: "-4"
+      inventory.dripstone_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dripstone_block
+      count: 1
+  - name: auto_hand_craft_coarse_dirt
+    preconditions:
+      inventory.dirt: ">= 2"
+      inventory.gravel: ">= 2"
+    effects:
+      inventory.dirt: "-2"
+      inventory.gravel: "-2"
+      inventory.coarse_dirt: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: coarse_dirt
+      count: 1
   - name: auto_hand_craft_planks_from_logs_category
     preconditions:
       inventory.category.log: ">= 1"
@@ -131,6 +238,781 @@ actions:
     params:
       recipe: warped_planks
       count: 1
+  - name: auto_hand_craft_bamboo_mosaic
+    preconditions:
+      inventory.bamboo_slab: ">= 2"
+    effects:
+      inventory.bamboo_slab: "-2"
+      inventory.bamboo_mosaic: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bamboo_mosaic
+      count: 1
+  - name: auto_hand_craft_amethyst_block
+    preconditions:
+      inventory.amethyst_shard: ">= 4"
+    effects:
+      inventory.amethyst_shard: "-4"
+      inventory.amethyst_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: amethyst_block
+      count: 1
+  - name: auto_hand_craft_cut_copper
+    preconditions:
+      inventory.copper_block: ">= 4"
+    effects:
+      inventory.copper_block: "-4"
+      inventory.cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cut_copper
+      count: 1
+  - name: auto_hand_craft_exposed_cut_copper
+    preconditions:
+      inventory.exposed_copper: ">= 4"
+    effects:
+      inventory.exposed_copper: "-4"
+      inventory.exposed_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: exposed_cut_copper
+      count: 1
+  - name: auto_hand_craft_weathered_cut_copper
+    preconditions:
+      inventory.weathered_copper: ">= 4"
+    effects:
+      inventory.weathered_copper: "-4"
+      inventory.weathered_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: weathered_cut_copper
+      count: 1
+  - name: auto_hand_craft_oxidized_cut_copper
+    preconditions:
+      inventory.oxidized_copper: ">= 4"
+    effects:
+      inventory.oxidized_copper: "-4"
+      inventory.oxidized_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oxidized_cut_copper
+      count: 1
+  - name: auto_hand_craft_waxed_copper_block
+    preconditions:
+      inventory.copper_block: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.copper_block: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_copper_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_copper_block
+      count: 1
+  - name: auto_hand_craft_waxed_exposed_copper
+    preconditions:
+      inventory.exposed_copper: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.exposed_copper: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_exposed_copper: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_exposed_copper
+      count: 1
+  - name: auto_hand_craft_waxed_weathered_copper
+    preconditions:
+      inventory.weathered_copper: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.weathered_copper: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_weathered_copper: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_weathered_copper
+      count: 1
+  - name: auto_hand_craft_waxed_oxidized_copper
+    preconditions:
+      inventory.oxidized_copper: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.oxidized_copper: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_oxidized_copper: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_oxidized_copper
+      count: 1
+  - name: auto_hand_craft_waxed_cut_copper
+    preconditions:
+      inventory.waxed_copper_block: ">= 4"
+    effects:
+      inventory.waxed_copper_block: "-4"
+      inventory.waxed_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_cut_copper
+      count: 1
+  - name: auto_hand_craft_waxed_exposed_cut_copper
+    preconditions:
+      inventory.waxed_exposed_copper: ">= 4"
+    effects:
+      inventory.waxed_exposed_copper: "-4"
+      inventory.waxed_exposed_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_exposed_cut_copper
+      count: 1
+  - name: auto_hand_craft_waxed_weathered_cut_copper
+    preconditions:
+      inventory.waxed_weathered_copper: ">= 4"
+    effects:
+      inventory.waxed_weathered_copper: "-4"
+      inventory.waxed_weathered_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_weathered_cut_copper
+      count: 1
+  - name: auto_hand_craft_waxed_oxidized_cut_copper
+    preconditions:
+      inventory.waxed_oxidized_copper: ">= 4"
+    effects:
+      inventory.waxed_oxidized_copper: "-4"
+      inventory.waxed_oxidized_cut_copper: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_oxidized_cut_copper
+      count: 1
+  - name: auto_hand_craft_waxed_cut_copper_stairs
+    preconditions:
+      inventory.cut_copper_stairs: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.cut_copper_stairs: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_cut_copper_stairs: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_cut_copper_stairs
+      count: 1
+  - name: auto_hand_craft_waxed_exposed_cut_copper_stairs
+    preconditions:
+      inventory.exposed_cut_copper_stairs: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.exposed_cut_copper_stairs: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_exposed_cut_copper_stairs: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_exposed_cut_copper_stairs
+      count: 1
+  - name: auto_hand_craft_waxed_weathered_cut_copper_stairs
+    preconditions:
+      inventory.weathered_cut_copper_stairs: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.weathered_cut_copper_stairs: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_weathered_cut_copper_stairs: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_weathered_cut_copper_stairs
+      count: 1
+  - name: auto_hand_craft_waxed_oxidized_cut_copper_stairs
+    preconditions:
+      inventory.oxidized_cut_copper_stairs: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.oxidized_cut_copper_stairs: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_oxidized_cut_copper_stairs: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_oxidized_cut_copper_stairs
+      count: 1
+  - name: auto_hand_craft_waxed_cut_copper_slab
+    preconditions:
+      inventory.cut_copper_slab: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.cut_copper_slab: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_cut_copper_slab: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_cut_copper_slab
+      count: 1
+  - name: auto_hand_craft_waxed_exposed_cut_copper_slab
+    preconditions:
+      inventory.exposed_cut_copper_slab: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.exposed_cut_copper_slab: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_exposed_cut_copper_slab: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_exposed_cut_copper_slab
+      count: 1
+  - name: auto_hand_craft_waxed_weathered_cut_copper_slab
+    preconditions:
+      inventory.weathered_cut_copper_slab: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.weathered_cut_copper_slab: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_weathered_cut_copper_slab: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_weathered_cut_copper_slab
+      count: 1
+  - name: auto_hand_craft_waxed_oxidized_cut_copper_slab
+    preconditions:
+      inventory.oxidized_cut_copper_slab: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.oxidized_cut_copper_slab: "-1"
+      inventory.honeycomb: "-1"
+      inventory.waxed_oxidized_cut_copper_slab: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: waxed_oxidized_cut_copper_slab
+      count: 1
+  - name: auto_hand_craft_muddy_mangrove_roots
+    preconditions:
+      inventory.mud: ">= 1"
+      inventory.mangrove_roots: ">= 1"
+    effects:
+      inventory.mud: "-1"
+      inventory.mangrove_roots: "-1"
+      inventory.muddy_mangrove_roots: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: muddy_mangrove_roots
+      count: 1
+  - name: auto_hand_craft_stripped_oak_wood
+    preconditions:
+      inventory.stripped_oak_log: ">= 4"
+    effects:
+      inventory.stripped_oak_log: "-4"
+      inventory.stripped_oak_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_oak_wood
+      count: 1
+  - name: auto_hand_craft_stripped_spruce_wood
+    preconditions:
+      inventory.stripped_spruce_log: ">= 4"
+    effects:
+      inventory.stripped_spruce_log: "-4"
+      inventory.stripped_spruce_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_spruce_wood
+      count: 1
+  - name: auto_hand_craft_stripped_birch_wood
+    preconditions:
+      inventory.stripped_birch_log: ">= 4"
+    effects:
+      inventory.stripped_birch_log: "-4"
+      inventory.stripped_birch_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_birch_wood
+      count: 1
+  - name: auto_hand_craft_stripped_jungle_wood
+    preconditions:
+      inventory.stripped_jungle_log: ">= 4"
+    effects:
+      inventory.stripped_jungle_log: "-4"
+      inventory.stripped_jungle_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_jungle_wood
+      count: 1
+  - name: auto_hand_craft_stripped_acacia_wood
+    preconditions:
+      inventory.stripped_acacia_log: ">= 4"
+    effects:
+      inventory.stripped_acacia_log: "-4"
+      inventory.stripped_acacia_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_acacia_wood
+      count: 1
+  - name: auto_hand_craft_stripped_cherry_wood
+    preconditions:
+      inventory.stripped_cherry_log: ">= 4"
+    effects:
+      inventory.stripped_cherry_log: "-4"
+      inventory.stripped_cherry_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_cherry_wood
+      count: 1
+  - name: auto_hand_craft_stripped_dark_oak_wood
+    preconditions:
+      inventory.stripped_dark_oak_log: ">= 4"
+    effects:
+      inventory.stripped_dark_oak_log: "-4"
+      inventory.stripped_dark_oak_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_dark_oak_wood
+      count: 1
+  - name: auto_hand_craft_stripped_mangrove_wood
+    preconditions:
+      inventory.stripped_mangrove_log: ">= 4"
+    effects:
+      inventory.stripped_mangrove_log: "-4"
+      inventory.stripped_mangrove_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_mangrove_wood
+      count: 1
+  - name: auto_hand_craft_stripped_crimson_hyphae
+    preconditions:
+      inventory.stripped_crimson_stem: ">= 4"
+    effects:
+      inventory.stripped_crimson_stem: "-4"
+      inventory.stripped_crimson_hyphae: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_crimson_hyphae
+      count: 1
+  - name: auto_hand_craft_stripped_warped_hyphae
+    preconditions:
+      inventory.stripped_warped_stem: ">= 4"
+    effects:
+      inventory.stripped_warped_stem: "-4"
+      inventory.stripped_warped_hyphae: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stripped_warped_hyphae
+      count: 1
+  - name: auto_hand_craft_oak_wood
+    preconditions:
+      inventory.oak_log: ">= 4"
+    effects:
+      inventory.oak_log: "-4"
+      inventory.oak_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oak_wood
+      count: 1
+  - name: auto_hand_craft_spruce_wood
+    preconditions:
+      inventory.spruce_log: ">= 4"
+    effects:
+      inventory.spruce_log: "-4"
+      inventory.spruce_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: spruce_wood
+      count: 1
+  - name: auto_hand_craft_birch_wood
+    preconditions:
+      inventory.birch_log: ">= 4"
+    effects:
+      inventory.birch_log: "-4"
+      inventory.birch_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: birch_wood
+      count: 1
+  - name: auto_hand_craft_jungle_wood
+    preconditions:
+      inventory.jungle_log: ">= 4"
+    effects:
+      inventory.jungle_log: "-4"
+      inventory.jungle_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jungle_wood
+      count: 1
+  - name: auto_hand_craft_acacia_wood
+    preconditions:
+      inventory.acacia_log: ">= 4"
+    effects:
+      inventory.acacia_log: "-4"
+      inventory.acacia_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: acacia_wood
+      count: 1
+  - name: auto_hand_craft_cherry_wood
+    preconditions:
+      inventory.cherry_log: ">= 4"
+    effects:
+      inventory.cherry_log: "-4"
+      inventory.cherry_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cherry_wood
+      count: 1
+  - name: auto_hand_craft_dark_oak_wood
+    preconditions:
+      inventory.dark_oak_log: ">= 4"
+    effects:
+      inventory.dark_oak_log: "-4"
+      inventory.dark_oak_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dark_oak_wood
+      count: 1
+  - name: auto_hand_craft_mangrove_wood
+    preconditions:
+      inventory.mangrove_log: ">= 4"
+    effects:
+      inventory.mangrove_log: "-4"
+      inventory.mangrove_wood: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mangrove_wood
+      count: 1
+  - name: auto_hand_craft_crimson_hyphae
+    preconditions:
+      inventory.crimson_stem: ">= 4"
+    effects:
+      inventory.crimson_stem: "-4"
+      inventory.crimson_hyphae: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: crimson_hyphae
+      count: 1
+  - name: auto_hand_craft_warped_hyphae
+    preconditions:
+      inventory.warped_stem: ">= 4"
+    effects:
+      inventory.warped_stem: "-4"
+      inventory.warped_hyphae: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: warped_hyphae
+      count: 1
+  - name: auto_hand_craft_sandstone
+    preconditions:
+      inventory.sand: ">= 4"
+    effects:
+      inventory.sand: "-4"
+      inventory.sandstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: sandstone
+      count: 1
+  - name: auto_hand_craft_chiseled_sandstone
+    preconditions:
+      inventory.sandstone_slab: ">= 2"
+    effects:
+      inventory.sandstone_slab: "-2"
+      inventory.chiseled_sandstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_sandstone
+      count: 1
+  - name: auto_hand_craft_cut_sandstone
+    preconditions:
+      inventory.sandstone: ">= 4"
+    effects:
+      inventory.sandstone: "-4"
+      inventory.cut_sandstone: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cut_sandstone
+      count: 1
+  - name: auto_hand_craft_white_wool
+    preconditions:
+      inventory.white_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.white_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.white_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: white_wool
+      count: 1
+  - name: auto_hand_craft_orange_wool
+    preconditions:
+      inventory.orange_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.orange_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.orange_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: orange_wool
+      count: 1
+  - name: auto_hand_craft_magenta_wool
+    preconditions:
+      inventory.magenta_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.magenta_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.magenta_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magenta_wool
+      count: 1
+  - name: auto_hand_craft_light_blue_wool
+    preconditions:
+      inventory.light_blue_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.light_blue_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.light_blue_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_blue_wool
+      count: 1
+  - name: auto_hand_craft_yellow_wool
+    preconditions:
+      inventory.yellow_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.yellow_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.yellow_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: yellow_wool
+      count: 1
+  - name: auto_hand_craft_lime_wool
+    preconditions:
+      inventory.lime_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.lime_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.lime_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lime_wool
+      count: 1
+  - name: auto_hand_craft_pink_wool
+    preconditions:
+      inventory.pink_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.pink_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.pink_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pink_wool
+      count: 1
+  - name: auto_hand_craft_gray_wool
+    preconditions:
+      inventory.gray_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.gray_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.gray_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gray_wool
+      count: 1
+  - name: auto_hand_craft_light_gray_wool
+    preconditions:
+      inventory.light_gray_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.light_gray_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.light_gray_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_gray_wool
+      count: 1
+  - name: auto_hand_craft_cyan_wool
+    preconditions:
+      inventory.cyan_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.cyan_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.cyan_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cyan_wool
+      count: 1
+  - name: auto_hand_craft_purple_wool
+    preconditions:
+      inventory.purple_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.purple_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.purple_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purple_wool
+      count: 1
+  - name: auto_hand_craft_blue_wool
+    preconditions:
+      inventory.blue_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.blue_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.blue_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blue_wool
+      count: 1
+  - name: auto_hand_craft_brown_wool
+    preconditions:
+      inventory.brown_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.brown_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.brown_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: brown_wool
+      count: 1
+  - name: auto_hand_craft_green_wool
+    preconditions:
+      inventory.green_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.green_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.green_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: green_wool
+      count: 1
+  - name: auto_hand_craft_red_wool
+    preconditions:
+      inventory.red_dye: ">= 1"
+      inventory.black_wool: ">= 1"
+    effects:
+      inventory.red_dye: "-1"
+      inventory.black_wool: "-1"
+      inventory.red_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_wool
+      count: 1
+  - name: auto_hand_craft_black_wool
+    preconditions:
+      inventory.black_dye: ">= 1"
+      inventory.blue_wool: ">= 1"
+    effects:
+      inventory.black_dye: "-1"
+      inventory.blue_wool: "-1"
+      inventory.black_wool: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: black_wool
+      count: 1
+  - name: auto_hand_craft_moss_carpet
+    preconditions:
+      inventory.moss_block: ">= 2"
+    effects:
+      inventory.moss_block: "-2"
+      inventory.moss_carpet: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: moss_carpet
+      count: 1
+  - name: auto_hand_craft_bricks
+    preconditions:
+      inventory.brick: ">= 4"
+    effects:
+      inventory.brick: "-4"
+      inventory.bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bricks
+      count: 1
+  - name: auto_hand_craft_mossy_cobblestone
+    preconditions:
+      inventory.cobblestone: ">= 1"
+      inventory.moss_block: ">= 1"
+    effects:
+      inventory.cobblestone: "-1"
+      inventory.moss_block: "-1"
+      inventory.mossy_cobblestone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mossy_cobblestone
+      count: 1
   - name: auto_hand_craft_torch
     preconditions:
       inventory.coal: ">= 1"
@@ -144,6 +1026,41 @@ actions:
     params:
       recipe: torch
       count: 1
+  - name: auto_hand_craft_end_rod
+    preconditions:
+      inventory.blaze_rod: ">= 1"
+      inventory.popped_chorus_fruit: ">= 1"
+    effects:
+      inventory.blaze_rod: "-1"
+      inventory.popped_chorus_fruit: "-1"
+      inventory.end_rod: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: end_rod
+      count: 1
+  - name: auto_hand_craft_purpur_block
+    preconditions:
+      inventory.popped_chorus_fruit: ">= 4"
+    effects:
+      inventory.popped_chorus_fruit: "-4"
+      inventory.purpur_block: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purpur_block
+      count: 1
+  - name: auto_hand_craft_purpur_pillar
+    preconditions:
+      inventory.purpur_slab: ">= 2"
+    effects:
+      inventory.purpur_slab: "-2"
+      inventory.purpur_pillar: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purpur_pillar
+      count: 1
   - name: auto_hand_craft_crafting_table
     preconditions:
       inventory.category.plank: ">= 4"
@@ -155,6 +1072,1222 @@ actions:
     params:
       recipe: crafting_table
       count: 1
+  - name: auto_hand_craft_snow_block
+    preconditions:
+      inventory.snowball: ">= 4"
+    effects:
+      inventory.snowball: "-4"
+      inventory.snow_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: snow_block
+      count: 1
+  - name: auto_hand_craft_clay
+    preconditions:
+      inventory.clay_ball: ">= 4"
+    effects:
+      inventory.clay_ball: "-4"
+      inventory.clay: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: clay
+      count: 1
+  - name: auto_hand_craft_jack_o_lantern
+    preconditions:
+      inventory.carved_pumpkin: ">= 1"
+      inventory.torch: ">= 1"
+    effects:
+      inventory.carved_pumpkin: "-1"
+      inventory.torch: "-1"
+      inventory.jack_o_lantern: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jack_o_lantern
+      count: 1
+  - name: auto_hand_craft_polished_basalt
+    preconditions:
+      inventory.basalt: ">= 4"
+    effects:
+      inventory.basalt: "-4"
+      inventory.polished_basalt: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_basalt
+      count: 1
+  - name: auto_hand_craft_glowstone
+    preconditions:
+      inventory.glowstone_dust: ">= 4"
+    effects:
+      inventory.glowstone_dust: "-4"
+      inventory.glowstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: glowstone
+      count: 1
+  - name: auto_hand_craft_stone_bricks
+    preconditions:
+      inventory.stone: ">= 4"
+    effects:
+      inventory.stone: "-4"
+      inventory.stone_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stone_bricks
+      count: 1
+  - name: auto_hand_craft_mossy_stone_bricks
+    preconditions:
+      inventory.stone_bricks: ">= 1"
+      inventory.moss_block: ">= 1"
+    effects:
+      inventory.stone_bricks: "-1"
+      inventory.moss_block: "-1"
+      inventory.mossy_stone_bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mossy_stone_bricks
+      count: 1
+  - name: auto_hand_craft_chiseled_stone_bricks
+    preconditions:
+      inventory.stone_brick_slab: ">= 2"
+    effects:
+      inventory.stone_brick_slab: "-2"
+      inventory.chiseled_stone_bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_stone_bricks
+      count: 1
+  - name: auto_hand_craft_packed_mud
+    preconditions:
+      inventory.mud: ">= 1"
+      inventory.wheat: ">= 1"
+    effects:
+      inventory.mud: "-1"
+      inventory.wheat: "-1"
+      inventory.packed_mud: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: packed_mud
+      count: 1
+  - name: auto_hand_craft_mud_bricks
+    preconditions:
+      inventory.packed_mud: ">= 4"
+    effects:
+      inventory.packed_mud: "-4"
+      inventory.mud_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mud_bricks
+      count: 1
+  - name: auto_hand_craft_deepslate_bricks
+    preconditions:
+      inventory.polished_deepslate: ">= 4"
+    effects:
+      inventory.polished_deepslate: "-4"
+      inventory.deepslate_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: deepslate_bricks
+      count: 1
+  - name: auto_hand_craft_deepslate_tiles
+    preconditions:
+      inventory.deepslate_bricks: ">= 4"
+    effects:
+      inventory.deepslate_bricks: "-4"
+      inventory.deepslate_tiles: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: deepslate_tiles
+      count: 1
+  - name: auto_hand_craft_chiseled_deepslate
+    preconditions:
+      inventory.cobbled_deepslate_slab: ">= 2"
+    effects:
+      inventory.cobbled_deepslate_slab: "-2"
+      inventory.chiseled_deepslate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_deepslate
+      count: 1
+  - name: auto_hand_craft_nether_bricks
+    preconditions:
+      inventory.nether_brick: ">= 4"
+    effects:
+      inventory.nether_brick: "-4"
+      inventory.nether_bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: nether_bricks
+      count: 1
+  - name: auto_hand_craft_chiseled_nether_bricks
+    preconditions:
+      inventory.nether_brick_slab: ">= 2"
+    effects:
+      inventory.nether_brick_slab: "-2"
+      inventory.chiseled_nether_bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_nether_bricks
+      count: 1
+  - name: auto_hand_craft_end_stone_bricks
+    preconditions:
+      inventory.end_stone: ">= 4"
+    effects:
+      inventory.end_stone: "-4"
+      inventory.end_stone_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: end_stone_bricks
+      count: 1
+  - name: auto_hand_craft_chiseled_quartz_block
+    preconditions:
+      inventory.quartz_slab: ">= 2"
+    effects:
+      inventory.quartz_slab: "-2"
+      inventory.chiseled_quartz_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_quartz_block
+      count: 1
+  - name: auto_hand_craft_quartz_block
+    preconditions:
+      inventory.quartz: ">= 4"
+    effects:
+      inventory.quartz: "-4"
+      inventory.quartz_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: quartz_block
+      count: 1
+  - name: auto_hand_craft_quartz_bricks
+    preconditions:
+      inventory.quartz_block: ">= 4"
+    effects:
+      inventory.quartz_block: "-4"
+      inventory.quartz_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: quartz_bricks
+      count: 1
+  - name: auto_hand_craft_quartz_pillar
+    preconditions:
+      inventory.quartz_block: ">= 2"
+    effects:
+      inventory.quartz_block: "-2"
+      inventory.quartz_pillar: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: quartz_pillar
+      count: 1
+  - name: auto_hand_craft_white_carpet
+    preconditions:
+      inventory.white_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.white_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.white_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: white_carpet
+      count: 1
+  - name: auto_hand_craft_orange_carpet
+    preconditions:
+      inventory.orange_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.orange_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.orange_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: orange_carpet
+      count: 1
+  - name: auto_hand_craft_magenta_carpet
+    preconditions:
+      inventory.magenta_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.magenta_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.magenta_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magenta_carpet
+      count: 1
+  - name: auto_hand_craft_light_blue_carpet
+    preconditions:
+      inventory.light_blue_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.light_blue_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.light_blue_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_blue_carpet
+      count: 1
+  - name: auto_hand_craft_yellow_carpet
+    preconditions:
+      inventory.yellow_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.yellow_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.yellow_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: yellow_carpet
+      count: 1
+  - name: auto_hand_craft_lime_carpet
+    preconditions:
+      inventory.lime_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.lime_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.lime_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lime_carpet
+      count: 1
+  - name: auto_hand_craft_pink_carpet
+    preconditions:
+      inventory.pink_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.pink_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.pink_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pink_carpet
+      count: 1
+  - name: auto_hand_craft_gray_carpet
+    preconditions:
+      inventory.gray_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.gray_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.gray_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gray_carpet
+      count: 1
+  - name: auto_hand_craft_light_gray_carpet
+    preconditions:
+      inventory.light_gray_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.light_gray_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.light_gray_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_gray_carpet
+      count: 1
+  - name: auto_hand_craft_cyan_carpet
+    preconditions:
+      inventory.cyan_wool: ">= 2"
+    effects:
+      inventory.cyan_wool: "-2"
+      inventory.cyan_carpet: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cyan_carpet
+      count: 1
+  - name: auto_hand_craft_purple_carpet
+    preconditions:
+      inventory.purple_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.purple_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.purple_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purple_carpet
+      count: 1
+  - name: auto_hand_craft_blue_carpet
+    preconditions:
+      inventory.blue_wool: ">= 2"
+    effects:
+      inventory.blue_wool: "-2"
+      inventory.blue_carpet: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blue_carpet
+      count: 1
+  - name: auto_hand_craft_brown_carpet
+    preconditions:
+      inventory.brown_wool: ">= 2"
+    effects:
+      inventory.brown_wool: "-2"
+      inventory.brown_carpet: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: brown_carpet
+      count: 1
+  - name: auto_hand_craft_green_carpet
+    preconditions:
+      inventory.green_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.green_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.green_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: green_carpet
+      count: 1
+  - name: auto_hand_craft_red_carpet
+    preconditions:
+      inventory.red_dye: ">= 1"
+      inventory.black_carpet: ">= 1"
+    effects:
+      inventory.red_dye: "-1"
+      inventory.black_carpet: "-1"
+      inventory.red_carpet: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_carpet
+      count: 1
+  - name: auto_hand_craft_black_carpet
+    preconditions:
+      inventory.black_wool: ">= 2"
+    effects:
+      inventory.black_wool: "-2"
+      inventory.black_carpet: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: black_carpet
+      count: 1
+  - name: auto_hand_craft_prismarine
+    preconditions:
+      inventory.prismarine_shard: ">= 4"
+    effects:
+      inventory.prismarine_shard: "-4"
+      inventory.prismarine: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: prismarine
+      count: 1
+  - name: auto_hand_craft_red_sandstone
+    preconditions:
+      inventory.red_sand: ">= 4"
+    effects:
+      inventory.red_sand: "-4"
+      inventory.red_sandstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_sandstone
+      count: 1
+  - name: auto_hand_craft_chiseled_red_sandstone
+    preconditions:
+      inventory.red_sandstone_slab: ">= 2"
+    effects:
+      inventory.red_sandstone_slab: "-2"
+      inventory.chiseled_red_sandstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_red_sandstone
+      count: 1
+  - name: auto_hand_craft_cut_red_sandstone
+    preconditions:
+      inventory.red_sandstone: ">= 4"
+    effects:
+      inventory.red_sandstone: "-4"
+      inventory.cut_red_sandstone: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cut_red_sandstone
+      count: 1
+  - name: auto_hand_craft_magma_block
+    preconditions:
+      inventory.magma_cream: ">= 4"
+    effects:
+      inventory.magma_cream: "-4"
+      inventory.magma_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magma_block
+      count: 1
+  - name: auto_hand_craft_red_nether_bricks
+    preconditions:
+      inventory.nether_brick: ">= 2"
+      inventory.nether_wart: ">= 2"
+    effects:
+      inventory.nether_brick: "-2"
+      inventory.nether_wart: "-2"
+      inventory.red_nether_bricks: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_nether_bricks
+      count: 1
+  - name: auto_hand_craft_redstone
+    preconditions:
+      inventory.redstone_block: ">= 1"
+    effects:
+      inventory.redstone_block: "-1"
+      inventory.redstone: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: redstone
+      count: 1
+  - name: auto_hand_craft_redstone_torch
+    preconditions:
+      inventory.redstone: ">= 1"
+      inventory.stick: ">= 1"
+    effects:
+      inventory.redstone: "-1"
+      inventory.stick: "-1"
+      inventory.redstone_torch: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: redstone_torch
+      count: 1
+  - name: auto_hand_craft_sticky_piston
+    preconditions:
+      inventory.slime_ball: ">= 1"
+      inventory.piston: ">= 1"
+    effects:
+      inventory.slime_ball: "-1"
+      inventory.piston: "-1"
+      inventory.sticky_piston: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: sticky_piston
+      count: 1
+  - name: auto_hand_craft_honey_block
+    preconditions:
+      inventory.honey_bottle: ">= 4"
+    effects:
+      inventory.honey_bottle: "-4"
+      inventory.honey_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: honey_block
+      count: 1
+  - name: auto_hand_craft_lever
+    preconditions:
+      inventory.stick: ">= 1"
+      inventory.cobblestone: ">= 1"
+    effects:
+      inventory.stick: "-1"
+      inventory.cobblestone: "-1"
+      inventory.lever: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lever
+      count: 1
+  - name: auto_hand_craft_trapped_chest
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.tripwire_hook: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.tripwire_hook: "-1"
+      inventory.trapped_chest: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: trapped_chest
+      count: 1
+  - name: auto_hand_craft_stone_button
+    preconditions:
+      inventory.stone: ">= 1"
+    effects:
+      inventory.stone: "-1"
+      inventory.stone_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stone_button
+      count: 1
+  - name: auto_hand_craft_polished_blackstone_button
+    preconditions:
+      inventory.polished_blackstone: ">= 1"
+    effects:
+      inventory.polished_blackstone: "-1"
+      inventory.polished_blackstone_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_blackstone_button
+      count: 1
+  - name: auto_hand_craft_oak_button
+    preconditions:
+      inventory.oak_planks: ">= 1"
+    effects:
+      inventory.oak_planks: "-1"
+      inventory.oak_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oak_button
+      count: 1
+  - name: auto_hand_craft_spruce_button
+    preconditions:
+      inventory.spruce_planks: ">= 1"
+    effects:
+      inventory.spruce_planks: "-1"
+      inventory.spruce_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: spruce_button
+      count: 1
+  - name: auto_hand_craft_birch_button
+    preconditions:
+      inventory.birch_planks: ">= 1"
+    effects:
+      inventory.birch_planks: "-1"
+      inventory.birch_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: birch_button
+      count: 1
+  - name: auto_hand_craft_jungle_button
+    preconditions:
+      inventory.jungle_planks: ">= 1"
+    effects:
+      inventory.jungle_planks: "-1"
+      inventory.jungle_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jungle_button
+      count: 1
+  - name: auto_hand_craft_acacia_button
+    preconditions:
+      inventory.acacia_planks: ">= 1"
+    effects:
+      inventory.acacia_planks: "-1"
+      inventory.acacia_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: acacia_button
+      count: 1
+  - name: auto_hand_craft_cherry_button
+    preconditions:
+      inventory.cherry_planks: ">= 1"
+    effects:
+      inventory.cherry_planks: "-1"
+      inventory.cherry_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cherry_button
+      count: 1
+  - name: auto_hand_craft_dark_oak_button
+    preconditions:
+      inventory.dark_oak_planks: ">= 1"
+    effects:
+      inventory.dark_oak_planks: "-1"
+      inventory.dark_oak_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dark_oak_button
+      count: 1
+  - name: auto_hand_craft_mangrove_button
+    preconditions:
+      inventory.mangrove_planks: ">= 1"
+    effects:
+      inventory.mangrove_planks: "-1"
+      inventory.mangrove_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mangrove_button
+      count: 1
+  - name: auto_hand_craft_bamboo_button
+    preconditions:
+      inventory.bamboo_planks: ">= 1"
+    effects:
+      inventory.bamboo_planks: "-1"
+      inventory.bamboo_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bamboo_button
+      count: 1
+  - name: auto_hand_craft_crimson_button
+    preconditions:
+      inventory.crimson_planks: ">= 1"
+    effects:
+      inventory.crimson_planks: "-1"
+      inventory.crimson_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: crimson_button
+      count: 1
+  - name: auto_hand_craft_warped_button
+    preconditions:
+      inventory.warped_planks: ">= 1"
+    effects:
+      inventory.warped_planks: "-1"
+      inventory.warped_button: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: warped_button
+      count: 1
+  - name: auto_hand_craft_stone_pressure_plate
+    preconditions:
+      inventory.stone: ">= 2"
+    effects:
+      inventory.stone: "-2"
+      inventory.stone_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: stone_pressure_plate
+      count: 1
+  - name: auto_hand_craft_polished_blackstone_pressure_plate
+    preconditions:
+      inventory.polished_blackstone: ">= 2"
+    effects:
+      inventory.polished_blackstone: "-2"
+      inventory.polished_blackstone_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_blackstone_pressure_plate
+      count: 1
+  - name: auto_hand_craft_light_weighted_pressure_plate
+    preconditions:
+      inventory.gold_ingot: ">= 2"
+    effects:
+      inventory.gold_ingot: "-2"
+      inventory.light_weighted_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_weighted_pressure_plate
+      count: 1
+  - name: auto_hand_craft_heavy_weighted_pressure_plate
+    preconditions:
+      inventory.iron_ingot: ">= 2"
+    effects:
+      inventory.iron_ingot: "-2"
+      inventory.heavy_weighted_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: heavy_weighted_pressure_plate
+      count: 1
+  - name: auto_hand_craft_oak_pressure_plate
+    preconditions:
+      inventory.oak_planks: ">= 2"
+    effects:
+      inventory.oak_planks: "-2"
+      inventory.oak_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oak_pressure_plate
+      count: 1
+  - name: auto_hand_craft_spruce_pressure_plate
+    preconditions:
+      inventory.spruce_planks: ">= 2"
+    effects:
+      inventory.spruce_planks: "-2"
+      inventory.spruce_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: spruce_pressure_plate
+      count: 1
+  - name: auto_hand_craft_birch_pressure_plate
+    preconditions:
+      inventory.birch_planks: ">= 2"
+    effects:
+      inventory.birch_planks: "-2"
+      inventory.birch_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: birch_pressure_plate
+      count: 1
+  - name: auto_hand_craft_jungle_pressure_plate
+    preconditions:
+      inventory.jungle_planks: ">= 2"
+    effects:
+      inventory.jungle_planks: "-2"
+      inventory.jungle_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jungle_pressure_plate
+      count: 1
+  - name: auto_hand_craft_acacia_pressure_plate
+    preconditions:
+      inventory.acacia_planks: ">= 2"
+    effects:
+      inventory.acacia_planks: "-2"
+      inventory.acacia_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: acacia_pressure_plate
+      count: 1
+  - name: auto_hand_craft_cherry_pressure_plate
+    preconditions:
+      inventory.cherry_planks: ">= 2"
+    effects:
+      inventory.cherry_planks: "-2"
+      inventory.cherry_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cherry_pressure_plate
+      count: 1
+  - name: auto_hand_craft_dark_oak_pressure_plate
+    preconditions:
+      inventory.dark_oak_planks: ">= 2"
+    effects:
+      inventory.dark_oak_planks: "-2"
+      inventory.dark_oak_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dark_oak_pressure_plate
+      count: 1
+  - name: auto_hand_craft_mangrove_pressure_plate
+    preconditions:
+      inventory.mangrove_planks: ">= 2"
+    effects:
+      inventory.mangrove_planks: "-2"
+      inventory.mangrove_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mangrove_pressure_plate
+      count: 1
+  - name: auto_hand_craft_bamboo_pressure_plate
+    preconditions:
+      inventory.bamboo_planks: ">= 2"
+    effects:
+      inventory.bamboo_planks: "-2"
+      inventory.bamboo_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bamboo_pressure_plate
+      count: 1
+  - name: auto_hand_craft_crimson_pressure_plate
+    preconditions:
+      inventory.crimson_planks: ">= 2"
+    effects:
+      inventory.crimson_planks: "-2"
+      inventory.crimson_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: crimson_pressure_plate
+      count: 1
+  - name: auto_hand_craft_warped_pressure_plate
+    preconditions:
+      inventory.warped_planks: ">= 2"
+    effects:
+      inventory.warped_planks: "-2"
+      inventory.warped_pressure_plate: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: warped_pressure_plate
+      count: 1
+  - name: auto_hand_craft_iron_trapdoor
+    preconditions:
+      inventory.iron_ingot: ">= 4"
+    effects:
+      inventory.iron_ingot: "-4"
+      inventory.iron_trapdoor: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: iron_trapdoor
+      count: 1
+  - name: auto_hand_craft_chest_minecart
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.minecart: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.minecart: "-1"
+      inventory.chest_minecart: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chest_minecart
+      count: 1
+  - name: auto_hand_craft_furnace_minecart
+    preconditions:
+      inventory.furnace: ">= 1"
+      inventory.minecart: ">= 1"
+    effects:
+      inventory.furnace: "-1"
+      inventory.minecart: "-1"
+      inventory.furnace_minecart: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: furnace_minecart
+      count: 1
+  - name: auto_hand_craft_tnt_minecart
+    preconditions:
+      inventory.tnt: ">= 1"
+      inventory.minecart: ">= 1"
+    effects:
+      inventory.tnt: "-1"
+      inventory.minecart: "-1"
+      inventory.tnt_minecart: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: tnt_minecart
+      count: 1
+  - name: auto_hand_craft_hopper_minecart
+    preconditions:
+      inventory.hopper: ">= 1"
+      inventory.minecart: ">= 1"
+    effects:
+      inventory.hopper: "-1"
+      inventory.minecart: "-1"
+      inventory.hopper_minecart: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: hopper_minecart
+      count: 1
+  - name: auto_hand_craft_carrot_on_a_stick
+    preconditions:
+      inventory.fishing_rod: ">= 1"
+      inventory.carrot: ">= 1"
+    effects:
+      inventory.fishing_rod: "-1"
+      inventory.carrot: "-1"
+      inventory.carrot_on_a_stick: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: carrot_on_a_stick
+      count: 1
+  - name: auto_hand_craft_warped_fungus_on_a_stick
+    preconditions:
+      inventory.fishing_rod: ">= 1"
+      inventory.warped_fungus: ">= 1"
+    effects:
+      inventory.fishing_rod: "-1"
+      inventory.warped_fungus: "-1"
+      inventory.warped_fungus_on_a_stick: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: warped_fungus_on_a_stick
+      count: 1
+  - name: auto_hand_craft_oak_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.oak_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.oak_boat: "-1"
+      inventory.oak_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: oak_chest_boat
+      count: 1
+  - name: auto_hand_craft_spruce_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.spruce_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.spruce_boat: "-1"
+      inventory.spruce_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: spruce_chest_boat
+      count: 1
+  - name: auto_hand_craft_birch_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.birch_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.birch_boat: "-1"
+      inventory.birch_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: birch_chest_boat
+      count: 1
+  - name: auto_hand_craft_jungle_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.jungle_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.jungle_boat: "-1"
+      inventory.jungle_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: jungle_chest_boat
+      count: 1
+  - name: auto_hand_craft_acacia_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.acacia_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.acacia_boat: "-1"
+      inventory.acacia_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: acacia_chest_boat
+      count: 1
+  - name: auto_hand_craft_cherry_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.cherry_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.cherry_boat: "-1"
+      inventory.cherry_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cherry_chest_boat
+      count: 1
+  - name: auto_hand_craft_dark_oak_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.dark_oak_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.dark_oak_boat: "-1"
+      inventory.dark_oak_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dark_oak_chest_boat
+      count: 1
+  - name: auto_hand_craft_mangrove_chest_boat
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.mangrove_boat: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.mangrove_boat: "-1"
+      inventory.mangrove_chest_boat: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mangrove_chest_boat
+      count: 1
+  - name: auto_hand_craft_bamboo_chest_raft
+    preconditions:
+      inventory.chest: ">= 1"
+      inventory.bamboo_raft: ">= 1"
+    effects:
+      inventory.chest: "-1"
+      inventory.bamboo_raft: "-1"
+      inventory.bamboo_chest_raft: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bamboo_chest_raft
+      count: 1
+  - name: auto_hand_craft_flint_and_steel
+    preconditions:
+      inventory.iron_ingot: ">= 1"
+      inventory.flint: ">= 1"
+    effects:
+      inventory.iron_ingot: "-1"
+      inventory.flint: "-1"
+      inventory.flint_and_steel: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: flint_and_steel
+      count: 1
+  - name: auto_hand_craft_coal
+    preconditions:
+      inventory.coal_block: ">= 1"
+    effects:
+      inventory.coal_block: "-1"
+      inventory.coal: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: coal
+      count: 1
+  - name: auto_hand_craft_diamond
+    preconditions:
+      inventory.diamond_block: ">= 1"
+    effects:
+      inventory.diamond_block: "-1"
+      inventory.diamond: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: diamond
+      count: 1
+  - name: auto_hand_craft_emerald
+    preconditions:
+      inventory.emerald_block: ">= 1"
+    effects:
+      inventory.emerald_block: "-1"
+      inventory.emerald: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: emerald
+      count: 1
+  - name: auto_hand_craft_lapis_lazuli
+    preconditions:
+      inventory.lapis_block: ">= 1"
+    effects:
+      inventory.lapis_block: "-1"
+      inventory.lapis_lazuli: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lapis_lazuli
+      count: 1
+  - name: auto_hand_craft_raw_iron
+    preconditions:
+      inventory.raw_iron_block: ">= 1"
+    effects:
+      inventory.raw_iron_block: "-1"
+      inventory.raw_iron: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: raw_iron
+      count: 1
+  - name: auto_hand_craft_iron_ingot
+    preconditions:
+      inventory.iron_block: ">= 1"
+    effects:
+      inventory.iron_block: "-1"
+      inventory.iron_ingot: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: iron_ingot
+      count: 1
+  - name: auto_hand_craft_raw_copper
+    preconditions:
+      inventory.raw_copper_block: ">= 1"
+    effects:
+      inventory.raw_copper_block: "-1"
+      inventory.raw_copper: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: raw_copper
+      count: 1
+  - name: auto_hand_craft_copper_ingot
+    preconditions:
+      inventory.copper_block: ">= 1"
+    effects:
+      inventory.copper_block: "-1"
+      inventory.copper_ingot: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: copper_ingot
+      count: 1
+  - name: auto_hand_craft_raw_gold
+    preconditions:
+      inventory.raw_gold_block: ">= 1"
+    effects:
+      inventory.raw_gold_block: "-1"
+      inventory.raw_gold: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: raw_gold
+      count: 1
+  - name: auto_hand_craft_gold_ingot
+    preconditions:
+      inventory.gold_block: ">= 1"
+    effects:
+      inventory.gold_block: "-1"
+      inventory.gold_ingot: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gold_ingot
+      count: 1
+  - name: auto_hand_craft_netherite_ingot
+    preconditions:
+      inventory.netherite_block: ">= 1"
+    effects:
+      inventory.netherite_block: "-1"
+      inventory.netherite_ingot: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: netherite_ingot
+      count: 1
   - name: auto_hand_craft_stick
     preconditions:
       inventory.category.plank: ">= 2"
@@ -165,4 +2298,988 @@ actions:
     skill: hand_craft
     params:
       recipe: stick
+      count: 1
+  - name: auto_hand_craft_mushroom_stew
+    preconditions:
+      inventory.brown_mushroom: ">= 1"
+      inventory.red_mushroom: ">= 1"
+      inventory.bowl: ">= 1"
+    effects:
+      inventory.brown_mushroom: "-1"
+      inventory.red_mushroom: "-1"
+      inventory.bowl: "-1"
+      inventory.mushroom_stew: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mushroom_stew
+      count: 1
+  - name: auto_hand_craft_wheat
+    preconditions:
+      inventory.hay_block: ">= 1"
+    effects:
+      inventory.hay_block: "-1"
+      inventory.wheat: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: wheat
+      count: 1
+  - name: auto_hand_craft_leather
+    preconditions:
+      inventory.rabbit_hide: ">= 4"
+    effects:
+      inventory.rabbit_hide: "-4"
+      inventory.leather: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: leather
+      count: 1
+  - name: auto_hand_craft_book
+    preconditions:
+      inventory.paper: ">= 3"
+      inventory.leather: ">= 1"
+    effects:
+      inventory.paper: "-3"
+      inventory.leather: "-1"
+      inventory.book: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: book
+      count: 1
+  - name: auto_hand_craft_slime_ball
+    preconditions:
+      inventory.slime_block: ">= 1"
+    effects:
+      inventory.slime_block: "-1"
+      inventory.slime_ball: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: slime_ball
+      count: 1
+  - name: auto_hand_craft_white_dye
+    preconditions:
+      inventory.bone_meal: ">= 1"
+    effects:
+      inventory.bone_meal: "-1"
+      inventory.white_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: white_dye
+      count: 1
+  - name: auto_hand_craft_orange_dye
+    preconditions:
+      inventory.orange_tulip: ">= 1"
+    effects:
+      inventory.orange_tulip: "-1"
+      inventory.orange_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: orange_dye
+      count: 1
+  - name: auto_hand_craft_magenta_dye
+    preconditions:
+      inventory.allium: ">= 1"
+    effects:
+      inventory.allium: "-1"
+      inventory.magenta_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magenta_dye
+      count: 1
+  - name: auto_hand_craft_light_blue_dye
+    preconditions:
+      inventory.blue_orchid: ">= 1"
+    effects:
+      inventory.blue_orchid: "-1"
+      inventory.light_blue_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_blue_dye
+      count: 1
+  - name: auto_hand_craft_yellow_dye
+    preconditions:
+      inventory.dandelion: ">= 1"
+    effects:
+      inventory.dandelion: "-1"
+      inventory.yellow_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: yellow_dye
+      count: 1
+  - name: auto_hand_craft_lime_dye
+    preconditions:
+      inventory.green_dye: ">= 1"
+      inventory.white_dye: ">= 1"
+    effects:
+      inventory.green_dye: "-1"
+      inventory.white_dye: "-1"
+      inventory.lime_dye: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lime_dye
+      count: 1
+  - name: auto_hand_craft_pink_dye
+    preconditions:
+      inventory.peony: ">= 1"
+    effects:
+      inventory.peony: "-1"
+      inventory.pink_dye: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pink_dye
+      count: 1
+  - name: auto_hand_craft_gray_dye
+    preconditions:
+      inventory.black_dye: ">= 1"
+      inventory.white_dye: ">= 1"
+    effects:
+      inventory.black_dye: "-1"
+      inventory.white_dye: "-1"
+      inventory.gray_dye: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gray_dye
+      count: 1
+  - name: auto_hand_craft_light_gray_dye
+    preconditions:
+      inventory.azure_bluet: ">= 1"
+    effects:
+      inventory.azure_bluet: "-1"
+      inventory.light_gray_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_gray_dye
+      count: 1
+  - name: auto_hand_craft_cyan_dye
+    preconditions:
+      inventory.blue_dye: ">= 1"
+      inventory.green_dye: ">= 1"
+    effects:
+      inventory.blue_dye: "-1"
+      inventory.green_dye: "-1"
+      inventory.cyan_dye: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cyan_dye
+      count: 1
+  - name: auto_hand_craft_purple_dye
+    preconditions:
+      inventory.blue_dye: ">= 1"
+      inventory.red_dye: ">= 1"
+    effects:
+      inventory.blue_dye: "-1"
+      inventory.red_dye: "-1"
+      inventory.purple_dye: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purple_dye
+      count: 1
+  - name: auto_hand_craft_blue_dye
+    preconditions:
+      inventory.lapis_lazuli: ">= 1"
+    effects:
+      inventory.lapis_lazuli: "-1"
+      inventory.blue_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blue_dye
+      count: 1
+  - name: auto_hand_craft_brown_dye
+    preconditions:
+      inventory.cocoa_beans: ">= 1"
+    effects:
+      inventory.cocoa_beans: "-1"
+      inventory.brown_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: brown_dye
+      count: 1
+  - name: auto_hand_craft_red_dye
+    preconditions:
+      inventory.beetroot: ">= 1"
+    effects:
+      inventory.beetroot: "-1"
+      inventory.red_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_dye
+      count: 1
+  - name: auto_hand_craft_black_dye
+    preconditions:
+      inventory.ink_sac: ">= 1"
+    effects:
+      inventory.ink_sac: "-1"
+      inventory.black_dye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: black_dye
+      count: 1
+  - name: auto_hand_craft_bone_meal
+    preconditions:
+      inventory.bone: ">= 1"
+    effects:
+      inventory.bone: "-1"
+      inventory.bone_meal: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: bone_meal
+      count: 1
+  - name: auto_hand_craft_sugar
+    preconditions:
+      inventory.honey_bottle: ">= 1"
+    effects:
+      inventory.honey_bottle: "-1"
+      inventory.sugar: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: sugar
+      count: 1
+  - name: auto_hand_craft_white_bed
+    preconditions:
+      inventory.white_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.white_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.white_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: white_bed
+      count: 1
+  - name: auto_hand_craft_orange_bed
+    preconditions:
+      inventory.orange_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.orange_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.orange_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: orange_bed
+      count: 1
+  - name: auto_hand_craft_magenta_bed
+    preconditions:
+      inventory.magenta_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.magenta_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.magenta_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magenta_bed
+      count: 1
+  - name: auto_hand_craft_light_blue_bed
+    preconditions:
+      inventory.light_blue_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.light_blue_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.light_blue_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_blue_bed
+      count: 1
+  - name: auto_hand_craft_yellow_bed
+    preconditions:
+      inventory.yellow_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.yellow_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.yellow_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: yellow_bed
+      count: 1
+  - name: auto_hand_craft_lime_bed
+    preconditions:
+      inventory.lime_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.lime_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.lime_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lime_bed
+      count: 1
+  - name: auto_hand_craft_pink_bed
+    preconditions:
+      inventory.pink_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.pink_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.pink_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pink_bed
+      count: 1
+  - name: auto_hand_craft_gray_bed
+    preconditions:
+      inventory.gray_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.gray_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.gray_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gray_bed
+      count: 1
+  - name: auto_hand_craft_light_gray_bed
+    preconditions:
+      inventory.light_gray_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.light_gray_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.light_gray_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_gray_bed
+      count: 1
+  - name: auto_hand_craft_cyan_bed
+    preconditions:
+      inventory.cyan_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.cyan_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.cyan_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cyan_bed
+      count: 1
+  - name: auto_hand_craft_purple_bed
+    preconditions:
+      inventory.purple_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.purple_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.purple_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purple_bed
+      count: 1
+  - name: auto_hand_craft_blue_bed
+    preconditions:
+      inventory.blue_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.blue_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.blue_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blue_bed
+      count: 1
+  - name: auto_hand_craft_brown_bed
+    preconditions:
+      inventory.brown_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.brown_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.brown_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: brown_bed
+      count: 1
+  - name: auto_hand_craft_green_bed
+    preconditions:
+      inventory.green_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.green_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.green_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: green_bed
+      count: 1
+  - name: auto_hand_craft_red_bed
+    preconditions:
+      inventory.red_dye: ">= 1"
+      inventory.black_bed: ">= 1"
+    effects:
+      inventory.red_dye: "-1"
+      inventory.black_bed: "-1"
+      inventory.red_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_bed
+      count: 1
+  - name: auto_hand_craft_black_bed
+    preconditions:
+      inventory.black_dye: ">= 1"
+      inventory.blue_bed: ">= 1"
+    effects:
+      inventory.black_dye: "-1"
+      inventory.blue_bed: "-1"
+      inventory.black_bed: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: black_bed
+      count: 1
+  - name: auto_hand_craft_shears
+    preconditions:
+      inventory.iron_ingot: ">= 2"
+    effects:
+      inventory.iron_ingot: "-2"
+      inventory.shears: "+1"
+      inventory.category.shears: true
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: shears
+      count: 1
+  - name: auto_hand_craft_dried_kelp
+    preconditions:
+      inventory.dried_kelp_block: ">= 1"
+    effects:
+      inventory.dried_kelp_block: "-1"
+      inventory.dried_kelp: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: dried_kelp
+      count: 1
+  - name: auto_hand_craft_pumpkin_seeds
+    preconditions:
+      inventory.pumpkin: ">= 1"
+    effects:
+      inventory.pumpkin: "-1"
+      inventory.pumpkin_seeds: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pumpkin_seeds
+      count: 1
+  - name: auto_hand_craft_melon_seeds
+    preconditions:
+      inventory.melon_slice: ">= 1"
+    effects:
+      inventory.melon_slice: "-1"
+      inventory.melon_seeds: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: melon_seeds
+      count: 1
+  - name: auto_hand_craft_gold_nugget
+    preconditions:
+      inventory.gold_ingot: ">= 1"
+    effects:
+      inventory.gold_ingot: "-1"
+      inventory.gold_nugget: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gold_nugget
+      count: 1
+  - name: auto_hand_craft_fermented_spider_eye
+    preconditions:
+      inventory.spider_eye: ">= 1"
+      inventory.brown_mushroom: ">= 1"
+      inventory.sugar: ">= 1"
+    effects:
+      inventory.spider_eye: "-1"
+      inventory.brown_mushroom: "-1"
+      inventory.sugar: "-1"
+      inventory.fermented_spider_eye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: fermented_spider_eye
+      count: 1
+  - name: auto_hand_craft_blaze_powder
+    preconditions:
+      inventory.blaze_rod: ">= 1"
+    effects:
+      inventory.blaze_rod: "-1"
+      inventory.blaze_powder: "+2"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blaze_powder
+      count: 1
+  - name: auto_hand_craft_magma_cream
+    preconditions:
+      inventory.blaze_powder: ">= 1"
+      inventory.slime_ball: ">= 1"
+    effects:
+      inventory.blaze_powder: "-1"
+      inventory.slime_ball: "-1"
+      inventory.magma_cream: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magma_cream
+      count: 1
+  - name: auto_hand_craft_ender_eye
+    preconditions:
+      inventory.ender_pearl: ">= 1"
+      inventory.blaze_powder: ">= 1"
+    effects:
+      inventory.ender_pearl: "-1"
+      inventory.blaze_powder: "-1"
+      inventory.ender_eye: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: ender_eye
+      count: 1
+  - name: auto_hand_craft_fire_charge
+    preconditions:
+      inventory.gunpowder: ">= 1"
+      inventory.blaze_powder: ">= 1"
+      inventory.coal: ">= 1"
+    effects:
+      inventory.gunpowder: "-1"
+      inventory.blaze_powder: "-1"
+      inventory.coal: "-1"
+      inventory.fire_charge: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: fire_charge
+      count: 1
+  - name: auto_hand_craft_writable_book
+    preconditions:
+      inventory.book: ">= 1"
+      inventory.ink_sac: ">= 1"
+      inventory.feather: ">= 1"
+    effects:
+      inventory.book: "-1"
+      inventory.ink_sac: "-1"
+      inventory.feather: "-1"
+      inventory.writable_book: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: writable_book
+      count: 1
+  - name: auto_hand_craft_glow_item_frame
+    preconditions:
+      inventory.item_frame: ">= 1"
+      inventory.glow_ink_sac: ">= 1"
+    effects:
+      inventory.item_frame: "-1"
+      inventory.glow_ink_sac: "-1"
+      inventory.glow_item_frame: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: glow_item_frame
+      count: 1
+  - name: auto_hand_craft_pumpkin_pie
+    preconditions:
+      inventory.pumpkin: ">= 1"
+      inventory.sugar: ">= 1"
+      inventory.egg: ">= 1"
+    effects:
+      inventory.pumpkin: "-1"
+      inventory.sugar: "-1"
+      inventory.egg: "-1"
+      inventory.pumpkin_pie: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pumpkin_pie
+      count: 1
+  - name: auto_hand_craft_firework_rocket
+    preconditions:
+      inventory.gunpowder: ">= 1"
+      inventory.paper: ">= 1"
+    effects:
+      inventory.gunpowder: "-1"
+      inventory.paper: "-1"
+      inventory.firework_rocket: "+3"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: firework_rocket
+      count: 1
+  - name: auto_hand_craft_iron_nugget
+    preconditions:
+      inventory.iron_ingot: ">= 1"
+    effects:
+      inventory.iron_ingot: "-1"
+      inventory.iron_nugget: "+9"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: iron_nugget
+      count: 1
+  - name: auto_hand_craft_loom
+    preconditions:
+      inventory.string: ">= 2"
+      inventory.category.plank: ">= 2"
+    effects:
+      inventory.string: "-2"
+      inventory.category.plank: "-2"
+      inventory.loom: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: loom
+      count: 1
+  - name: auto_hand_craft_flower_banner_pattern
+    preconditions:
+      inventory.paper: ">= 1"
+      inventory.oxeye_daisy: ">= 1"
+    effects:
+      inventory.paper: "-1"
+      inventory.oxeye_daisy: "-1"
+      inventory.flower_banner_pattern: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: flower_banner_pattern
+      count: 1
+  - name: auto_hand_craft_creeper_banner_pattern
+    preconditions:
+      inventory.paper: ">= 1"
+      inventory.creeper_head: ">= 1"
+    effects:
+      inventory.paper: "-1"
+      inventory.creeper_head: "-1"
+      inventory.creeper_banner_pattern: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: creeper_banner_pattern
+      count: 1
+  - name: auto_hand_craft_skull_banner_pattern
+    preconditions:
+      inventory.paper: ">= 1"
+      inventory.wither_skeleton_skull: ">= 1"
+    effects:
+      inventory.paper: "-1"
+      inventory.wither_skeleton_skull: "-1"
+      inventory.skull_banner_pattern: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: skull_banner_pattern
+      count: 1
+  - name: auto_hand_craft_mojang_banner_pattern
+    preconditions:
+      inventory.paper: ">= 1"
+      inventory.enchanted_golden_apple: ">= 1"
+    effects:
+      inventory.paper: "-1"
+      inventory.enchanted_golden_apple: "-1"
+      inventory.mojang_banner_pattern: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: mojang_banner_pattern
+      count: 1
+  - name: auto_hand_craft_honeycomb_block
+    preconditions:
+      inventory.honeycomb: ">= 4"
+    effects:
+      inventory.honeycomb: "-4"
+      inventory.honeycomb_block: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: honeycomb_block
+      count: 1
+  - name: auto_hand_craft_polished_blackstone
+    preconditions:
+      inventory.blackstone: ">= 4"
+    effects:
+      inventory.blackstone: "-4"
+      inventory.polished_blackstone: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_blackstone
+      count: 1
+  - name: auto_hand_craft_chiseled_polished_blackstone
+    preconditions:
+      inventory.polished_blackstone_slab: ">= 2"
+    effects:
+      inventory.polished_blackstone_slab: "-2"
+      inventory.chiseled_polished_blackstone: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: chiseled_polished_blackstone
+      count: 1
+  - name: auto_hand_craft_polished_blackstone_bricks
+    preconditions:
+      inventory.polished_blackstone: ">= 4"
+    effects:
+      inventory.polished_blackstone: "-4"
+      inventory.polished_blackstone_bricks: "+4"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: polished_blackstone_bricks
+      count: 1
+  - name: auto_hand_craft_candle
+    preconditions:
+      inventory.string: ">= 1"
+      inventory.honeycomb: ">= 1"
+    effects:
+      inventory.string: "-1"
+      inventory.honeycomb: "-1"
+      inventory.candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: candle
+      count: 1
+  - name: auto_hand_craft_white_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.white_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.white_dye: "-1"
+      inventory.white_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: white_candle
+      count: 1
+  - name: auto_hand_craft_orange_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.orange_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.orange_dye: "-1"
+      inventory.orange_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: orange_candle
+      count: 1
+  - name: auto_hand_craft_magenta_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.magenta_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.magenta_dye: "-1"
+      inventory.magenta_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: magenta_candle
+      count: 1
+  - name: auto_hand_craft_light_blue_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.light_blue_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.light_blue_dye: "-1"
+      inventory.light_blue_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_blue_candle
+      count: 1
+  - name: auto_hand_craft_yellow_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.yellow_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.yellow_dye: "-1"
+      inventory.yellow_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: yellow_candle
+      count: 1
+  - name: auto_hand_craft_lime_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.lime_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.lime_dye: "-1"
+      inventory.lime_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: lime_candle
+      count: 1
+  - name: auto_hand_craft_pink_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.pink_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.pink_dye: "-1"
+      inventory.pink_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: pink_candle
+      count: 1
+  - name: auto_hand_craft_gray_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.gray_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.gray_dye: "-1"
+      inventory.gray_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: gray_candle
+      count: 1
+  - name: auto_hand_craft_light_gray_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.light_gray_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.light_gray_dye: "-1"
+      inventory.light_gray_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: light_gray_candle
+      count: 1
+  - name: auto_hand_craft_cyan_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.cyan_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.cyan_dye: "-1"
+      inventory.cyan_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: cyan_candle
+      count: 1
+  - name: auto_hand_craft_purple_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.purple_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.purple_dye: "-1"
+      inventory.purple_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: purple_candle
+      count: 1
+  - name: auto_hand_craft_blue_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.blue_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.blue_dye: "-1"
+      inventory.blue_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: blue_candle
+      count: 1
+  - name: auto_hand_craft_brown_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.brown_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.brown_dye: "-1"
+      inventory.brown_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: brown_candle
+      count: 1
+  - name: auto_hand_craft_green_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.green_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.green_dye: "-1"
+      inventory.green_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: green_candle
+      count: 1
+  - name: auto_hand_craft_red_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.red_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.red_dye: "-1"
+      inventory.red_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: red_candle
+      count: 1
+  - name: auto_hand_craft_black_candle
+    preconditions:
+      inventory.candle: ">= 1"
+      inventory.black_dye: ">= 1"
+    effects:
+      inventory.candle: "-1"
+      inventory.black_dye: "-1"
+      inventory.black_candle: "+1"
+    cost: 10
+    skill: hand_craft
+    params:
+      recipe: black_candle
       count: 1

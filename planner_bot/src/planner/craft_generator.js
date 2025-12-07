@@ -86,13 +86,6 @@ async function generateCraftActions(version) {
       const hasAllowedCategoryIngredient = allowCategory && hasAnyAllowedIngredientCategory(ingredients, itemToCountCategories);
       const useItemCategories = allowCategory && hasAllowedCategoryIngredient;
 
-      // 生成対象フィルタ（最小構成用）
-      if (craftingType === "hand") {
-        if (!isHandAllowed(resultName, allowedHand)) continue;
-      } else {
-        if (!allowedWorkbench.has(resultName)) continue;
-      }
-
       // 同一成果物は最初の1件だけにする
       if (targetSeen.has(resultName)) continue;
       targetSeen.add(resultName);
