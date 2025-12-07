@@ -112,6 +112,13 @@ function printCompletionBanner(aiCount) {
   console.log('    !navigation chestWithdraw {' + chalk.yellow('"item": "iron_ingot"') + chalk.gray(', "count": (1|-1)') + '}  ' + chalk.gray('# count省略時は1、-1で全て取り出す'));
   console.log('    !navigation chestClose {}  ' + chalk.gray('# チェストを閉じる'));
   console.log('');
+  console.log('  Look / Idle (視線・待機):');
+  console.log('    !look direction ' + chalk.gray('{"yaw": 180, "pitch": 0}  # 度数指定で方角・俯角をセット（片方だけでも可）'));
+  console.log('    !look player ' + chalk.yellow('{"username": "PlayerName"}') + chalk.gray('  # 指定プレイヤーの頭付近を見る'));
+  console.log('    !look watch ' + chalk.yellow('{"username": "PlayerName"}') + chalk.gray(', "intervalMs": (1000)  # プレイヤーを継続して見る（!stop で解除）'));
+  console.log('    !idle_on ' + chalk.gray('{"intervalMs": (4000), "playerRange": (8)}  # 近くのプレイヤーを見たり首振りしたりする待機モード'));
+  console.log('    !stop ' + chalk.gray('# idle_on も含めて進行中の操作を停止'));
+  console.log('');
   console.log('  Creative (建築など):');
   console.log('    !creative placeBlock {' + chalk.yellow('"name": "chest"') + chalk.gray(', "coords": ([100, 64, 200]), "allowSelfPosition": (false)') + '}');
   console.log('');

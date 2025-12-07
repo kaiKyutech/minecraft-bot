@@ -6,6 +6,10 @@ const handleCreativeCommand = require('./creative_command')
 const handleStatusCommand = require('./status_command')
 const handleInfoCommand = require('./info_command')
 const handleNavigationCommand = require('./navigation_command')
+const handleLookCommand = require('./look_command')
+const { stopLookWatch } = require('./look_command')
+const handleIdleCommand = require('./idle_command')
+const { stopIdle } = require('./idle_command')
 
 /**
  * すべての実行中操作を停止
@@ -41,6 +45,18 @@ function stopAll(bot) {
       bot.pathfinder.setGoal(null)
     }
     stoppedActions.push(`follow (${target})`)
+  }
+
+  // 4. idleループを停止
+  if (bot.idleInterval) {
+    stopIdle(bot)
+    stoppedActions.push('idle')
+  }
+
+  // 5. 視線監視を停止
+  if (bot.lookWatchInterval) {
+    stopLookWatch(bot)
+    stoppedActions.push('look_watch')
   }
 
   return {
@@ -80,6 +96,14 @@ async function handleChatCommand(bot, username, message, stateManager) {
   if (/^!info(\s|$)/.test(trimmed)) {
     // 情報取得は停止不要
     return await handleInfoCommand(bot, username, trimmed, stateManager)
+  }
+
+  if (trimmed.startsWith('!look ')) {
+    return await handleLookCommand(bot, username, trimmed, stateManager)
+  }
+
+  if (trimmed.startsWith('!idle_on')) {
+    return await handleIdleCommand(bot, username, trimmed, stateManager)
   }
 
   if (/^!navigation(\s|$)/.test(trimmed)) {
@@ -323,6 +347,8 @@ function determineCommandName(trimmed) {
   if (/^!skill(\s|$)/.test(trimmed)) return 'skill'
   if (trimmed.startsWith('!goal ')) return 'goal'
   if (trimmed === '!stop') return 'stop'
+  if (trimmed.startsWith('!idle_on')) return 'idle_on'
+  if (trimmed.startsWith('!look ')) return 'look'
   if (trimmed.startsWith('!creative ')) return 'creative'
   if (trimmed === '!history' || trimmed.startsWith('!history ')) return 'history'
   if (trimmed.startsWith('!chat ')) return 'chat'
