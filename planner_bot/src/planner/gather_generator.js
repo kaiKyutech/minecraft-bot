@@ -104,9 +104,9 @@ async function generateGatherActions(version) {
     if (!block || blacklist.has(block.name)) continue;
     if (categoryBlockSet.has(block.name)) continue; // 調整済みカテゴリに属するブロックはスキップ
     if (block.diggable === false) continue;
-    if (!Array.isArray(block.drops) || block.drops.length === 0) continue;
 
     const dropName = mcData.items[block.drops[0]]?.name || null;
+    const effectiveDrop = dropName || block.name;
     const toolReq = resolveToolRequirement(mcData, block);
     const preconditions = {
       inventory_space: true,
@@ -118,8 +118,8 @@ async function generateGatherActions(version) {
 
     const effects = {};
     effects[`inventory.${block.name}`] = '+1';
-    if (dropName && dropName !== block.name) {
-      effects[`inventory.${dropName}`] = '+1';
+    if (effectiveDrop && effectiveDrop !== block.name) {
+      effects[`inventory.${effectiveDrop}`] = '+1';
     }
 
     const perUnit = toolReq ? 1 : 5;
@@ -172,10 +172,14 @@ function buildItemCategoryLookup(itemCategories) {
 }
 
 function getPrimaryDrop(mcData, block) {
-  if (!block || !Array.isArray(block.drops) || block.drops.length === 0) return null;
+  if (!block) return null;
+  if (!Array.isArray(block.drops) || block.drops.length === 0) {
+    // ドロップ未定義の場合はブロック自体を落とすものとして扱う
+    return block.name;
+  }
   const itemId = block.drops[0];
   const item = mcData.items[itemId];
-  return item ? item.name : null;
+  return item ? item.name : block.name;
 }
 
 function resolveToolRequirement(mcData, block) {
