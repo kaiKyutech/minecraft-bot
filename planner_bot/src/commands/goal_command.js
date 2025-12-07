@@ -3,6 +3,7 @@ const { buildState } = require('../planner/state_builder')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
 const { ensureGatherActionsGenerated } = require('../planner/gather_generator')
 const { ensureCraftActionsGenerated } = require('../planner/craft_generator')
+const { ensureEquipmentActionsGenerated } = require('../planner/equipment_generator')
 const { createLogger } = require('../utils/logger')
 
 /**
@@ -62,6 +63,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
     if (goapPlanner.USE_AUTO_CRAFT) {
       await ensureCraftActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
     }
+    await ensureEquipmentActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
   }
 
   // ゴール前にツールを最低限用意する（minecraft-dataから直接判定）
