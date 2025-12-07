@@ -105,7 +105,7 @@ function printCompletionBanner(aiCount) {
   console.log('    !navigation moveInDirection {' + chalk.yellow('"distance": 10') + chalk.gray(', "yaw": (current), "verticalMode": ("nearest")') + '}');
   console.log('    !navigation follow ' + chalk.yellow('{"username": "PlayerName"}'));
   console.log('    !navigation stopFollow {}');
-  console.log('    !navigation dropItem {' + chalk.yellow('"targetPlayer": "PlayerName", "itemName": "iron_ingot"') + chalk.gray(', "count": (1), "maxDistance": (100)') + '}');
+  console.log('    !navigation dropItem {' + chalk.gray('"targetPlayer": "PlayerName", ') + chalk.yellow('"itemName": "iron_ingot"') + chalk.gray(', "count": (1), "maxDistance": (100)') + '}  ' + chalk.gray('# targetPlayer省略時はその場でドロップ'));
   console.log('    !navigation pickupItems ' + chalk.gray('{"range": (5)}  # itemName 省略時は全アイテム'));
   console.log('    !navigation chestOpen {' + chalk.gray('"coords": [100, 64, 200]') + '}  ' + chalk.gray('# チェストを開いて中身を確認'));
   console.log('    !navigation chestDeposit {' + chalk.yellow('"item": "cobblestone"') + chalk.gray(', "count": (1|-1)') + '}  ' + chalk.gray('# count省略時は1、-1で全て預ける'));

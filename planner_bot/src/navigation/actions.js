@@ -405,20 +405,39 @@ module.exports = {
   },
 
   /**
-   * プレイヤーの近くに移動してアイテムをドロップ
+   * アイテムをドロップ（targetPlayer 指定時は近くまで行ってドロップ、未指定ならその場でドロップ）
    * @param {Object} bot - Mineflayerボット
    * @param {Object} stateManager - 状態マネージャー
    * @param {Object} params - {targetPlayer: string, itemName: string, count?: number, maxDistance?: number}
    */
   async dropItem(bot, stateManager, params) {
     const { targetPlayer, itemName, count = 1, maxDistance = 100 } = params
-
-    if (!targetPlayer) {
-      throw new Error('対象プレイヤー名（targetPlayer）が必要です')
-    }
+    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
 
     if (!itemName) {
       throw new Error('アイテム名（itemName）が必要です')
+    }
+
+    // インベントリにアイテムがあるか確認（移動前にチェック）
+    const item = bot.inventory.items().find(i => i.name === itemName)
+    if (!item) {
+      throw new Error(`アイテム「${itemName}」がインベントリにありません`)
+    }
+
+    const availableCount = item.count
+    const dropCount = Math.min(count, availableCount)
+
+    // 対象プレイヤーなし: その場でドロップ
+    if (!targetPlayer) {
+      logger.info(`[NAVIGATION] その場で ${itemName} を ${dropCount}個ドロップします`)
+      await bot.toss(item.type, null, dropCount)
+      return {
+        success: true,
+        message: `その場で ${itemName} を ${dropCount}個ドロップしました`,
+        itemName,
+        droppedCount: dropCount,
+        availableCount
+      }
     }
 
     // プレイヤーの存在確認
@@ -435,17 +454,7 @@ module.exports = {
       )
     }
 
-    const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
     logger.info(`[NAVIGATION] ${targetPlayer} の近くに移動してアイテムをドロップします（現在距離: ${Math.floor(distance)}ブロック）`)
-
-    // インベントリにアイテムがあるか確認（移動前にチェック）
-    const item = bot.inventory.items().find(i => i.name === itemName)
-    if (!item) {
-      throw new Error(`アイテム「${itemName}」がインベントリにありません`)
-    }
-
-    const availableCount = item.count
-    const dropCount = Math.min(count, availableCount)
 
     // GoalFollowで追跡しながら近づく（プレイヤーが移動しても追いかける）
     const { GoalFollow } = require('mineflayer-pathfinder').goals

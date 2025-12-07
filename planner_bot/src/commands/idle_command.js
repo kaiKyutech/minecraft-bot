@@ -5,6 +5,7 @@ const DEFAULT_PLAYER_RANGE = 8
 const DEFAULT_YAW_JITTER = 45 // 度
 const DEFAULT_PITCH_MIN = -20
 const DEFAULT_PITCH_MAX = 10
+const DEFAULT_PLAYER_LOOK_CHANCE = 0.6
 
 /**
  * !idle_on コマンドハンドラ
@@ -36,12 +37,13 @@ async function handleIdleCommand(bot, username, message) {
 
   const intervalMs = params.intervalMs || DEFAULT_INTERVAL_MS
   const playerRange = params.playerRange || DEFAULT_PLAYER_RANGE
+  const playerLookChance = params.playerLookChance ?? DEFAULT_PLAYER_LOOK_CHANCE
 
-  logger.info(`[IDLE] idle_on: interval=${intervalMs}ms, playerRange=${playerRange}`)
+  logger.info(`[IDLE] idle_on: interval=${intervalMs}ms, playerRange=${playerRange}, playerLookChance=${playerLookChance}`)
 
   return {
     success: true,
-    message: `idleモード開始（interval=${intervalMs}ms, playerRange=${playerRange}）`
+    message: `idleモード開始（interval=${intervalMs}ms, playerRange=${playerRange}, playerLookChance=${playerLookChance}）`
   }
 }
 
@@ -53,7 +55,8 @@ function startIdle(bot, options = {}, logger = null) {
     playerRange: Math.max(1, options.playerRange || DEFAULT_PLAYER_RANGE),
     yawJitter: options.yawJitter !== undefined ? Number(options.yawJitter) : DEFAULT_YAW_JITTER,
     pitchMin: options.pitchMin !== undefined ? Number(options.pitchMin) : DEFAULT_PITCH_MIN,
-    pitchMax: options.pitchMax !== undefined ? Number(options.pitchMax) : DEFAULT_PITCH_MAX
+    pitchMax: options.pitchMax !== undefined ? Number(options.pitchMax) : DEFAULT_PITCH_MAX,
+    playerLookChance: clamp(options.playerLookChance ?? DEFAULT_PLAYER_LOOK_CHANCE, 0, 1)
   }
 
   bot.idleConfig = config
@@ -82,13 +85,15 @@ async function tickIdle(bot) {
   // GOAPなど長い処理中は干渉を避ける
   if (bot.currentAbortController) return
 
-  const { yawJitter, pitchMin, pitchMax, playerRange } = bot.idleConfig || {}
+  const { yawJitter, pitchMin, pitchMax, playerRange, playerLookChance } = bot.idleConfig || {}
   if (!bot.entity || !bot.entity.position) return
 
   bot._idleTicking = true
   try {
     const targetPlayer = findNearestPlayer(bot, playerRange)
-    if (targetPlayer) {
+    const shouldLookPlayer = targetPlayer && Math.random() < playerLookChance
+
+    if (shouldLookPlayer) {
       const headPos = targetPlayer.entity.position.offset(0, targetPlayer.entity.height, 0)
       await bot.lookAt(headPos)
       bot.idleLogger?.info(`[IDLE] Looking at ${targetPlayer.username}`)
