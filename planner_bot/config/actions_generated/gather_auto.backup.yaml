@@ -2284,6 +2284,17 @@ actions:
     params:
       itemName: dark_oak_sapling
       count: 1
+  - name: auto_gather_mangrove_propagule_x1
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_propagule: ">= 1"
+    effects:
+      inventory.mangrove_propagule: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: mangrove_propagule
+      count: 1
   - name: auto_gather_sand_x1
     preconditions:
       inventory_space: true
@@ -2294,6 +2305,17 @@ actions:
     skill: gather
     params:
       itemName: sand
+      count: 1
+  - name: auto_gather_suspicious_sand_x1
+    preconditions:
+      inventory_space: true
+      nearby.suspicious_sand: ">= 1"
+    effects:
+      inventory.suspicious_sand: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: suspicious_sand
       count: 1
   - name: auto_gather_red_sand_x1
     preconditions:
@@ -2316,6 +2338,17 @@ actions:
     skill: gather
     params:
       itemName: gravel
+      count: 1
+  - name: auto_gather_suspicious_gravel_x1
+    preconditions:
+      inventory_space: true
+      nearby.suspicious_gravel: ">= 1"
+    effects:
+      inventory.suspicious_gravel: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: suspicious_gravel
       count: 1
   - name: auto_gather_gold_ore_x1
     preconditions:
@@ -2576,6 +2609,50 @@ actions:
     params:
       itemName: stripped_mangrove_wood
       count: 1
+  - name: auto_gather_oak_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.oak_leaves: ">= 1"
+    effects:
+      inventory.oak_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: oak_leaves
+      count: 1
+  - name: auto_gather_spruce_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.spruce_leaves: ">= 1"
+    effects:
+      inventory.spruce_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: spruce_leaves
+      count: 1
+  - name: auto_gather_birch_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.birch_leaves: ">= 1"
+    effects:
+      inventory.birch_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: birch_leaves
+      count: 1
+  - name: auto_gather_jungle_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.jungle_leaves: ">= 1"
+    effects:
+      inventory.jungle_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: jungle_leaves
+      count: 1
   - name: auto_gather_acacia_leaves_x1
     preconditions:
       inventory_space: true
@@ -2587,6 +2664,61 @@ actions:
     skill: gather
     params:
       itemName: acacia_leaves
+      count: 1
+  - name: auto_gather_cherry_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.cherry_leaves: ">= 1"
+    effects:
+      inventory.cherry_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cherry_leaves
+      count: 1
+  - name: auto_gather_dark_oak_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.dark_oak_leaves: ">= 1"
+    effects:
+      inventory.dark_oak_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: dark_oak_leaves
+      count: 1
+  - name: auto_gather_mangrove_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.mangrove_leaves: ">= 1"
+    effects:
+      inventory.mangrove_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: mangrove_leaves
+      count: 1
+  - name: auto_gather_azalea_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.azalea_leaves: ">= 1"
+    effects:
+      inventory.azalea_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: azalea_leaves
+      count: 1
+  - name: auto_gather_flowering_azalea_leaves_x1
+    preconditions:
+      inventory_space: true
+      nearby.flowering_azalea_leaves: ">= 1"
+    effects:
+      inventory.flowering_azalea_leaves: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: flowering_azalea_leaves
       count: 1
   - name: auto_gather_sponge_x1
     preconditions:
@@ -2609,6 +2741,17 @@ actions:
     skill: gather
     params:
       itemName: wet_sponge
+      count: 1
+  - name: auto_gather_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.glass: ">= 1"
+    effects:
+      inventory.glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: glass
       count: 1
   - name: auto_gather_lapis_ore_x1
     preconditions:
@@ -2707,6 +2850,182 @@ actions:
     params:
       itemName: note_block
       count: 1
+  - name: auto_gather_white_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.white_bed: ">= 1"
+    effects:
+      inventory.white_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: white_bed
+      count: 1
+  - name: auto_gather_orange_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.orange_bed: ">= 1"
+    effects:
+      inventory.orange_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: orange_bed
+      count: 1
+  - name: auto_gather_magenta_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.magenta_bed: ">= 1"
+    effects:
+      inventory.magenta_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: magenta_bed
+      count: 1
+  - name: auto_gather_light_blue_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_blue_bed: ">= 1"
+    effects:
+      inventory.light_blue_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_blue_bed
+      count: 1
+  - name: auto_gather_yellow_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.yellow_bed: ">= 1"
+    effects:
+      inventory.yellow_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: yellow_bed
+      count: 1
+  - name: auto_gather_lime_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.lime_bed: ">= 1"
+    effects:
+      inventory.lime_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: lime_bed
+      count: 1
+  - name: auto_gather_pink_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.pink_bed: ">= 1"
+    effects:
+      inventory.pink_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: pink_bed
+      count: 1
+  - name: auto_gather_gray_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.gray_bed: ">= 1"
+    effects:
+      inventory.gray_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: gray_bed
+      count: 1
+  - name: auto_gather_light_gray_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_gray_bed: ">= 1"
+    effects:
+      inventory.light_gray_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_gray_bed
+      count: 1
+  - name: auto_gather_cyan_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.cyan_bed: ">= 1"
+    effects:
+      inventory.cyan_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cyan_bed
+      count: 1
+  - name: auto_gather_purple_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.purple_bed: ">= 1"
+    effects:
+      inventory.purple_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: purple_bed
+      count: 1
+  - name: auto_gather_blue_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.blue_bed: ">= 1"
+    effects:
+      inventory.blue_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: blue_bed
+      count: 1
+  - name: auto_gather_brown_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.brown_bed: ">= 1"
+    effects:
+      inventory.brown_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brown_bed
+      count: 1
+  - name: auto_gather_green_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.green_bed: ">= 1"
+    effects:
+      inventory.green_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: green_bed
+      count: 1
+  - name: auto_gather_red_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.red_bed: ">= 1"
+    effects:
+      inventory.red_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: red_bed
+      count: 1
+  - name: auto_gather_black_bed_x1
+    preconditions:
+      inventory_space: true
+      nearby.black_bed: ">= 1"
+    effects:
+      inventory.black_bed: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: black_bed
+      count: 1
   - name: auto_gather_powered_rail_x1
     preconditions:
       inventory_space: true
@@ -2753,6 +3072,28 @@ actions:
     params:
       itemName: cobweb
       count: 1
+  - name: auto_gather_grass_x1
+    preconditions:
+      inventory_space: true
+      nearby.grass: ">= 1"
+    effects:
+      inventory.grass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: grass
+      count: 1
+  - name: auto_gather_fern_x1
+    preconditions:
+      inventory_space: true
+      nearby.fern: ">= 1"
+    effects:
+      inventory.fern: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: fern
+      count: 1
   - name: auto_gather_dead_bush_x1
     preconditions:
       inventory_space: true
@@ -2765,6 +3106,28 @@ actions:
     params:
       itemName: dead_bush
       count: 1
+  - name: auto_gather_seagrass_x1
+    preconditions:
+      inventory_space: true
+      nearby.seagrass: ">= 1"
+    effects:
+      inventory.seagrass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: seagrass
+      count: 1
+  - name: auto_gather_tall_seagrass_x1
+    preconditions:
+      inventory_space: true
+      nearby.tall_seagrass: ">= 1"
+    effects:
+      inventory.tall_seagrass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: tall_seagrass
+      count: 1
   - name: auto_gather_piston_x1
     preconditions:
       inventory_space: true
@@ -2775,6 +3138,17 @@ actions:
     skill: gather
     params:
       itemName: piston
+      count: 1
+  - name: auto_gather_piston_head_x1
+    preconditions:
+      inventory_space: true
+      nearby.piston_head: ">= 1"
+    effects:
+      inventory.piston_head: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: piston_head
       count: 1
   - name: auto_gather_white_wool_x1
     preconditions:
@@ -3187,6 +3561,17 @@ actions:
     params:
       itemName: bookshelf
       count: 1
+  - name: auto_gather_chiseled_bookshelf_x1
+    preconditions:
+      inventory_space: true
+      nearby.chiseled_bookshelf: ">= 1"
+    effects:
+      inventory.chiseled_bookshelf: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: chiseled_bookshelf
+      count: 1
   - name: auto_gather_mossy_cobblestone_x1
     preconditions:
       inventory_space: true
@@ -3233,6 +3618,40 @@ actions:
     skill: gather
     params:
       itemName: wall_torch
+      count: 1
+  - name: auto_gather_fire_x1
+    preconditions:
+      inventory_space: true
+      nearby.fire: ">= 1"
+    effects:
+      inventory.fire: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: fire
+      count: 1
+  - name: auto_gather_soul_fire_x1
+    preconditions:
+      inventory_space: true
+      nearby.soul_fire: ">= 1"
+    effects:
+      inventory.soul_fire: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: soul_fire
+      count: 1
+  - name: auto_gather_spawner_x1
+    preconditions:
+      inventory_space: true
+      nearby.spawner: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.spawner: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: spawner
       count: 1
   - name: auto_gather_oak_stairs_x1
     preconditions:
@@ -4026,6 +4445,29 @@ actions:
     params:
       itemName: stone_button
       count: 1
+  - name: auto_gather_snow_x1
+    preconditions:
+      inventory_space: true
+      nearby.snow: ">= 1"
+      inventory.category.shovel: true
+    effects:
+      inventory.snow: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: snow
+      count: 1
+  - name: auto_gather_ice_x1
+    preconditions:
+      inventory_space: true
+      nearby.ice: ">= 1"
+    effects:
+      inventory.ice: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: ice
+      count: 1
   - name: auto_gather_snow_block_x1
     preconditions:
       inventory_space: true
@@ -4221,6 +4663,17 @@ actions:
     params:
       itemName: jack_o_lantern
       count: 1
+  - name: auto_gather_cake_x1
+    preconditions:
+      inventory_space: true
+      nearby.cake: ">= 1"
+    effects:
+      inventory.cake: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cake
+      count: 1
   - name: auto_gather_repeater_x1
     preconditions:
       inventory_space: true
@@ -4231,6 +4684,182 @@ actions:
     skill: gather
     params:
       itemName: repeater
+      count: 1
+  - name: auto_gather_white_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.white_stained_glass: ">= 1"
+    effects:
+      inventory.white_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: white_stained_glass
+      count: 1
+  - name: auto_gather_orange_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.orange_stained_glass: ">= 1"
+    effects:
+      inventory.orange_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: orange_stained_glass
+      count: 1
+  - name: auto_gather_magenta_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.magenta_stained_glass: ">= 1"
+    effects:
+      inventory.magenta_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: magenta_stained_glass
+      count: 1
+  - name: auto_gather_light_blue_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_blue_stained_glass: ">= 1"
+    effects:
+      inventory.light_blue_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_blue_stained_glass
+      count: 1
+  - name: auto_gather_yellow_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.yellow_stained_glass: ">= 1"
+    effects:
+      inventory.yellow_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: yellow_stained_glass
+      count: 1
+  - name: auto_gather_lime_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.lime_stained_glass: ">= 1"
+    effects:
+      inventory.lime_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: lime_stained_glass
+      count: 1
+  - name: auto_gather_pink_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.pink_stained_glass: ">= 1"
+    effects:
+      inventory.pink_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: pink_stained_glass
+      count: 1
+  - name: auto_gather_gray_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.gray_stained_glass: ">= 1"
+    effects:
+      inventory.gray_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: gray_stained_glass
+      count: 1
+  - name: auto_gather_light_gray_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_gray_stained_glass: ">= 1"
+    effects:
+      inventory.light_gray_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_gray_stained_glass
+      count: 1
+  - name: auto_gather_cyan_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.cyan_stained_glass: ">= 1"
+    effects:
+      inventory.cyan_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cyan_stained_glass
+      count: 1
+  - name: auto_gather_purple_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.purple_stained_glass: ">= 1"
+    effects:
+      inventory.purple_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: purple_stained_glass
+      count: 1
+  - name: auto_gather_blue_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.blue_stained_glass: ">= 1"
+    effects:
+      inventory.blue_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: blue_stained_glass
+      count: 1
+  - name: auto_gather_brown_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.brown_stained_glass: ">= 1"
+    effects:
+      inventory.brown_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brown_stained_glass
+      count: 1
+  - name: auto_gather_green_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.green_stained_glass: ">= 1"
+    effects:
+      inventory.green_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: green_stained_glass
+      count: 1
+  - name: auto_gather_red_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.red_stained_glass: ">= 1"
+    effects:
+      inventory.red_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: red_stained_glass
+      count: 1
+  - name: auto_gather_black_stained_glass_x1
+    preconditions:
+      inventory_space: true
+      nearby.black_stained_glass: ">= 1"
+    effects:
+      inventory.black_stained_glass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: black_stained_glass
       count: 1
   - name: auto_gather_oak_trapdoor_x1
     preconditions:
@@ -4402,6 +5031,72 @@ actions:
     params:
       itemName: mud_bricks
       count: 1
+  - name: auto_gather_infested_stone_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_stone: ">= 1"
+    effects:
+      inventory.infested_stone: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_stone
+      count: 1
+  - name: auto_gather_infested_cobblestone_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_cobblestone: ">= 1"
+    effects:
+      inventory.infested_cobblestone: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_cobblestone
+      count: 1
+  - name: auto_gather_infested_stone_bricks_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_stone_bricks: ">= 1"
+    effects:
+      inventory.infested_stone_bricks: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_stone_bricks
+      count: 1
+  - name: auto_gather_infested_mossy_stone_bricks_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_mossy_stone_bricks: ">= 1"
+    effects:
+      inventory.infested_mossy_stone_bricks: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_mossy_stone_bricks
+      count: 1
+  - name: auto_gather_infested_cracked_stone_bricks_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_cracked_stone_bricks: ">= 1"
+    effects:
+      inventory.infested_cracked_stone_bricks: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_cracked_stone_bricks
+      count: 1
+  - name: auto_gather_infested_chiseled_stone_bricks_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_chiseled_stone_bricks: ">= 1"
+    effects:
+      inventory.infested_chiseled_stone_bricks: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_chiseled_stone_bricks
+      count: 1
   - name: auto_gather_brown_mushroom_block_x1
     preconditions:
       inventory_space: true
@@ -4426,6 +5121,17 @@ actions:
     params:
       itemName: red_mushroom_block
       count: 1
+  - name: auto_gather_mushroom_stem_x1
+    preconditions:
+      inventory_space: true
+      nearby.mushroom_stem: ">= 1"
+    effects:
+      inventory.mushroom_stem: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: mushroom_stem
+      count: 1
   - name: auto_gather_iron_bars_x1
     preconditions:
       inventory_space: true
@@ -4449,6 +5155,17 @@ actions:
     skill: gather
     params:
       itemName: chain
+      count: 1
+  - name: auto_gather_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.glass_pane: ">= 1"
+    effects:
+      inventory.glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: glass_pane
       count: 1
   - name: auto_gather_melon_x1
     preconditions:
@@ -4509,6 +5226,28 @@ actions:
     skill: gather
     params:
       itemName: melon_stem
+      count: 1
+  - name: auto_gather_vine_x1
+    preconditions:
+      inventory_space: true
+      nearby.vine: ">= 1"
+    effects:
+      inventory.vine: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: vine
+      count: 1
+  - name: auto_gather_glow_lichen_x1
+    preconditions:
+      inventory_space: true
+      nearby.glow_lichen: ">= 1"
+    effects:
+      inventory.glow_lichen: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: glow_lichen
       count: 1
   - name: auto_gather_oak_fence_gate_x1
     preconditions:
@@ -5914,6 +6653,182 @@ actions:
     params:
       itemName: black_terracotta
       count: 1
+  - name: auto_gather_white_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.white_stained_glass_pane: ">= 1"
+    effects:
+      inventory.white_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: white_stained_glass_pane
+      count: 1
+  - name: auto_gather_orange_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.orange_stained_glass_pane: ">= 1"
+    effects:
+      inventory.orange_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: orange_stained_glass_pane
+      count: 1
+  - name: auto_gather_magenta_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.magenta_stained_glass_pane: ">= 1"
+    effects:
+      inventory.magenta_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: magenta_stained_glass_pane
+      count: 1
+  - name: auto_gather_light_blue_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_blue_stained_glass_pane: ">= 1"
+    effects:
+      inventory.light_blue_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_blue_stained_glass_pane
+      count: 1
+  - name: auto_gather_yellow_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.yellow_stained_glass_pane: ">= 1"
+    effects:
+      inventory.yellow_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: yellow_stained_glass_pane
+      count: 1
+  - name: auto_gather_lime_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.lime_stained_glass_pane: ">= 1"
+    effects:
+      inventory.lime_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: lime_stained_glass_pane
+      count: 1
+  - name: auto_gather_pink_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.pink_stained_glass_pane: ">= 1"
+    effects:
+      inventory.pink_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: pink_stained_glass_pane
+      count: 1
+  - name: auto_gather_gray_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.gray_stained_glass_pane: ">= 1"
+    effects:
+      inventory.gray_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: gray_stained_glass_pane
+      count: 1
+  - name: auto_gather_light_gray_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.light_gray_stained_glass_pane: ">= 1"
+    effects:
+      inventory.light_gray_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: light_gray_stained_glass_pane
+      count: 1
+  - name: auto_gather_cyan_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.cyan_stained_glass_pane: ">= 1"
+    effects:
+      inventory.cyan_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cyan_stained_glass_pane
+      count: 1
+  - name: auto_gather_purple_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.purple_stained_glass_pane: ">= 1"
+    effects:
+      inventory.purple_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: purple_stained_glass_pane
+      count: 1
+  - name: auto_gather_blue_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.blue_stained_glass_pane: ">= 1"
+    effects:
+      inventory.blue_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: blue_stained_glass_pane
+      count: 1
+  - name: auto_gather_brown_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.brown_stained_glass_pane: ">= 1"
+    effects:
+      inventory.brown_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brown_stained_glass_pane
+      count: 1
+  - name: auto_gather_green_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.green_stained_glass_pane: ">= 1"
+    effects:
+      inventory.green_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: green_stained_glass_pane
+      count: 1
+  - name: auto_gather_red_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.red_stained_glass_pane: ">= 1"
+    effects:
+      inventory.red_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: red_stained_glass_pane
+      count: 1
+  - name: auto_gather_black_stained_glass_pane_x1
+    preconditions:
+      inventory_space: true
+      nearby.black_stained_glass_pane: ">= 1"
+    effects:
+      inventory.black_stained_glass_pane: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: black_stained_glass_pane
+      count: 1
   - name: auto_gather_acacia_stairs_x1
     preconditions:
       inventory_space: true
@@ -6334,6 +7249,17 @@ actions:
     params:
       itemName: coal_block
       count: 1
+  - name: auto_gather_packed_ice_x1
+    preconditions:
+      inventory_space: true
+      nearby.packed_ice: ">= 1"
+    effects:
+      inventory.packed_ice: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: packed_ice
+      count: 1
   - name: auto_gather_sunflower_x1
     preconditions:
       inventory_space: true
@@ -6377,6 +7303,28 @@ actions:
     skill: gather
     params:
       itemName: peony
+      count: 1
+  - name: auto_gather_tall_grass_x1
+    preconditions:
+      inventory_space: true
+      nearby.tall_grass: ">= 1"
+    effects:
+      inventory.tall_grass: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: tall_grass
+      count: 1
+  - name: auto_gather_large_fern_x1
+    preconditions:
+      inventory_space: true
+      nearby.large_fern: ">= 1"
+    effects:
+      inventory.large_fern: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: large_fern
       count: 1
   - name: auto_gather_white_banner_x1
     preconditions:
@@ -7407,6 +8355,17 @@ actions:
     params:
       itemName: chorus_plant
       count: 1
+  - name: auto_gather_chorus_flower_x1
+    preconditions:
+      inventory_space: true
+      nearby.chorus_flower: ">= 1"
+    effects:
+      inventory.chorus_flower: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: chorus_flower
+      count: 1
   - name: auto_gather_purpur_block_x1
     preconditions:
       inventory_space: true
@@ -7514,6 +8473,17 @@ actions:
     params:
       itemName: dirt_path
       count: 1
+  - name: auto_gather_frosted_ice_x1
+    preconditions:
+      inventory_space: true
+      nearby.frosted_ice: ">= 1"
+    effects:
+      inventory.frosted_ice: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: frosted_ice
+      count: 1
   - name: auto_gather_magma_block_x1
     preconditions:
       inventory_space: true
@@ -7560,6 +8530,17 @@ actions:
     skill: gather
     params:
       itemName: bone_block
+      count: 1
+  - name: auto_gather_structure_void_x1
+    preconditions:
+      inventory_space: true
+      nearby.structure_void: ">= 1"
+    effects:
+      inventory.structure_void: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: structure_void
       count: 1
   - name: auto_gather_observer_x1
     preconditions:
@@ -8354,6 +9335,17 @@ actions:
     params:
       itemName: dried_kelp_block
       count: 1
+  - name: auto_gather_turtle_egg_x1
+    preconditions:
+      inventory_space: true
+      nearby.turtle_egg: ">= 1"
+    effects:
+      inventory.turtle_egg: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: turtle_egg
+      count: 1
   - name: auto_gather_sniffer_egg_x1
     preconditions:
       inventory_space: true
@@ -8490,6 +9482,351 @@ actions:
     params:
       itemName: horn_coral_block
       count: 1
+  - name: auto_gather_dead_tube_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_tube_coral: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_tube_coral: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_tube_coral
+      count: 1
+  - name: auto_gather_dead_brain_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_brain_coral: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_brain_coral: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_brain_coral
+      count: 1
+  - name: auto_gather_dead_bubble_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_bubble_coral: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_bubble_coral: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_bubble_coral
+      count: 1
+  - name: auto_gather_dead_fire_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_fire_coral: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_fire_coral: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_fire_coral
+      count: 1
+  - name: auto_gather_dead_horn_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_horn_coral: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_horn_coral: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_horn_coral
+      count: 1
+  - name: auto_gather_tube_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.tube_coral: ">= 1"
+    effects:
+      inventory.tube_coral: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: tube_coral
+      count: 1
+  - name: auto_gather_brain_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.brain_coral: ">= 1"
+    effects:
+      inventory.brain_coral: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brain_coral
+      count: 1
+  - name: auto_gather_bubble_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.bubble_coral: ">= 1"
+    effects:
+      inventory.bubble_coral: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bubble_coral
+      count: 1
+  - name: auto_gather_fire_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.fire_coral: ">= 1"
+    effects:
+      inventory.fire_coral: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: fire_coral
+      count: 1
+  - name: auto_gather_horn_coral_x1
+    preconditions:
+      inventory_space: true
+      nearby.horn_coral: ">= 1"
+    effects:
+      inventory.horn_coral: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: horn_coral
+      count: 1
+  - name: auto_gather_dead_tube_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_tube_coral_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_tube_coral_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_tube_coral_fan
+      count: 1
+  - name: auto_gather_dead_brain_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_brain_coral_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_brain_coral_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_brain_coral_fan
+      count: 1
+  - name: auto_gather_dead_bubble_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_bubble_coral_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_bubble_coral_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_bubble_coral_fan
+      count: 1
+  - name: auto_gather_dead_fire_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_fire_coral_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_fire_coral_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_fire_coral_fan
+      count: 1
+  - name: auto_gather_dead_horn_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_horn_coral_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_horn_coral_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_horn_coral_fan
+      count: 1
+  - name: auto_gather_tube_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.tube_coral_fan: ">= 1"
+    effects:
+      inventory.tube_coral_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: tube_coral_fan
+      count: 1
+  - name: auto_gather_brain_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.brain_coral_fan: ">= 1"
+    effects:
+      inventory.brain_coral_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brain_coral_fan
+      count: 1
+  - name: auto_gather_bubble_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.bubble_coral_fan: ">= 1"
+    effects:
+      inventory.bubble_coral_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bubble_coral_fan
+      count: 1
+  - name: auto_gather_fire_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.fire_coral_fan: ">= 1"
+    effects:
+      inventory.fire_coral_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: fire_coral_fan
+      count: 1
+  - name: auto_gather_horn_coral_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.horn_coral_fan: ">= 1"
+    effects:
+      inventory.horn_coral_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: horn_coral_fan
+      count: 1
+  - name: auto_gather_dead_tube_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_tube_coral_wall_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_tube_coral_wall_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_tube_coral_wall_fan
+      count: 1
+  - name: auto_gather_dead_brain_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_brain_coral_wall_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_brain_coral_wall_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_brain_coral_wall_fan
+      count: 1
+  - name: auto_gather_dead_bubble_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_bubble_coral_wall_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_bubble_coral_wall_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_bubble_coral_wall_fan
+      count: 1
+  - name: auto_gather_dead_fire_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_fire_coral_wall_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_fire_coral_wall_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_fire_coral_wall_fan
+      count: 1
+  - name: auto_gather_dead_horn_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.dead_horn_coral_wall_fan: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.dead_horn_coral_wall_fan: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: dead_horn_coral_wall_fan
+      count: 1
+  - name: auto_gather_tube_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.tube_coral_wall_fan: ">= 1"
+    effects:
+      inventory.tube_coral_wall_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: tube_coral_wall_fan
+      count: 1
+  - name: auto_gather_brain_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.brain_coral_wall_fan: ">= 1"
+    effects:
+      inventory.brain_coral_wall_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: brain_coral_wall_fan
+      count: 1
+  - name: auto_gather_bubble_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.bubble_coral_wall_fan: ">= 1"
+    effects:
+      inventory.bubble_coral_wall_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bubble_coral_wall_fan
+      count: 1
+  - name: auto_gather_fire_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.fire_coral_wall_fan: ">= 1"
+    effects:
+      inventory.fire_coral_wall_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: fire_coral_wall_fan
+      count: 1
+  - name: auto_gather_horn_coral_wall_fan_x1
+    preconditions:
+      inventory_space: true
+      nearby.horn_coral_wall_fan: ">= 1"
+    effects:
+      inventory.horn_coral_wall_fan: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: horn_coral_wall_fan
+      count: 1
   - name: auto_gather_sea_pickle_x1
     preconditions:
       inventory_space: true
@@ -8500,6 +9837,17 @@ actions:
     skill: gather
     params:
       itemName: sea_pickle
+      count: 1
+  - name: auto_gather_blue_ice_x1
+    preconditions:
+      inventory_space: true
+      nearby.blue_ice: ">= 1"
+    effects:
+      inventory.blue_ice: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: blue_ice
       count: 1
   - name: auto_gather_conduit_x1
     preconditions:
@@ -8546,6 +9894,17 @@ actions:
     skill: gather
     params:
       itemName: potted_bamboo
+      count: 1
+  - name: auto_gather_bubble_column_x1
+    preconditions:
+      inventory_space: true
+      nearby.bubble_column: ">= 1"
+    effects:
+      inventory.bubble_column: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bubble_column
       count: 1
   - name: auto_gather_polished_granite_stairs_x1
     preconditions:
@@ -9212,6 +10571,17 @@ actions:
     params:
       itemName: soul_campfire
       count: 1
+  - name: auto_gather_sweet_berry_bush_x1
+    preconditions:
+      inventory_space: true
+      nearby.sweet_berry_bush: ">= 1"
+    effects:
+      inventory.sweet_berry_bush: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sweet_berry_bush
+      count: 1
   - name: auto_gather_warped_stem_x1
     preconditions:
       inventory_space: true
@@ -9302,6 +10672,17 @@ actions:
     params:
       itemName: warped_roots
       count: 1
+  - name: auto_gather_nether_sprouts_x1
+    preconditions:
+      inventory_space: true
+      nearby.nether_sprouts: ">= 1"
+    effects:
+      inventory.nether_sprouts: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: nether_sprouts
+      count: 1
   - name: auto_gather_crimson_stem_x1
     preconditions:
       inventory_space: true
@@ -9381,6 +10762,17 @@ actions:
     params:
       itemName: shroomlight
       count: 1
+  - name: auto_gather_weeping_vines_x1
+    preconditions:
+      inventory_space: true
+      nearby.weeping_vines: ">= 1"
+    effects:
+      inventory.weeping_vines: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: weeping_vines
+      count: 1
   - name: auto_gather_weeping_vines_plant_x1
     preconditions:
       inventory_space: true
@@ -9392,6 +10784,28 @@ actions:
     skill: gather
     params:
       itemName: weeping_vines_plant
+      count: 1
+  - name: auto_gather_twisting_vines_x1
+    preconditions:
+      inventory_space: true
+      nearby.twisting_vines: ">= 1"
+    effects:
+      inventory.twisting_vines: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: twisting_vines
+      count: 1
+  - name: auto_gather_twisting_vines_plant_x1
+    preconditions:
+      inventory_space: true
+      nearby.twisting_vines_plant: ">= 1"
+    effects:
+      inventory.twisting_vines_plant: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: twisting_vines_plant
       count: 1
   - name: auto_gather_crimson_roots_x1
     preconditions:
@@ -9647,6 +11061,17 @@ actions:
     skill: gather
     params:
       itemName: target
+      count: 1
+  - name: auto_gather_bee_nest_x1
+    preconditions:
+      inventory_space: true
+      nearby.bee_nest: ">= 1"
+    effects:
+      inventory.bee_nest: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: bee_nest
       count: 1
   - name: auto_gather_beehive_x1
     preconditions:
@@ -10431,6 +11856,18 @@ actions:
     params:
       itemName: amethyst_block
       count: 1
+  - name: auto_gather_budding_amethyst_x1
+    preconditions:
+      inventory_space: true
+      nearby.budding_amethyst: ">= 1"
+      inventory.category.pickaxe: true
+    effects:
+      inventory.budding_amethyst: "+1"
+    cost: 1
+    skill: gather
+    params:
+      itemName: budding_amethyst
+      count: 1
   - name: auto_gather_amethyst_cluster_x1
     preconditions:
       inventory_space: true
@@ -10442,6 +11879,39 @@ actions:
     skill: gather
     params:
       itemName: amethyst_cluster
+      count: 1
+  - name: auto_gather_large_amethyst_bud_x1
+    preconditions:
+      inventory_space: true
+      nearby.large_amethyst_bud: ">= 1"
+    effects:
+      inventory.large_amethyst_bud: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: large_amethyst_bud
+      count: 1
+  - name: auto_gather_medium_amethyst_bud_x1
+    preconditions:
+      inventory_space: true
+      nearby.medium_amethyst_bud: ">= 1"
+    effects:
+      inventory.medium_amethyst_bud: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: medium_amethyst_bud
+      count: 1
+  - name: auto_gather_small_amethyst_bud_x1
+    preconditions:
+      inventory_space: true
+      nearby.small_amethyst_bud: ">= 1"
+    effects:
+      inventory.small_amethyst_bud: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: small_amethyst_bud
       count: 1
   - name: auto_gather_tuff_x1
     preconditions:
@@ -10477,6 +11947,83 @@ actions:
     skill: gather
     params:
       itemName: tinted_glass
+      count: 1
+  - name: auto_gather_powder_snow_x1
+    preconditions:
+      inventory_space: true
+      nearby.powder_snow: ">= 1"
+    effects:
+      inventory.powder_snow: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: powder_snow
+      count: 1
+  - name: auto_gather_sculk_sensor_x1
+    preconditions:
+      inventory_space: true
+      nearby.sculk_sensor: ">= 1"
+    effects:
+      inventory.sculk_sensor: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sculk_sensor
+      count: 1
+  - name: auto_gather_calibrated_sculk_sensor_x1
+    preconditions:
+      inventory_space: true
+      nearby.calibrated_sculk_sensor: ">= 1"
+    effects:
+      inventory.calibrated_sculk_sensor: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: calibrated_sculk_sensor
+      count: 1
+  - name: auto_gather_sculk_x1
+    preconditions:
+      inventory_space: true
+      nearby.sculk: ">= 1"
+    effects:
+      inventory.sculk: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sculk
+      count: 1
+  - name: auto_gather_sculk_vein_x1
+    preconditions:
+      inventory_space: true
+      nearby.sculk_vein: ">= 1"
+    effects:
+      inventory.sculk_vein: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sculk_vein
+      count: 1
+  - name: auto_gather_sculk_catalyst_x1
+    preconditions:
+      inventory_space: true
+      nearby.sculk_catalyst: ">= 1"
+    effects:
+      inventory.sculk_catalyst: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sculk_catalyst
+      count: 1
+  - name: auto_gather_sculk_shrieker_x1
+    preconditions:
+      inventory_space: true
+      nearby.sculk_shrieker: ">= 1"
+    effects:
+      inventory.sculk_shrieker: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: sculk_shrieker
       count: 1
   - name: auto_gather_oxidized_copper_x1
     preconditions:
@@ -10923,6 +12470,28 @@ actions:
     params:
       itemName: dripstone_block
       count: 1
+  - name: auto_gather_cave_vines_x1
+    preconditions:
+      inventory_space: true
+      nearby.cave_vines: ">= 1"
+    effects:
+      inventory.cave_vines: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cave_vines
+      count: 1
+  - name: auto_gather_cave_vines_plant_x1
+    preconditions:
+      inventory_space: true
+      nearby.cave_vines_plant: ">= 1"
+    effects:
+      inventory.cave_vines_plant: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: cave_vines_plant
+      count: 1
   - name: auto_gather_spore_blossom_x1
     preconditions:
       inventory_space: true
@@ -11011,6 +12580,28 @@ actions:
     skill: gather
     params:
       itemName: big_dripleaf_stem
+      count: 1
+  - name: auto_gather_small_dripleaf_x1
+    preconditions:
+      inventory_space: true
+      nearby.small_dripleaf: ">= 1"
+    effects:
+      inventory.small_dripleaf: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: small_dripleaf
+      count: 1
+  - name: auto_gather_hanging_roots_x1
+    preconditions:
+      inventory_space: true
+      nearby.hanging_roots: ">= 1"
+    effects:
+      inventory.hanging_roots: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: hanging_roots
       count: 1
   - name: auto_gather_rooted_dirt_x1
     preconditions:
@@ -11275,6 +12866,17 @@ actions:
     params:
       itemName: cracked_deepslate_tiles
       count: 1
+  - name: auto_gather_infested_deepslate_x1
+    preconditions:
+      inventory_space: true
+      nearby.infested_deepslate: ">= 1"
+    effects:
+      inventory.infested_deepslate: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: infested_deepslate
+      count: 1
   - name: auto_gather_smooth_basalt_x1
     preconditions:
       inventory_space: true
@@ -11379,6 +12981,28 @@ actions:
     skill: gather
     params:
       itemName: pearlescent_froglight
+      count: 1
+  - name: auto_gather_frogspawn_x1
+    preconditions:
+      inventory_space: true
+      nearby.frogspawn: ">= 1"
+    effects:
+      inventory.frogspawn: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: frogspawn
+      count: 1
+  - name: auto_gather_reinforced_deepslate_x1
+    preconditions:
+      inventory_space: true
+      nearby.reinforced_deepslate: ">= 1"
+    effects:
+      inventory.reinforced_deepslate: "+1"
+    cost: 5
+    skill: gather
+    params:
+      itemName: reinforced_deepslate
       count: 1
   - name: auto_gather_decorated_pot_x1
     preconditions:
