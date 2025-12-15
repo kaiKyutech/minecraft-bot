@@ -181,17 +181,4 @@ const newMessages = history.filter(msg => msg.sequence > lastProcessedSequence);
 
 - **Mineflayer** (v4.33.0): Minecraftボットフレームワーク
 - **mineflayer-pathfinder**: パスファインディング
-- **yaml**: 設定ファイル管理
 - **Node.js**: JavaScript実行環境
-
-## ライセンス
-
-このプロジェクトは個人プロジェクトです。
-
-## 最近の改善点（2025-10-30）
-
-- **会話連番システム**: タイムスタンプ衝突を防ぐ単調増加カウンター
-- **シンプルなエラー報告**: `missingPreconditions` 配列でわかりやすく
-- **循環参照検出**: GOAP無限ループの防止
-- **深度管理最適化**: より複雑な目標のプランニングが可能に
-- **統一停止コマンド**: `!stop` ですべての操作を一括停止
