@@ -5,4 +5,12 @@ nul
 *.png
 .claude
 *.bat
-doc/design/GOAP_IMPLEMENTATION_GUIDE.md
+
+# すべての.mdファイルを無視
+*.md
+
+# README.mdは除外
+!README.md
+
+# doc/planner_bot/API.mdも除外
+!doc/planner_bot/API.md
