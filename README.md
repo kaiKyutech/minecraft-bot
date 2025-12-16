@@ -175,7 +175,6 @@ const newMessages = history.filter(msg => msg.sequence > lastProcessedSequence);
 ## ドキュメント
 
 - **[doc/planner_bot/API.md](doc/planner_bot/API.md)**: 詳細なAPIリファレンス
-- **[CLAUDE.md](CLAUDE.md)**: 開発者向けガイド
 
 ## 技術スタック
 
