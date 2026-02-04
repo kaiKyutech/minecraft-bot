@@ -1,10 +1,11 @@
-※このプロジェクトはclaude codeを使用しています。
-動作例(youtube)
-↓このプロジェクト
-https://youtu.be/1OYRvkW0qc4
+※このプロジェクトはclaude codeを使用しています。 
+ 
+動作例(youtube)  
+↓このプロジェクト  
+https://youtu.be/1OYRvkW0qc4  
 
-↓AIエージェント連携（開発中、非公開プロジェクト）
-https://youtu.be/E2P8Qd0gLfo
+↓AIエージェント連携（開発中、非公開プロジェクト）  
+https://youtu.be/E2P8Qd0gLfo  
 # Minecraft Bot with GOAP
 
 Mineflayerベースのマインクラフトボット。GOAP（Goal-Oriented Action Planning）による自動プランニングと実行機能を備えています。
