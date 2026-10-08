@@ -48,4 +48,7 @@ test('planning prepares generated actions without changing tracked YAML and keep
   assert.deepEqual(results[0], isolated);
   assert.ok(logs[0].some(x => x.includes('inventory.stick')));
   assert.ok(logs[1].some(x => x.includes('inventory.oak_planks')));
+  class Logger { constructor(){this.messages=[]} info(x){this.messages.push(String(x))} warn(x){this.messages.push(String(x))} }
+  const prototypeLogger=new Logger();const again=await planner.plan('inventory.stick:4',state,prototypeLogger);
+  assert.deepEqual(again,isolated);assert.ok(prototypeLogger.messages.length);
 });

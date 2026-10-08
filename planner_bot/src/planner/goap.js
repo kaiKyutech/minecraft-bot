@@ -5,10 +5,9 @@ const { getStateValue, arePreconditionsSatisfied, applyEffects, evaluateConditio
 const { analyzeRelevantVariables, isActionRelevant } = require('./relevance')
 const { diagnoseGoalFailure } = require('./failure_diagnosis')
 const { buildState } = require('./state_builder')
-const { createLogger } = require('../utils/logger')
 
 const { MAX_ITERATIONS, YIELD_INTERVAL } = require('./options')
-const { planningLog, getLogger } = require('./logging')
+const { planningLog, getLogger, planningLogger } = require('./logging')
 const { prepareDomain, loadDomain, USE_AUTO_GATHER, USE_AUTO_CRAFT } = require('./domain')
 
 function yieldToEventLoop() {
@@ -17,7 +16,7 @@ function yieldToEventLoop() {
 }
 
 function plan(goalInput, worldState, logger = null, options = {}) {
-  return planningLog.run(logger && typeof logger.info === 'function' && typeof logger.warn === 'function' ? { ...logger, debug: logger.debug || logger.info.bind(logger) } : createLogger({ category: 'goap' }), async () => {
+  return planningLog.run(planningLogger(logger), async () => {
     await prepareDomain(options.version, getLogger())
     return planPrepared(goalInput, worldState)
   })
@@ -344,7 +343,7 @@ function summarizeFrontier(open, context, limit = 5) {
 
 // ゴール達成に不足しているリソース（ヒューリスティック推定）を取得
 function collectShortages(goalInput, worldState, logger = null, options = {}) {
-  return planningLog.run(logger && typeof logger.info === 'function' && typeof logger.warn === 'function' ? { ...logger, debug: logger.debug || logger.info.bind(logger) } : createLogger({ category: 'goap' }), async () => {
+  return planningLog.run(planningLogger(logger), async () => {
     await prepareDomain(options.version, getLogger())
     return collectShortagesPrepared(goalInput, worldState)
   })
