@@ -15,6 +15,8 @@ const SCAN_MAX_CHECKS = Number.isFinite(parsedMaxChecks) && parsedMaxChecks > 0
  */
 class StateManager {
   constructor() {
+    this.refreshGeneration = 0
+    this.publishedGeneration = 0
     this.cache = null
     this.namedLocations = {}  // 登録された場所の座標マップ {name: {x, y, z}}
     this.silentRefresh = false  // リフレッシュ時のログ抑制フラグ
@@ -28,10 +30,25 @@ class StateManager {
   }
 
   async refresh(bot) {
+    const generation = ++this.refreshGeneration
+    const state = await this.observe(bot)
+    if (generation >= this.publishedGeneration) {
+      this.cache = state
+      this.publishedGeneration = generation
+    }
+    if (!this.silentRefresh) {
+      const view = Object.create(this)
+      view.cache = state
+      view.logCurrentState(bot)
+    }
+    return state
+  }
+
+  async observe(bot) {
     const blockData = await this.extractNearbyBlocks(bot)
     const hasSpace = this.hasInventorySpace(bot)
 
-    this.cache = {
+    const state = {
       timestamp: Date.now(),
       inventory: this.extractInventory(bot), // インベントリ生データ
       equipment: this.extractEquipment(bot), // 装備情報
@@ -43,12 +60,7 @@ class StateManager {
       blocks: blockData.blocks        // ブロック座標リスト
     }
 
-    // デバッグ用: GOAP状態をログ出力
-    if (!this.silentRefresh) {
-      this.logCurrentState(bot)
-    }
-
-    return this.cache
+    return state
   }
 
   extractInventory(bot) {
@@ -58,9 +70,9 @@ class StateManager {
     // デバッグ: 全スロットの詳細をログ出力
     if (process.env.DEBUG_INVENTORY === '1') {
       const logger = getLogger(bot)
-      logger.info('[STATE] インベントリスロット詳細:')
+      logger.debug('[STATE] インベントリスロット詳細:')
       for (const item of slots) {
-        logger.info(`  - ${item.name} x${item.count} (slot: ${item.slot}, type: ${item.type})`)
+        logger.debug(`  - ${item.name} x${item.count} (slot: ${item.slot}, type: ${item.type})`)
       }
     }
 
@@ -175,7 +187,7 @@ class StateManager {
 
     if (process.env.STATE_SCAN_DEBUG === '1') {
       const logger = getLogger(bot)
-      logger.info(
+      logger.debug(
         `[STATE_SCAN] range=${summary.scanRange} checks=${summary.checksUsed} ` +
         `remaining=${remaining} limit=${summary.maxChecks ?? 'unlimited'} ` +
         `limitReached=${summary.limitReached ? 1 : 0} callbackStop=${summary.stoppedByCallback ? 1 : 0}`
@@ -226,7 +238,7 @@ class StateManager {
             }
           }
           if (nearbyEntries.length > 0) {
-            logger.info(`[STATE] Nearby Counts: ${nearbyEntries.join(' ')}`)
+            logger.debug(`[STATE] Nearby Counts: ${nearbyEntries.join(' ')}`)
           }
           const categoryInfo = value.category
           if (categoryInfo && typeof categoryInfo === 'object') {
@@ -237,7 +249,7 @@ class StateManager {
               }
             }
             if (categoryEntries.length > 0) {
-              logger.info(`[STATE] Nearby Categories: ${categoryEntries.join(' ')}`)
+              logger.debug(`[STATE] Nearby Categories: ${categoryEntries.join(' ')}`)
             }
           }
         } else if (key === 'equipment') {
@@ -251,10 +263,10 @@ class StateManager {
       }
     }
 
-    logger.info(`[STATE] Boolean: ${booleanStates.join(' ')}`)
-    logger.info(`[STATE] Numeric: ${numericStates.join(' ')}`)
+    logger.debug(`[STATE] Boolean: ${booleanStates.join(' ')}`)
+    logger.debug(`[STATE] Numeric: ${numericStates.join(' ')}`)
     if (equipmentStates.length > 0) {
-      logger.info(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
+      logger.debug(`[STATE] Equipment: ${equipmentStates.join(' ')}`)
     }
 
     // inventory.category の情報を表示
@@ -272,15 +284,16 @@ class StateManager {
         }
       }
       if (categoryCounts.length > 0) {
-        logger.info(`[STATE] Inventory Categories (count): ${categoryCounts.join(' ')}`)
+        logger.debug(`[STATE] Inventory Categories (count): ${categoryCounts.join(' ')}`)
       }
       if (categoryBools.length > 0) {
-        logger.info(`[STATE] Inventory Categories (bool): ${categoryBools.join(' ')}`)
+        logger.debug(`[STATE] Inventory Categories (bool): ${categoryBools.join(' ')}`)
       }
     }
   }
 
   clear() {
+    this.publishedGeneration = ++this.refreshGeneration
     this.cache = null
   }
 
@@ -296,7 +309,7 @@ class StateManager {
       y: Math.floor(position.y),
       z: Math.floor(position.z)
     }
-    logger.info(`[STATE_MANAGER] 場所「${name}」を登録: (${this.namedLocations[name].x}, ${this.namedLocations[name].y}, ${this.namedLocations[name].z})`)
+    logger.debug(`[STATE_MANAGER] 場所「${name}」を登録: (${this.namedLocations[name].x}, ${this.namedLocations[name].y}, ${this.namedLocations[name].z})`)
   }
 
   /**

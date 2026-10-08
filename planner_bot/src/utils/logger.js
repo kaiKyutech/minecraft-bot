@@ -9,13 +9,15 @@
  */
 
 const LEVELS = ['error', 'warn', 'info', 'debug']
+const { currentContext } = require('./context')
 
 function createLogger(options = {}) {
   const bot = options.bot || null
   const category = options.category || null
-  const commandName = options.commandName || null
+  const context = currentContext(bot)
+  const commandName = context.commandName || options.commandName || null
 
-  const levelEnv = process.env.LOG_LEVEL ? process.env.LOG_LEVEL.toLowerCase() : 'info'
+  const levelEnv = String(context.logLevel || options.level || bot?.logLevel || process.env.LOG_LEVEL || (process.env.PLANNER_DEBUG === '1' ? 'debug' : 'info')).toLowerCase()
   const minLevelIdx = LEVELS.indexOf(levelEnv) >= 0 ? LEVELS.indexOf(levelEnv) : LEVELS.indexOf('info')
 
   const commandFilter = buildFilter(process.env.LOG_COMMANDS, { defaultMode: 'all' })
@@ -43,7 +45,7 @@ function createLogger(options = {}) {
     if (!shouldLogCategory(category)) return
     if (!shouldLogCommand(commandName)) return
 
-    const writer = bot?.systemLog ? bot.systemLog.bind(bot) : console.log
+    const writer = bot?.logWriter || (bot?.systemLog ? bot.systemLog.bind(bot) : console.log)
     const msg = args.length === 1 ? args[0] : args.map(formatArg).join(' ')
     writer(msg)
   }

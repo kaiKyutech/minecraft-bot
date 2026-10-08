@@ -88,7 +88,7 @@ function getLogger() {
 
 
 function plan(goalInput, worldState, logger = null, options = {}) {
-  return planningLog.run(logger, async () => {
+  return planningLog.run(logger && typeof logger.info === 'function' && typeof logger.warn === 'function' ? { ...logger, debug: logger.debug || logger.info.bind(logger) } : createLogger({ category: 'goap' }), async () => {
     await prepareDomain(options.version, getLogger())
     return planPrepared(goalInput, worldState)
   })
@@ -139,19 +139,19 @@ async function planPrepared(goalInput, worldState) {
   if (process.env.GOAP_DISABLE_ACTION_FILTER !== '1') {
     const relevantVars = analyzeRelevantVariables(adjustedGoal, actions, initialState)
     filteredActions = actions.filter(action => isActionRelevant(action, relevantVars))
-    getLogger().info(`[GOAP] 関連変数 (${relevantVars.size}個): ${JSON.stringify(Array.from(relevantVars).sort())}`)
-    getLogger().info(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
+    getLogger().debug(`[GOAP] 関連変数 (${relevantVars.size}個): ${JSON.stringify(Array.from(relevantVars).sort())}`)
+    getLogger().debug(`[GOAP] アクション数: ${actions.length} → ${filteredActions.length}`)
 
     // デバッグ: フィルタリングされたアクションのリスト
     if (process.env.GOAP_DEBUG_ACTIONS === '1') {
-      getLogger().info(`[GOAP] フィルタリング後のアクション:`)
-      filteredActions.forEach(a => getLogger().info(`  - ${a.name}`))
-      getLogger().info(`[GOAP] 除外されたアクション (${actions.length - filteredActions.length}個):`)
+      getLogger().debug(`[GOAP] フィルタリング後のアクション:`)
+      filteredActions.forEach(a => getLogger().debug(`  - ${a.name}`))
+      getLogger().debug(`[GOAP] 除外されたアクション (${actions.length - filteredActions.length}個):`)
       const excludedActions = actions.filter(a => !filteredActions.includes(a))
-      excludedActions.forEach(a => getLogger().info(`  - ${a.name}`))
+      excludedActions.forEach(a => getLogger().debug(`  - ${a.name}`))
     }
   } else {
-    getLogger().info(`[GOAP] アクション数: ${actions.length}`)
+    getLogger().debug(`[GOAP] アクション数: ${actions.length}`)
   }
 
 
@@ -159,7 +159,7 @@ async function planPrepared(goalInput, worldState) {
 
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
-  getLogger().info(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
+  getLogger().debug(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
 
   // ヒューリスティックが示す不足リソースを簡易表示
   const hintEntries = []
@@ -171,7 +171,7 @@ async function planPrepared(goalInput, worldState) {
     }
   }
   if (hintEntries.length > 0) {
-    getLogger().info(`[GOAP] ヒューリスティック補足: ${hintEntries.join(' / ')}`)
+    getLogger().debug(`[GOAP] ヒューリスティック補足: ${hintEntries.join(' / ')}`)
   }
 
   // ヒューリスティック値をキャッシュ
@@ -222,8 +222,8 @@ async function planPrepared(goalInput, worldState) {
         ? `...${current.actions.slice(-3).map(a => a.action).join(' → ')}`
         : current.actions.map(a => a.action).join(' → ')
 
-      getLogger().info(`[GOAP Iter ${iterations}] queue:${open.size} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
-      getLogger().info(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
+      getLogger().debug(`[GOAP Iter ${iterations}] queue:${open.size} visited:${visited.size} g:${current.cost} h:${h} f:${f}`)
+      getLogger().debug(`  actions(${current.actions.length}): [${actionPreview || 'none'}]`)
     }
 
     // gather_logsを含む経路の追跡（デバッグ用）
@@ -235,18 +235,18 @@ async function planPrepared(goalInput, worldState) {
       // }
 
     if (isGoalSatisfied(adjustedGoal, current.state)) {
-      getLogger().info(`\n[GOAP] ✓ プラン発見`)
-      getLogger().info(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
+      getLogger().debug(`\n[GOAP] ✓ プラン発見`)
+      getLogger().debug(`  イテレーション: ${iterations}, ステップ数: ${current.actions.length}, 総コスト: ${current.cost}`)
       return { plan: current.actions, diagnosis: null }
     }
 
     // デバッグ: ゴール判定の詳細を出力
     if (process.env.GOAP_DEBUG_GOAL === '1' && iterations <= 10) {
-      getLogger().info(`[GOAP Debug Iter ${iterations}] Goal check:`)
-      getLogger().info(`  adjustedGoal: ${JSON.stringify(adjustedGoal)}`)
+      getLogger().debug(`[GOAP Debug Iter ${iterations}] Goal check:`)
+      getLogger().debug(`  adjustedGoal: ${JSON.stringify(adjustedGoal)}`)
       for (const [key, target] of Object.entries(adjustedGoal)) {
         const actual = getStateValue(current.state, key)
-        getLogger().info(`  ${key}: target=${target}, actual=${actual}, satisfied=${evaluateCondition(actual, target)}`)
+        getLogger().debug(`  ${key}: target=${target}, actual=${actual}, satisfied=${evaluateCondition(actual, target)}`)
       }
     }
 
@@ -255,12 +255,12 @@ async function planPrepared(goalInput, worldState) {
 
       // デバッグ: 初回イテレーションのみ前提条件チェックの詳細を出力
       if (process.env.GOAP_DEBUG_PRECONDITIONS === '1' && iterations === 1) {
-        getLogger().info(`[PRECOND] ${action.name}: ${satisfied ? 'OK' : 'FAILED'}`)
+        getLogger().debug(`[PRECOND] ${action.name}: ${satisfied ? 'OK' : 'FAILED'}`)
         if (!satisfied && action.preconditions) {
           for (const [key, condition] of Object.entries(action.preconditions)) {
             const value = getStateValue(current.state, key)
             const result = evaluateCondition(value, condition)
-            getLogger().info(`  ${key}: value=${JSON.stringify(value)}, condition=${JSON.stringify(condition)}, result=${result}`)
+            getLogger().debug(`  ${key}: value=${JSON.stringify(value)}, condition=${JSON.stringify(condition)}, result=${result}`)
           }
         }
       }
@@ -274,12 +274,12 @@ async function planPrepared(goalInput, worldState) {
 
       // デバッグ: effectsと状態遷移の詳細
       if (process.env.GOAP_DEBUG_EFFECTS === '1' && iterations === 1 && action.name.includes('dirt')) {
-        getLogger().info(`[EFFECTS] ${action.name}:`)
-        getLogger().info(`  effects: ${JSON.stringify(action.effects)}`)
-        getLogger().info(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
-        getLogger().info(`  current.state.inventory.category.log: ${getStateValue(current.state, 'inventory.category.log')}`)
-        getLogger().info(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
-        getLogger().info(`  nextState.inventory.category.log: ${getStateValue(nextState, 'inventory.category.log')}`)
+        getLogger().debug(`[EFFECTS] ${action.name}:`)
+        getLogger().debug(`  effects: ${JSON.stringify(action.effects)}`)
+        getLogger().debug(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
+        getLogger().debug(`  current.state.inventory.category.log: ${getStateValue(current.state, 'inventory.category.log')}`)
+        getLogger().debug(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
+        getLogger().debug(`  nextState.inventory.category.log: ${getStateValue(nextState, 'inventory.category.log')}`)
       }
 
       // 各リソースの合理的な上限（Minecraftの1スタック = 64個を基準）
@@ -307,7 +307,7 @@ async function planPrepared(goalInput, worldState) {
 
       if (exceedsLimit) {
         if (process.env.GOAP_DEBUG_LIMIT === '1' && iterations === 1) {
-          getLogger().info(`[LIMIT] ${action.name}: EXCEEDED - ${exceedReason}`)
+          getLogger().debug(`[LIMIT] ${action.name}: EXCEEDED - ${exceedReason}`)
         }
         continue
       }
@@ -319,16 +319,16 @@ async function planPrepared(goalInput, worldState) {
 
       // デバッグ: 初回イテレーションのみ状態遷移の詳細を出力
       if (process.env.GOAP_DEBUG_STATE === '1' && iterations === 1) {
-        getLogger().info(`[STATE] ${action.name}:`)
-        getLogger().info(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
-        getLogger().info(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
-        getLogger().info(`  signature: ${signature.substring(0, 100)}...`)
-        getLogger().info(`  visited: ${visited.has(signature)}, cost: current=${current.cost}, total=${totalCost}, visited=${visited.get(signature)}`)
+        getLogger().debug(`[STATE] ${action.name}:`)
+        getLogger().debug(`  current.state.inventory.dirt: ${getStateValue(current.state, 'inventory.dirt')}`)
+        getLogger().debug(`  nextState.inventory.dirt: ${getStateValue(nextState, 'inventory.dirt')}`)
+        getLogger().debug(`  signature: ${signature.substring(0, 100)}...`)
+        getLogger().debug(`  visited: ${visited.has(signature)}, cost: current=${current.cost}, total=${totalCost}, visited=${visited.get(signature)}`)
       }
 
       if (visited.has(signature) && visited.get(signature) <= totalCost) {
         if (process.env.GOAP_DEBUG_STATE === '1' && iterations === 1) {
-          getLogger().info(`  SKIPPED: already visited with lower cost`)
+          getLogger().debug(`  SKIPPED: already visited with lower cost`)
         }
         continue
       }
@@ -731,8 +731,8 @@ function calculateHeuristic(state, context = {}) {
   let estimate = 0
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-    getLogger().info('[HEURISTIC] Computing h(n) for goal:', finalGoal)
-    getLogger().info('[HEURISTIC] Current state summary:', {
+    getLogger().debug('[HEURISTIC] Computing h(n) for goal:', finalGoal)
+    getLogger().debug('[HEURISTIC] Current state summary:', {
       'inventory.category.log': getStateValue(state, 'inventory.category.log'),
       'inventory.category.plank': getStateValue(state, 'inventory.category.plank'),
       'inventory.cobblestone': getStateValue(state, 'inventory.cobblestone'),
@@ -746,7 +746,7 @@ function calculateHeuristic(state, context = {}) {
     const steps = estimateRequirement(key, requirement, state, actions, memo, new Set(), shortageLog)
 
     if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-      getLogger().info(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
+      getLogger().debug(`[HEURISTIC] ${key} ${formatRequirement(requirement)} -> estimated cost: ${steps}`)
     }
 
     if (!Number.isFinite(steps)) {
@@ -759,7 +759,7 @@ function calculateHeuristic(state, context = {}) {
   }
 
   if (process.env.GOAP_DEBUG_HEURISTIC === '1') {
-    getLogger().info(`[HEURISTIC] Final h(n) = ${estimate}`)
+    getLogger().debug(`[HEURISTIC] Final h(n) = ${estimate}`)
   }
 
   // 不足リソースのログを表示（重複はマージ）。初回の計算時のみ。
@@ -779,7 +779,7 @@ function calculateHeuristic(state, context = {}) {
     const display = Array.from(merged.values())
       .sort((a, b) => a.key.localeCompare(b.key))
       .map(e => `${e.key} ${formatRequirement(e.requirement)} (不足=${e.deficit})`)
-    getLogger().info(`[GOAP] 不足リソース: ${display.join(', ')}`)
+    getLogger().debug(`[GOAP] 不足リソース: ${display.join(', ')}`)
     context._shortageLogged = true
   }
 
@@ -835,7 +835,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting, s
     let preconditionCost = 0
     if (action.preconditions) {
       if (shouldDebugRequirement(key)) {
-        getLogger().info(`[HEURISTIC] ${key} <- ${action.name} (必要回数 ${repeats})`)
+        getLogger().debug(`[HEURISTIC] ${key} <- ${action.name} (必要回数 ${repeats})`)
       }
       for (const [preKey, preCondition] of Object.entries(action.preconditions)) {
         const preRequirement = buildRequirementFromCondition(preCondition)
@@ -850,7 +850,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting, s
         // Math.max → 合計に変更（全ての前提条件を満たす必要があるため）
         preconditionCost += subCost
         if (shouldDebugRequirement(key)) {
-          getLogger().info(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
+          getLogger().debug(`  [OK] 前提 ${preKey} ${formatRequirement(preRequirement)} -> 残り推定 ${subCost}`)
         }
       }
     }
@@ -862,7 +862,7 @@ function estimateRequirement(key, requirement, state, actions, memo, visiting, s
     const actionCost = Number.isFinite(action.cost) ? action.cost : 1
     const total = preconditionCost + (actionCost * repeats)
     if (shouldDebugRequirement(key)) {
-      getLogger().info(`  => 推定コスト ${total} (前提: ${preconditionCost}, アクション: ${actionCost} x ${repeats})`)
+      getLogger().debug(`  => 推定コスト ${total} (前提: ${preconditionCost}, アクション: ${actionCost} x ${repeats})`)
     }
     if (total < best) {
       best = total
@@ -1411,7 +1411,7 @@ function analyzeRelevantVariables(goal, actions, initialState = null) {
       const isAlreadySatisfied = initialState && initialState[variable] === true
 
       if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
-        getLogger().info(`[COMPOSITE] ${variable}: isAlreadySatisfied=${isAlreadySatisfied}, deps=${JSON.stringify(compositeStateDependencies[variable])}`)
+        getLogger().debug(`[COMPOSITE] ${variable}: isAlreadySatisfied=${isAlreadySatisfied}, deps=${JSON.stringify(compositeStateDependencies[variable])}`)
       }
 
       if (!isAlreadySatisfied) {
@@ -1421,7 +1421,7 @@ function analyzeRelevantVariables(goal, actions, initialState = null) {
         const cheapestDep = deps[0]  // 配列の最初が最も安い（state_schema.yamlで定義順）
 
         if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
-          getLogger().info(`[COMPOSITE] Expanding ${variable} → ${cheapestDep} (選択: 最初の1つのみ)`)
+          getLogger().debug(`[COMPOSITE] Expanding ${variable} → ${cheapestDep} (選択: 最初の1つのみ)`)
         }
 
         if (cheapestDep && !relevant.has(cheapestDep)) {
@@ -1474,7 +1474,7 @@ function analyzeRelevantVariables(goal, actions, initialState = null) {
       actionsToConsider = [cheapest]  // 最も安いもののみ
 
       if (process.env.GOAP_DEBUG_COMPOSITE === '1') {
-        getLogger().info(`[COMPOSITE] ${variable}を効果として持つアクション: ${originalCount}個から最安の${cheapest.name}を選択`)
+        getLogger().debug(`[COMPOSITE] ${variable}を効果として持つアクション: ${originalCount}個から最安の${cheapest.name}を選択`)
       }
     }
 
@@ -1546,7 +1546,7 @@ function isActionRelevant(action, relevantVars) {
 
 // ゴール達成に不足しているリソース（ヒューリスティック推定）を取得
 function collectShortages(goalInput, worldState, logger = null, options = {}) {
-  return planningLog.run(logger, async () => {
+  return planningLog.run(logger && typeof logger.info === 'function' && typeof logger.warn === 'function' ? { ...logger, debug: logger.debug || logger.info.bind(logger) } : createLogger({ category: 'goap' }), async () => {
     await prepareDomain(options.version, getLogger())
     return collectShortagesPrepared(goalInput, worldState)
   })

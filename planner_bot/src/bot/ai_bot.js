@@ -1,3 +1,4 @@
+const { createLogger } = require('../utils/logger')
 /**
  * AI Bot Factory
  * GOAP・スキル・視覚機能を持つボットを作成する
@@ -13,7 +14,7 @@ const { handleChatCommand } = require('../commands')
  */
 function debugLog(message) {
   if (process.env.PLANNER_DEBUG === '1') {
-    console.log(`[planner] ${message}`)
+    createLogger({ category: 'setup' }).debug(`[planner] ${message}`)
   }
 }
 
@@ -38,15 +39,8 @@ function addLoggingSystem(bot) {
    * 1. システムログ（コンソール出力専用）
    * @param {string} message - ログメッセージ
    */
-  bot.systemLog = (message) => {
-    // コマンド実行中のみフィルタ判定（通常ログは常に表示）
-    if (bot.currentCommandName && bot.logFilter.enabled) {
-      if (!bot.logFilter.allowed.has(bot.currentCommandName)) {
-        return
-      }
-    }
-    console.log(`[${bot.username}] ${message}`)
-  }
+  bot.logWriter = message => console.log(`[${bot.username}] ${message}`)
+  bot.systemLog = message => createLogger({ bot, category: 'command', commandName: bot.currentCommandName }).info(message)
 
   /**
    * 2. MCチャットへの発言（whisper送信専用）
@@ -197,7 +191,7 @@ function createAIBot(id, config, options = {}) {
   // AI_BOT_COUNT=1の場合は番号を付けない（マルチプロセス対応）
   const botName = config.aiBotCount === 1 ? config.username : `${config.username}${id}`
 
-  console.log(`[AI-BOT] Creating ${botName}...`)
+  createLogger({ category: 'setup' }).info(`[AI-BOT] Creating ${botName}...`)
 
   const bot = mineflayer.createBot({
     host: config.host,
@@ -219,7 +213,7 @@ function createAIBot(id, config, options = {}) {
 
   // スポーン時
   bot.once('spawn', () => {
-    console.log(`[AI-BOT] ${botName} spawned`)
+    createLogger({ bot, category: 'setup' }).info(`[AI-BOT] ${botName} spawned`)
     debugLog(`${botName} spawned, ready to receive goals`)
   })
 
@@ -238,9 +232,9 @@ function createAIBot(id, config, options = {}) {
 
           // コマンドの最終的な返り値をログ出力
           if (result !== undefined && bot.shouldLogCommand(bot.lastCommandName)) {
-            console.log('='.repeat(80))
-            console.log(`[${bot.username}] [COMMAND_RESULT] 最終的なコマンドの返り値:`)
-            console.log(JSON.stringify(result, null, 2))
+            createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('='.repeat(80))
+            createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('[COMMAND_RESULT] 最終的なコマンドの返り値:')
+            createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info(JSON.stringify(result, null, 2))
             console.log('='.repeat(80))
           }
         } catch (error) {
@@ -295,7 +289,7 @@ function createAIBot(id, config, options = {}) {
   })
 
   bot.on('end', () => {
-    console.log(`[AI-BOT] ${botName} disconnected`)
+    createLogger({ bot, category: 'setup' }).info(`[AI-BOT] ${botName} disconnected`)
   })
 
   return bot
