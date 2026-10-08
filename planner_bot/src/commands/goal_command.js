@@ -1,2 +1,1 @@
-// Compatibility entry; orchestration belongs to the executor layer.
-module.exports = require('../executor/goal_runner')
+module.exports = (bot, username, goal, stateManager, signal) => require('../api').createBotApi(bot, { stateManager }).executeGoal(goal, { signal, username })

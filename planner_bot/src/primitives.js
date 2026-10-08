@@ -1,3 +1,4 @@
+const { failure } = require('./utils/result')
 const { interruptible, checkpoint } = require('./utils/context')
 const { Vec3 } = require('vec3')
 const minecraftData = require('minecraft-data')
@@ -12,7 +13,7 @@ async function moveTo(bot, params = {}) {
 
   const position = resolvePosition(params)
   if (!position) {
-    throw new Error('移動座標が指定されていません')
+    throw failure('INVALID_ARGUMENT', '移動座標が指定されていません')
   }
 
   const range = typeof params.range === 'number' ? params.range : 0
@@ -56,16 +57,16 @@ async function digBlock(bot, params = {}) {
   // 指定座標のブロックを採掘する
   const targetPos = resolvePosition(params)
   if (!targetPos) {
-    throw new Error('掘削対象の座標が必要です')
+    throw failure('INVALID_ARGUMENT', '掘削対象の座標が必要です')
   }
 
   const block = bot.blockAt(targetPos)
   if (!block) {
-    throw new Error('指定位置にブロックが存在しません')
+    throw failure('BLOCK_NOT_FOUND', '指定位置にブロックが存在しません')
   }
 
   if (!bot.canDigBlock(block)) {
-    throw new Error(`このブロックは掘れません: ${block.name}`)
+    throw failure('BLOCK_NOT_FOUND', `このブロックは掘れません: ${block.name}`)
   }
 
   const digTime = bot.digTime(block)
@@ -274,7 +275,7 @@ async function collectDrops(bot, params = {}) {
   const radius = params.radius ?? 6
   const itemName = params.itemName
   if (!bot.version) {
-    throw new Error('bot.version が取得できるまで待ってください')
+    throw failure('BOT_NOT_READY', 'bot.version が取得できるまで待ってください')
   }
   const mcData = minecraftData(bot.version)
 
@@ -341,17 +342,17 @@ async function collectDrops(bot, params = {}) {
 async function craftItem(bot, params = {}) {
   // 指定アイテムをクラフトする（レシピは自動選択）
   if (!params.itemName) {
-    throw new Error('itemName が必要です')
+    throw failure('INVALID_ARGUMENT', 'itemName が必要です')
   }
 
   if (!bot.version) {
-    throw new Error('bot.version が取得できるまで待ってください')
+    throw failure('BOT_NOT_READY', 'bot.version が取得できるまで待ってください')
   }
 
   const mcData = minecraftData(bot.version)
   const recipeItem = mcData.itemsByName[params.itemName]
   if (!recipeItem) {
-    throw new Error(`未知のアイテム名です: ${params.itemName}`)
+    throw failure('ITEM_NOT_FOUND', `未知のアイテム名です: ${params.itemName}`)
   }
 
   const count = params.count ?? 1
@@ -359,7 +360,7 @@ async function craftItem(bot, params = {}) {
 
   const recipes = bot.recipesFor(recipeItem.id, params.metadata ?? null, count, tableBlock)
   if (!recipes || recipes.length === 0) {
-    throw new Error('利用可能なレシピが見つかりません')
+    throw failure('RECIPE_NOT_FOUND', '利用可能なレシピが見つかりません')
   }
 
   try {
@@ -368,7 +369,7 @@ async function craftItem(bot, params = {}) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
     if (/missing ingredient/i.test(error.message)) {
-      throw new Error('必要な素材が不足しています')
+      throw failure('ITEM_NOT_FOUND', '必要な素材が不足しています')
     }
     throw error
   }
@@ -377,13 +378,13 @@ async function craftItem(bot, params = {}) {
 async function placeBlock(bot, params = {}) {
   // 手持ちのブロックを基準ブロックの指定面に設置する
   if (!params.reference) {
-    throw new Error('reference 座標が必要です')
+    throw failure('INVALID_ARGUMENT', 'reference 座標が必要です')
   }
 
   const referencePos = resolvePosition({ position: params.reference })
   const referenceBlock = bot.blockAt(referencePos)
   if (!referenceBlock) {
-    throw new Error('参照ブロックが存在しません')
+    throw failure('BLOCK_NOT_FOUND', '参照ブロックが存在しません')
   }
 
   const face = params.face ?? { x: 0, y: 1, z: 0 }
@@ -391,7 +392,7 @@ async function placeBlock(bot, params = {}) {
 
   const heldItem = bot.heldItem
   if (!heldItem) {
-    throw new Error('手にブロックが装備されていません')
+    throw failure('PLACEMENT_FAILED', '手にブロックが装備されていません')
   }
 
   await interruptible(bot, () => bot.placeBlock(referenceBlock, faceVector))
@@ -400,13 +401,13 @@ async function placeBlock(bot, params = {}) {
 async function equipItem(bot, params = {}) {
   // インベントリ内のアイテムを指定スロットに装備する
   if (!params.itemName) {
-    throw new Error('itemName が必要です')
+    throw failure('INVALID_ARGUMENT', 'itemName が必要です')
   }
 
   const destination = params.destination ?? 'hand'
   const item = bot.inventory.items().find((invItem) => invItem.name === params.itemName)
   if (!item) {
-    throw new Error(`インベントリに ${params.itemName} がありません`)
+    throw failure('ITEM_NOT_FOUND', `インベントリに ${params.itemName} がありません`)
   }
 
   await interruptible(bot, () => bot.equip(item, destination))
@@ -414,13 +415,13 @@ async function equipItem(bot, params = {}) {
 
 function ensurePathfinder(bot) {
   if (!bot.pathfinder) {
-    throw new Error('pathfinder プラグインが読み込まれていません')
+    throw failure('BOT_NOT_READY', 'pathfinder プラグインが読み込まれていません')
   }
 
   if (movementCache.has(bot)) return movementCache.get(bot)
 
   if (!bot.version) {
-    throw new Error('bot.version が取得できるまで待ってください')
+    throw failure('BOT_NOT_READY', 'bot.version が取得できるまで待ってください')
   }
 
   const mcData = minecraftData(bot.version)
@@ -470,7 +471,7 @@ async function findBlock(bot, params = {}) {
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6
   const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
   logger.info(`[PRIMITIVES] findBlock match=${describeMatch(params.match)} distance=${options.maxDistance} took ${elapsedMs.toFixed(1)}ms`)
-  if (!block) throw new Error('条件に合うブロックが見つかりません')
+  if (!block) throw failure('BLOCK_NOT_FOUND', '条件に合うブロックが見つかりません')
   return {
     position: block.position.clone(),
     name: block.name,
@@ -487,7 +488,7 @@ async function findBlocks(bot, params = {}) {
   const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
   logger.info(`[PRIMITIVES] findBlocks match=${describeMatch(params.match)} distance=${options.maxDistance} count=${options.count} took ${elapsedMs.toFixed(1)}ms`)
   if (!blocks || blocks.length === 0) {
-    throw new Error('条件に合うブロックが見つかりません')
+    throw failure('BLOCK_NOT_FOUND', '条件に合うブロックが見つかりません')
   }
   return blocks.map((pos) => ({
     position: pos.clone(),
@@ -498,7 +499,7 @@ async function findBlocks(bot, params = {}) {
 function buildFindBlockOptions(params) {
   // findBlock(s) 用オプションを構築するヘルパー
   if (!params.match) {
-    throw new Error('match 条件が必要です')
+    throw failure('INVALID_ARGUMENT', 'match 条件が必要です')
   }
 
   const maxDistance = params.maxDistance ?? 32
@@ -536,7 +537,7 @@ function buildMatchingPredicate(match) {
     }
   }
 
-  throw new Error('match 条件の形式が不正です')
+  throw failure('INVALID_ARGUMENT', 'match 条件の形式が不正です')
 }
 
 module.exports = {

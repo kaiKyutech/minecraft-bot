@@ -53,7 +53,7 @@ class OperationManager {
 
   release(entry) {
     entry.signal?.removeEventListener('abort', entry.forwardAbort)
-    entry.controller.signal.removeEventListener('abort', entry.stopPhysical)
+    if (entry.stopPhysical) entry.controller.signal.removeEventListener('abort', entry.stopPhysical)
     if (this.active === entry) this.active = null
     if (this.bot.currentAbortController === entry.controller) this.bot.currentAbortController = null
   }
@@ -103,21 +103,27 @@ class OperationManager {
     return work
   }
 
-  continueChest(fn) {
+  continueChest(fn, options = {}) {
+    if (options.signal?.aborted) return Promise.reject(cancelled())
     const generation = this.generation
     const work = this.tail.then(async () => {
       if (generation !== this.generation) throw cancelled()
-      const entry = this.active
-      if (entry) { checkpoint(this.bot, entry.controller.signal); entry.running = true }
+      checkpoint(this.bot, options.signal)
+      const entry = this.active || { kind: 'chest', controller: new AbortController() }
+      const abort = () => entry.controller.abort()
+      options.signal?.addEventListener('abort', abort, { once: true })
+      this.active = entry
+      checkpoint(this.bot, entry.controller.signal)
+      entry.running = true
       try {
-        const value = await withContext({ bot: this.bot, signal: entry?.controller.signal || null }, () => fn(entry?.controller.signal))
-        if (entry) checkpoint(this.bot, entry.controller.signal)
+        const value = await withContext({ bot: this.bot, signal: entry.controller.signal }, () => fn(entry.controller.signal))
+        checkpoint(this.bot, entry.controller.signal)
         return value
       } finally {
-        if (entry) {
-          entry.running = false
-          if (!this.bot.currentChest && !this.bot.followTarget) this.release(entry)
-        }
+        options.signal?.removeEventListener('abort', abort)
+        entry.running = false
+        if (entry.controller.signal.aborted) await this.cleanup()
+        else if (!this.bot.currentChest && !this.bot.followTarget) this.release(entry)
       }
     })
     this.tail = work.catch(() => {})

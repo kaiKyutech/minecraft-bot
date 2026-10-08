@@ -1,9 +1,10 @@
+const { failure } = require('./result')
 const minecraftData = require("minecraft-data");
 const prismarineRecipe = require("prismarine-recipe");
 
 function ensureMcData(bot) {
   if (!bot.version) {
-    throw new Error("bot.version が取得できるまで待ってください");
+    throw failure('BOT_NOT_READY', "bot.version が取得できるまで待ってください");
   }
   return minecraftData(bot.version);
 }
@@ -11,7 +12,7 @@ function ensureMcData(bot) {
 function resolveItem(mcData, itemName, label) {
   const item = mcData.itemsByName[itemName];
   if (!item) {
-    throw new Error(`${label} に指定されたアイテムが見つかりません: ${itemName}`);
+    throw failure('ITEM_NOT_FOUND', `${label} に指定されたアイテムが見つかりません: ${itemName}`);
   }
   return item;
 }
@@ -150,7 +151,7 @@ function listRecipesUsing(bot, ingredientInput, mode = "and") {
   const mcData = ensureMcData(bot);
   const ingredients = normalizeIngredientInput(ingredientInput);
   if (ingredients.length === 0) {
-    throw new Error("ingredients が指定されていません");
+    throw failure('INVALID_ARGUMENT', "ingredients が指定されていません");
   }
 
   // validate ingredients exist

@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { Vec3 } = require('vec3')
@@ -68,7 +69,7 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
         }
       }
     }
-    throw new Error('地表が見つかりません')
+    throw failure('BLOCK_NOT_FOUND', '地表が見つかりません')
   }
 
   // "below" モード: 下方向のみ探索
@@ -82,7 +83,7 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
         }
       }
     }
-    throw new Error(`現在地より下に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
+    throw failure('BLOCK_NOT_FOUND', `現在地より下に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
   }
 
   // "above" モード: 上方向のみ探索
@@ -96,7 +97,7 @@ function findSurfaceHeight(bot, x, z, verticalMode = 'nearest') {
         }
       }
     }
-    throw new Error(`現在地より上に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
+    throw failure('BLOCK_NOT_FOUND', `現在地より上に立てる地面が見つかりません (探索範囲: ${maxRange}ブロック)`)
   }
 
   // "nearest" モード: 上下交互に探索
@@ -134,7 +135,7 @@ module.exports = {
    */
   async register(bot, stateManager, params) {
     if (!params.name) {
-      throw new Error('場所名（name）が必要です')
+      throw failure('INVALID_ARGUMENT', '場所名（name）が必要です')
     }
 
     let position = bot.entity.position
@@ -142,11 +143,11 @@ module.exports = {
     // coords指定があれば、その座標を登録
     if (params.coords) {
       if (!Array.isArray(params.coords) || params.coords.length !== 3) {
-        throw new Error('座標は [x, y, z] の形式で指定してください')
+        throw failure('INVALID_ARGUMENT', '座標は [x, y, z] の形式で指定してください')
       }
       const [x, y, z] = params.coords
       if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
-        throw new Error('座標は数値である必要があります')
+        throw failure('INVALID_ARGUMENT', '座標は数値である必要があります')
       }
       position = { x, y, z }
       const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
@@ -159,7 +160,7 @@ module.exports = {
         maxDistance: 100
       })
       if (!block) {
-        throw new Error(`${params.blockType} が見つかりません`)
+        throw failure('BLOCK_NOT_FOUND', `${params.blockType} が見つかりません`)
       }
       position = block.position
       const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
@@ -192,7 +193,7 @@ module.exports = {
    */
   async goto(bot, stateManager, params) {
     if (!params.name) {
-      throw new Error('場所名（name）が必要です')
+      throw failure('INVALID_ARGUMENT', '場所名（name）が必要です')
     }
 
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
@@ -203,6 +204,7 @@ module.exports = {
       logger.info(`[NAVIGATION] ${message}`)
       return {
         success: false,
+        code: 'LOCATION_NOT_FOUND',
         message: message,
         registeredLocations: registered
       }
@@ -232,17 +234,17 @@ module.exports = {
    */
   async gotoCoords(bot, stateManager, params) {
     if (!params.coords) {
-      throw new Error('座標（coords）が必要です')
+      throw failure('INVALID_ARGUMENT', '座標（coords）が必要です')
     }
 
     if (!Array.isArray(params.coords) || params.coords.length !== 3) {
-      throw new Error('座標は [x, y, z] の形式で指定してください')
+      throw failure('INVALID_ARGUMENT', '座標は [x, y, z] の形式で指定してください')
     }
 
     const [x, y, z] = params.coords
 
     if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
-      throw new Error('座標は数値である必要があります')
+      throw failure('INVALID_ARGUMENT', '座標は数値である必要があります')
     }
 
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
@@ -271,12 +273,12 @@ module.exports = {
   async follow(bot, stateManager, params) {
     const targetUsername = params.username
     if (!targetUsername) {
-      throw new Error('追跡するプレイヤー名（username）が必要です')
+      throw failure('INVALID_ARGUMENT', '追跡するプレイヤー名（username）が必要です')
     }
 
     const targetPlayer = bot.players[targetUsername]
     if (!targetPlayer || !targetPlayer.entity) {
-      throw new Error(`プレイヤー「${targetUsername}」が見つかりません`)
+      throw failure('PLAYER_NOT_FOUND', `プレイヤー「${targetUsername}」が見つかりません`)
     }
 
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
@@ -342,7 +344,7 @@ module.exports = {
     let { yaw } = params
 
     if (distance === undefined) {
-      throw new Error('距離（distance）が必要です')
+      throw failure('INVALID_ARGUMENT', '距離（distance）が必要です')
     }
 
     // yawが指定されていない場合は現在の視線方向を使用
@@ -355,7 +357,7 @@ module.exports = {
     // 有効な verticalMode かチェック
     const validModes = ['nearest', 'above', 'below', 'surface']
     if (!validModes.includes(verticalMode)) {
-      throw new Error(`verticalMode は ${validModes.join(', ')} のいずれかである必要があります`)
+      throw failure('INVALID_ARGUMENT', `verticalMode は ${validModes.join(', ')} のいずれかである必要があります`)
     }
 
     const currentPos = bot.entity.position
@@ -418,13 +420,13 @@ module.exports = {
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
 
     if (!itemName) {
-      throw new Error('アイテム名（itemName）が必要です')
+      throw failure('INVALID_ARGUMENT', 'アイテム名（itemName）が必要です')
     }
 
     // インベントリにアイテムがあるか確認（移動前にチェック）
     const item = bot.inventory.items().find(i => i.name === itemName)
     if (!item) {
-      throw new Error(`アイテム「${itemName}」がインベントリにありません`)
+      throw failure('ITEM_NOT_FOUND', `アイテム「${itemName}」がインベントリにありません`)
     }
 
     const availableCount = item.count
@@ -446,14 +448,13 @@ module.exports = {
     // プレイヤーの存在確認
     const player = bot.players[targetPlayer]
     if (!player || !player.entity) {
-      throw new Error(`プレイヤー「${targetPlayer}」が見つかりません`)
+      throw failure('PLAYER_NOT_FOUND', `プレイヤー「${targetPlayer}」が見つかりません`)
     }
 
     // 距離チェック
     const distance = bot.entity.position.distanceTo(player.entity.position)
     if (distance > maxDistance) {
-      throw new Error(
-        `プレイヤー「${targetPlayer}」が遠すぎます（距離: ${Math.floor(distance)}ブロック、最大: ${maxDistance}ブロック）`
+      throw failure('OUT_OF_RANGE',        `プレイヤー「${targetPlayer}」が遠すぎます（距離: ${Math.floor(distance)}ブロック、最大: ${maxDistance}ブロック）`
       )
     }
 
@@ -602,6 +603,7 @@ module.exports = {
       if (!Array.isArray(coords) || coords.length !== 3) {
         return {
           success: false,
+          code: 'INVALID_ARGUMENT',
           error: '座標（coords）は [x, y, z] の形式で指定してください'
         }
       }
@@ -610,6 +612,7 @@ module.exports = {
       if (typeof cx !== 'number' || typeof cy !== 'number' || typeof cz !== 'number') {
         return {
           success: false,
+          code: 'INVALID_ARGUMENT',
           error: '座標は数値である必要があります'
         }
       }
@@ -631,6 +634,7 @@ module.exports = {
       if (!chestBlock) {
         return {
           success: false,
+          code: 'CHEST_NOT_FOUND',
           error: '周囲32ブロック以内にチェストが見つかりませんでした'
         }
       }
@@ -648,6 +652,7 @@ module.exports = {
     if (!block) {
       return {
         success: false,
+        code: 'EXECUTION_FAILED',
         error: '座標が範囲外です（チャンクが読み込まれていません）',
         position: { x, y, z }
       }
@@ -657,6 +662,7 @@ module.exports = {
     if (block.name !== 'chest') {
       return {
         success: false,
+        code: 'CHEST_NOT_FOUND',
         error: `指定座標はチェストではありません（${block.name}）`,
         position: { x, y, z },
         blockName: block.name
@@ -675,6 +681,7 @@ module.exports = {
       if (error?.name === 'AbortError') throw error
         return {
           success: false,
+          code: error.code || 'EXECUTION_FAILED',
           error: `移動に失敗しました: ${error.message}`,
           position: { x, y, z }
         }
@@ -691,6 +698,7 @@ module.exports = {
       if (error?.name === 'AbortError') throw error
       return {
         success: false,
+        code: error.code || 'EXECUTION_FAILED',
         error: `チェストを開けませんでした: ${error.message}`,
         position: { x, y, z }
       }
@@ -760,6 +768,7 @@ module.exports = {
     if (!item) {
       return {
         success: false,
+        code: 'INVALID_ARGUMENT',
         error: 'アイテム名（item）が必要です'
       }
     }
@@ -768,6 +777,7 @@ module.exports = {
     if (!bot.currentChest) {
       return {
         success: false,
+        code: 'CHEST_NOT_OPEN',
         error: '先に chestOpen コマンドでチェストを開いてください'
       }
     }
@@ -780,11 +790,13 @@ module.exports = {
       } else if (count < 0) {
         return {
           success: false,
+          code: 'EXECUTION_FAILED',
           error: 'count は正の数または -1（全て）で指定してください'
         }
       } else if (count === 0) {
         return {
           success: false,
+          code: 'INVALID_ARGUMENT',
           error: 'count は 1 以上の数値で指定してください'
         }
       } else {
@@ -797,6 +809,7 @@ module.exports = {
     if (depositCount <= 0) {
       return {
         success: false,
+        code: 'EXECUTION_FAILED',
         error: '預けられるアイテムがありません'
       }
     }
@@ -805,6 +818,7 @@ module.exports = {
     if (!inventoryItem) {
       return {
         success: false,
+        code: 'ITEM_NOT_FOUND',
         error: `インベントリに ${item} がありません`,
         inventory: bot.inventory.items().map(i => ({ name: i.name, count: i.count }))
       }
@@ -834,6 +848,7 @@ module.exports = {
       if (error?.name === 'AbortError') throw error
       return {
         success: false,
+        code: error.code || 'EXECUTION_FAILED',
         error: `アイテムを預けられませんでした: ${error.message}`,
         position: bot.currentChestPosition,
         item: item
@@ -852,6 +867,7 @@ module.exports = {
     if (!item) {
       return {
         success: false,
+        code: 'INVALID_ARGUMENT',
         error: 'アイテム名（item）が必要です'
       }
     }
@@ -860,6 +876,7 @@ module.exports = {
     if (!bot.currentChest) {
       return {
         success: false,
+        code: 'CHEST_NOT_OPEN',
         error: '先に chestOpen コマンドでチェストを開いてください'
       }
     }
@@ -872,11 +889,13 @@ module.exports = {
       } else if (count < 0) {
         return {
           success: false,
+          code: 'EXECUTION_FAILED',
           error: 'count は正の数または -1（全て）で指定してください'
         }
       } else if (count === 0) {
         return {
           success: false,
+          code: 'INVALID_ARGUMENT',
           error: 'count は 1 以上の数値で指定してください'
         }
       } else {
@@ -889,6 +908,7 @@ module.exports = {
     if (withdrawCount <= 0) {
       return {
         success: false,
+        code: 'EXECUTION_FAILED',
         error: '取り出せるアイテムがありません'
       }
     }
@@ -900,6 +920,7 @@ module.exports = {
     if (!chestItem) {
       return {
         success: false,
+        code: 'EXECUTION_FAILED',
         error: `チェストに ${item} がありません`,
         position: bot.currentChestPosition,
         chestItems: bot.currentChest.items().map(i => ({ name: i.name, count: i.count }))
@@ -928,6 +949,7 @@ module.exports = {
       if (error?.name === 'AbortError') throw error
       return {
         success: false,
+        code: error.code || 'EXECUTION_FAILED',
         error: `アイテムを取り出せませんでした: ${error.message}`,
         position: bot.currentChestPosition,
         item: item
@@ -943,6 +965,7 @@ module.exports = {
     if (!bot.currentChest) {
       return {
         success: false,
+        code: 'CHEST_NOT_OPEN',
         error: '開いているチェストがありません'
       }
     }

@@ -46,3 +46,10 @@ test('external abort stops a persistent follow after its start has returned', as
   assert.equal(manager.busy(), true); controller.abort(); await manager.tail;
   assert.equal(bot.followTarget, null); assert.equal(manager.busy(), false);
 });
+test('external abort drains a chest transfer and closes a legacy container', async () => {
+  const {bot,manager,events}=fixture();const controller=new AbortController();let finish;
+  bot.currentChest={close:()=>events.push('close')};
+  const running=manager.continueChest(()=>new Promise(resolve=>{finish=resolve}),{signal:controller.signal}).catch(e=>e);
+  await tick();controller.abort();finish();assert.equal((await running).code,'CANCELLED');
+  assert.equal(bot.currentChest,null);assert.equal(manager.busy(),false);assert.equal(events.at(-1),'close');
+});

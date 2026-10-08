@@ -1,62 +1,7 @@
-const primitives = require('../primitives')
-
-/**
- * !primitive コマンドのハンドラ
- * @param {Object} bot - Mineflayerボット
- * @param {string} username - コマンド送信者のユーザー名
- * @param {string} message - チャットメッセージ全体
- * @param {Object} stateManager - 状態マネージャー
- */
-async function handlePrimitiveCommand(bot, username, message, stateManager) {
-  const body = message.replace(/^!primitive\s*/, '').trim()
-
-  if (!body) {
-    const errorMsg = 'プリミティブ名を指定してください'
-    bot.systemLog(errorMsg)
-    return
-  }
-
-  const [nameToken, ...rest] = body.split(' ')
-  const paramString = rest.join(' ').trim()
-
-  const primitiveName = snakeToCamel(nameToken)
-  const primitiveFn = primitives[primitiveName]
-
-  if (typeof primitiveFn !== 'function') {
-    const errorMsg = `未知のプリミティブです: ${nameToken}`
-    bot.systemLog(errorMsg)
-    return
-  }
-
-  let params = {}
-  if (paramString) {
-    try {
-      params = JSON.parse(paramString)
-    } catch (error) {
-      const errorMsg = 'パラメータはJSON形式で指定してください'
-      bot.systemLog(errorMsg)
-      return
-    }
-  }
-
-  bot.systemLog(`Executing primitive: ${primitiveName} with params: ${JSON.stringify(params)}`)
-  await stateManager.refresh(bot)  // プリミティブ実行前に最新状態を取得
-  await primitiveFn(bot, params)
-  await stateManager.refresh(bot)  // プリミティブ実行後に状態を更新
-
-  const completeMsg = '完了しました'
-  bot.systemLog(completeMsg)
-  // await bot.speak(username, completeMsg)  // LLMプロジェクトで使用時にアンコメント
-  // bot.addMessage(bot.username, completeMsg, 'conversation')  // LLMプロジェクトで使用時にアンコメント
+const { createBotApi } = require('../api')
+const { action } = require('./parse')
+const { errorResult } = require('../utils/result')
+module.exports = async (bot, username, message, stateManager) => {
+  try { const { name, params } = action(message, 'primitive'); return await createBotApi(bot, { stateManager }).executePrimitive(name, params) }
+  catch (error) { return errorResult(error) }
 }
-
-/**
- * snake_case を camelCase に変換
- * @param {string} value - 変換する文字列
- * @returns {string} camelCase形式の文字列
- */
-function snakeToCamel(value) {
-  return value.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-}
-
-module.exports = handlePrimitiveCommand

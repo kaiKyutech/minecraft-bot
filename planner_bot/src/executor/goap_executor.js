@@ -226,7 +226,7 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
       }
     }
 
-    throw new Error(errorMessage)
+    throw Object.assign(new Error(errorMessage), { code: 'REPLAN_FAILED', diagnosis })
   }
 
   return newPlan

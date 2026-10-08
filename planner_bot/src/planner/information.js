@@ -1,0 +1,397 @@
+const { failure } = require('../utils/result')
+/**
+ * !info コマンドのハンドラ
+ * 外部プロジェクト（LLM）から情報を取得するためのAPI
+ *
+ * 特徴:
+ * - JSON形式でデータを返す
+ * - bot.systemLog()でコンソール出力のみ
+ * - 会話履歴には入れない
+ *
+ * 使用例:
+ *   !info all
+ *   !info vision {"yaw": 90, "pitch": 0}
+ *   !info scanBlocks {"range": 32, "types": ["diamond_ore"]}
+ *   !info recipesFor {"item": "diamond_pickaxe"}
+ *   !info recipesUsing {"ingredients": ["diamond", "stick"], "mode": "and"}
+ */
+
+const vision = require('../vision/capture')
+const { scanBlocks } = require('../utils/block_scanner')
+const { listRecipesFor, listRecipesUsing } = require('../utils/recipe_utils')
+
+/**
+ * インベントリ情報を取得
+ * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
+ */
+async function getInventoryInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
+
+  const inventory = worldState.inventory?.counts || {}
+  const items = []
+
+  // アイテムごとの詳細情報を収集
+  for (const [itemName, count] of Object.entries(inventory)) {
+    // カテゴリ判定
+    let category = 'other'
+    if (itemName.includes('pickaxe') || itemName.includes('axe') ||
+        itemName.includes('sword') || itemName.includes('shovel') ||
+        itemName.includes('hoe')) {
+      category = 'tool'
+    } else if (itemName.includes('log') || itemName.includes('plank') ||
+               itemName.includes('stick') || itemName.includes('ore') ||
+               itemName.includes('ingot') || itemName.includes('cobblestone') ||
+               itemName.includes('stone') || itemName.includes('dirt')) {
+      category = 'material'
+    }
+
+    items.push({
+      name: itemName,
+      count: count,
+      category: category
+    })
+  }
+
+  // カテゴリ別にソート（tool > material > other、各カテゴリ内は名前順）
+  items.sort((a, b) => {
+    const categoryOrder = { tool: 0, material: 1, other: 2 }
+    const catDiff = categoryOrder[a.category] - categoryOrder[b.category]
+    if (catDiff !== 0) return catDiff
+    return a.name.localeCompare(b.name)
+  })
+
+  // サマリー情報
+  const summary = {
+    totalItems: items.length,
+    totalCount: items.reduce((sum, item) => sum + item.count, 0),
+    tools: items.filter(i => i.category === 'tool').length,
+    materials: items.filter(i => i.category === 'material').length,
+    isEmpty: items.length === 0
+  }
+
+  return {
+    items: items,
+    summary: summary
+  }
+}
+
+/**
+ * 周辺ブロック情報を取得
+ */
+async function getNearbyInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
+
+  const nearbyCounts = worldState.nearby || {}
+  const blockEntries = []
+  const categoryEntries = []
+
+  for (const [name, count] of Object.entries(nearbyCounts)) {
+    if (name === 'category') continue
+    if (typeof count === 'number' && count > 0) {
+      blockEntries.push({ name, count })
+    }
+  }
+
+  blockEntries.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  const categoryCounts = nearbyCounts.category || {}
+  for (const [name, count] of Object.entries(categoryCounts)) {
+    if (typeof count === 'number' && count > 0) {
+      categoryEntries.push({ name, count })
+    }
+  }
+  categoryEntries.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+
+  const totalBlocks = blockEntries.reduce((sum, entry) => sum + entry.count, 0)
+
+  return {
+    blocks: blockEntries,
+    categories: categoryEntries,
+    summary: {
+      totalTypes: blockEntries.length,
+      totalBlocks,
+      topBlock: blockEntries[0]?.name || null
+    }
+  }
+}
+
+/**
+ * 位置情報を取得
+ * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
+ */
+async function getPositionInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
+
+  const position = {
+    x: Math.floor(bot.entity.position.x),
+    y: Math.floor(bot.entity.position.y),
+    z: Math.floor(bot.entity.position.z)
+  }
+
+  const rotation = {
+    yaw: bot.entity.yaw * 180 / Math.PI,  // ラジアンから度数に変換
+    pitch: bot.entity.pitch * 180 / Math.PI
+  }
+
+  const time = {
+    isDay: worldState.isDay,
+    timeOfDay: bot.time.timeOfDay
+  }
+
+  return {
+    position: position,
+    rotation: rotation,
+    time: time,
+    health: bot.health,
+    food: bot.food
+  }
+}
+
+/**
+ * 登録済み場所一覧を取得
+ */
+async function getLocationsInfo(bot, stateManager) {
+  const locations = stateManager.getLocations()
+  const locationList = []
+
+  for (const [name, coords] of Object.entries(locations)) {
+    const currentPos = bot.entity.position
+    const distance = Math.floor(Math.sqrt(
+      Math.pow(coords.x - currentPos.x, 2) +
+      Math.pow(coords.y - currentPos.y, 2) +
+      Math.pow(coords.z - currentPos.z, 2)
+    ))
+
+    locationList.push({
+      name: name,
+      position: {
+        x: coords.x,
+        y: coords.y,
+        z: coords.z
+      },
+      distance: distance
+    })
+  }
+
+  // 距離順にソート
+  locationList.sort((a, b) => a.distance - b.distance)
+
+  return {
+    locations: locationList,
+    count: locationList.length
+  }
+}
+
+/**
+ * ビジョン情報を取得（スクリーンショット）
+ */
+async function getVisionInfo(bot, stateManager, params) {
+  // vision.capture を呼び出してスクリーンショットを取得
+  const result = await vision.capture(bot, stateManager, params)
+
+  // result.data には { image: base64String, metadata: {...} } が入っている
+  return result.data
+}
+
+/**
+ * 周辺ブロック情報を取得（スキャン）
+ */
+async function getScanBlocksInfo(bot, stateManager, params) {
+  let range = params.range !== undefined ? Number(params.range) : 32;
+  if (!Number.isFinite(range) || range <= 0) range = 32;
+
+  let filterTypes = params.types !== undefined ? params.types : params.type;
+  if (typeof filterTypes === "string") {
+    filterTypes = [filterTypes];
+  }
+  if (Array.isArray(filterTypes) && filterTypes.length === 0) {
+    filterTypes = null;
+  }
+
+  const rawMaxChecks = params.maxChecks !== undefined ? Number(params.maxChecks) : 25000;
+  const limitEnabled = rawMaxChecks > 0 && Number.isFinite(rawMaxChecks);
+  const maxChecksLabel = limitEnabled ? rawMaxChecks : 'unlimited';
+
+  bot.systemLog(`[INFO] Scanning blocks within ${range} blocks (maxChecks=${maxChecksLabel})...`);
+  if (filterTypes) {
+    bot.systemLog(`[INFO] Filtering by types: ${filterTypes.join(", ")}`);
+  }
+
+  const result = await scanBlocks(bot, {
+    ...params,
+    range,
+    types: filterTypes
+  });
+
+  const summary = result.summary;
+  const statusSuffix = summary.limitReached ? ' (maxChecks reached)' : '';
+  bot.systemLog(`[INFO] Found ${summary.totalBlocks} blocks (checked ${summary.checksUsed}/${summary.eligiblePositions} positions, estCoverage ${summary.estimatedCoveragePercent}%)${statusSuffix}`);
+
+  return {
+    blocks: result.blocks,
+    summary
+  }
+}
+
+/**
+ * 全プレイヤー情報を取得
+ * @param {Object} worldState - 既に取得済みの状態（省略時は自動取得）
+ */
+async function getAllPlayersInfo(bot, stateManager, worldState = null) {
+  if (!worldState) {
+    await stateManager.refresh(bot)
+    worldState = await stateManager.getState(bot)
+  }
+
+  const players = []
+  const botPosition = bot.entity.position
+
+  // bot.players から全プレイヤー情報を取得
+  for (const [username, player] of Object.entries(bot.players)) {
+    // 自分自身は除外
+    if (username === bot.username) continue
+
+    // エンティティ情報が取得できる場合のみ追加
+    if (player.entity) {
+      const playerPosition = player.entity.position
+      const distance = Math.floor(botPosition.distanceTo(playerPosition))
+
+      players.push({
+        username: username,
+        position: {
+          x: Math.floor(playerPosition.x),
+          y: Math.floor(playerPosition.y),
+          z: Math.floor(playerPosition.z)
+        },
+        distance: distance,
+        health: player.entity.health || null
+      })
+    } else {
+      // エンティティ情報がない場合でもプレイヤー名だけ記録
+      players.push({
+        username: username,
+        position: null,
+        distance: null,
+        health: null
+      })
+    }
+  }
+
+  // 距離順にソート（距離がnullのものは最後）
+  players.sort((a, b) => {
+    if (a.distance === null && b.distance === null) return 0
+    if (a.distance === null) return 1
+    if (b.distance === null) return -1
+    return a.distance - b.distance
+  })
+
+  // サマリー情報
+  const summary = {
+    totalPlayers: players.length,
+    nearestPlayer: players.length > 0 && players[0].distance !== null ? players[0].username : null,
+    nearestDistance: players.length > 0 && players[0].distance !== null ? players[0].distance : null
+  }
+
+  return {
+    players: players,
+    summary: summary
+  }
+}
+
+/**
+ * すべての基本情報を取得（inventory, position, locations, players）
+ */
+async function getAllInfo(bot, stateManager) {
+  // 一度だけrefreshを呼ぶ
+  await stateManager.refresh(bot)
+  const worldState = await stateManager.getState(bot)
+
+  // 取得済みのworldStateを各関数に渡す
+  const inventory = await getInventoryInfo(bot, stateManager, worldState)
+  const position = await getPositionInfo(bot, stateManager, worldState)
+  const locations = await getLocationsInfo(bot, stateManager)
+  const players = await getAllPlayersInfo(bot, stateManager, worldState)
+  const nearby = await getNearbyInfo(bot, stateManager, worldState)
+
+  return {
+    inventory: inventory,
+    position: position,
+    locations: locations,
+    players: players,
+    nearby: nearby
+  }
+}
+
+/**
+ * !info コマンドのメインハンドラ
+ */
+async function info(bot, stateManager, infoType, params = {}) {
+  bot.systemLog(`[INFO] Retrieving ${infoType} information...`)
+
+  let data
+
+  if (infoType === 'all') {
+    data = await getAllInfo(bot, stateManager)
+    bot.systemLog('[INFO] All basic information:')
+    bot.systemLog(JSON.stringify(data, null, 2))
+  }
+  else if (infoType === 'vision') {
+    data = await getVisionInfo(bot, stateManager, params)
+    bot.systemLog('[INFO] Vision data:')
+    // 画像データは長いのでメタデータのみログ出力
+    const { image, ...metadata } = data
+    bot.systemLog(JSON.stringify({ ...metadata, imageSize: image ? image.length : 0 }, null, 2))
+  }
+  else if (infoType === 'scanBlocks') {
+    data = await getScanBlocksInfo(bot, stateManager, params)
+    bot.systemLog('[INFO] ScanBlocks data:')
+    // ブロックリストは長いので要約のみ出力
+    bot.systemLog(JSON.stringify({ summary: data.summary }, null, 2))
+    if (data.blocks.length <= 10) {
+      bot.systemLog(JSON.stringify({ blocks: data.blocks }, null, 2))
+    } else {
+      bot.systemLog(`[INFO] ${data.blocks.length} blocks found (showing first 10):`)
+      bot.systemLog(JSON.stringify({ blocks: data.blocks.slice(0, 10) }, null, 2))
+    }
+  }
+  else if (infoType === 'recipesFor') {
+    const itemName = params.item || params.name
+    const count = params.count !== undefined ? params.count : 1
+    if (!itemName) {
+      throw failure('INVALID_ARGUMENT', 'recipesFor には item パラメータが必要です')
+    }
+    data = await listRecipesFor(bot, itemName, count)
+    bot.systemLog(`[INFO] recipesFor ${data.item} x${data.count}: ${data.recipes.length} recipe(s)`)
+    bot.systemLog(JSON.stringify(data, null, 2))
+  }
+  else if (infoType === 'recipesUsing') {
+    const mode = params.mode === 'or' ? 'or' : 'and'
+    const ingredients = params.ingredients || params.ingredient
+    data = await listRecipesUsing(bot, ingredients, mode)
+    bot.systemLog(`[INFO] recipesUsing (${mode}) ingredients: ${data.ingredients.join(', ')}`)
+    bot.systemLog(JSON.stringify(data, null, 2))
+  }
+  else {
+    throw failure('UNKNOWN_ACTION',      `未知の情報タイプ: ${infoType}\n` +
+      `利用可能: all, vision, scanBlocks, recipesFor, recipesUsing`
+    )
+  }
+
+  // 戻り値として返す（外部プロジェクトから関数として呼び出す場合）
+  return {
+    success: true,
+    type: infoType,
+    data: data
+  }
+}
+
+module.exports = { info }

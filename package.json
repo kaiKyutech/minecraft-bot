@@ -2,9 +2,9 @@
   "name": "minecraft-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "planner_bot/api.js",
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/offline/*.test.cjs",
+    "test": "node --test --test-concurrency=1 tests/offline/*.test.cjs tests/known-failures/*.test.cjs",
     "test:known": "node --test --test-concurrency=1 tests/known-failures/*.test.cjs",
     "test:live": "node --test --test-concurrency=1 tests/live/*.test.cjs",
     "observe:flat": "node tests/live/observe.cjs flat",

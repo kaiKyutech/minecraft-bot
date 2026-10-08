@@ -67,6 +67,9 @@ async function capture(bot, stateManager, params = {}) {
       const pitchRadians = params.pitch !== undefined
         ? params.pitch * Math.PI / 180
         : bot.entity.pitch;
+      if (require('../executor/operation_manager').operationsFor(bot).busy()) {
+        throw Object.assign(new Error('Directional vision is unavailable while an operation is running'), { code: 'OPERATION_CONFLICT' });
+      }
       await bot.look(yawRadians, pitchRadians, true);
       await new Promise(resolve => setTimeout(resolve, 200));
       logger.info('[VISION] View direction set');
