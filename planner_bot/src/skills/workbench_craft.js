@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 const { goals } = require('mineflayer-pathfinder')
@@ -22,7 +23,7 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   const itemName = params.recipe
 
   // 1. stateManagerから作業台の座標を取得
-  const state = await stateManager.getState(bot)
+  const state = await interruptible(bot, () => stateManager.getState(bot))
   const workbenchData = state.blocks?.list?.find(b => b.name === 'crafting_table')
 
   if (!workbenchData) {
@@ -35,12 +36,12 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   const currentDistance = bot.entity.position.distanceTo(workbenchData.position)
   if (currentDistance > 4) {
     logger.info(`[WORKBENCH_CRAFT] 作業台へ移動中...`)
-    await bot.pathfinder.goto(new goals.GoalNear(
+    await interruptible(bot, () => bot.pathfinder.goto(new goals.GoalNear(
       workbenchData.position.x,
       workbenchData.position.y,
       workbenchData.position.z,
       4
-    ))
+    )))
   }
 
   // 3. bot.blockAtで直接ブロックを取得（チャンク読み込み問題を回避）
@@ -60,15 +61,17 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   try {
     const count = params.count || 1
     // GOAPが前提条件を保証済みのため、直接クラフト実行
-    await primitives.craftItem(bot, {
+    await interruptible(bot, () => primitives.craftItem(bot, {
       itemName: itemName,
       count: count,
       table: workbench  // Blockインスタンスそのものを渡す
-    })
+    }))
 
     logger.info(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`作業台クラフトに失敗しました: ${error.message}`)
   }
 }

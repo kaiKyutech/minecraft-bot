@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('./utils/context')
 const { Vec3 } = require('vec3')
 const minecraftData = require('minecraft-data')
 const { goals, Movements } = require('mineflayer-pathfinder')
@@ -28,21 +29,27 @@ async function moveTo(bot, params = {}) {
     timeout = Math.max(30000, distance * 1000)
   }
 
-  // タイムアウトがnullの場合はタイムアウトなし
-  if (timeout === null) {
-    await bot.pathfinder.goto(goal)
-    return
+  checkpoint(bot)
+  let timer
+  const movement = bot.pathfinder.goto(goal)
+  try {
+    if (timeout === null) {
+      await movement
+    } else {
+      const expired = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(Object.assign(new Error(`moveTo timeout (${timeout}ms)`), { code: 'TIMEOUT' })), timeout)
+      })
+      await Promise.race([movement, expired])
+    }
+    checkpoint(bot)
+  } catch (error) {
+    bot.pathfinder.setGoal(null)
+    await Promise.resolve(movement).catch(() => {})
+    checkpoint(bot)
+    throw error
+  } finally {
+    clearTimeout(timer)
   }
-
-  // タイムアウト付きでpathfindingを実行
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(`moveTo timeout (${timeout}ms)`)), timeout)
-  })
-
-  await Promise.race([
-    bot.pathfinder.goto(goal),
-    timeoutPromise
-  ])
 }
 
 async function digBlock(bot, params = {}) {
@@ -74,7 +81,7 @@ async function digBlock(bot, params = {}) {
   bot.once('diggingAborted', digAbortHandler)
 
   try {
-    await bot.dig(block)
+    await interruptible(bot, () => bot.dig(block))
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
     logger.info(`[DIG] ${block.name} 採掘完了、実際の時間: ${elapsed}秒`)
   } finally {
@@ -86,20 +93,22 @@ async function digBlock(bot, params = {}) {
 async function equipBestToolForBlock(bot, block) {
   try {
     // インベントリから最適なツールを探索
-    const bestTool = await findBestTool(bot, block)
+    const bestTool = await interruptible(bot, () => findBestTool(bot, block))
 
     if (bestTool) {
       const mcData = minecraftData(bot.version)
       const toolName = mcData.items[bestTool.type].name
       const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
       logger.info(`[TOOL] ${block.name}用に${toolName}を装備`)
-      await bot.equip(bestTool, 'hand')
+      await interruptible(bot, () => bot.equip(bestTool, 'hand'))
     } else {
       const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
       logger.info(`[TOOL] ${block.name}用の適切なツールが見つからず、素手で掘削`)
-      await bot.unequip('hand')
+      await interruptible(bot, () => bot.unequip('hand'))
     }
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
     logger.info(`[TOOL] ツール装備に失敗、素手で掘削: ${error.message}`)
   }
@@ -145,8 +154,8 @@ async function findBestTool(bot, block) {
     try {
       const toolName = mcData.items[tool.type].name
       // ツールを装備
-      await bot.equip(tool, 'hand')
-      await delay(30) // 装備完了を待つ（1.20.xでは30msで十分）
+      await interruptible(bot, () => bot.equip(tool, 'hand'))
+      await interruptible(bot, () => delay(30)) // 装備完了を待つ（1.20.xでは30msで十分）
 
       // 装備確認してから採掘時間を測定
       if (!bot.heldItem || bot.heldItem.type !== tool.type) {
@@ -163,14 +172,16 @@ async function findBestTool(bot, block) {
         bestTool = tool
       }
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       // console.log(`[TOOL] ${mcData.items[tool.type].name}: テスト失敗 - ${error.message}`)
     }
   }
 
   // 素手での採掘時間を測定（手に何も持たない状態）
   try {
-    await bot.unequip('hand')
-    await delay(30) // 装備解除完了を待つ（1.20.xでは30msで十分）
+    await interruptible(bot, () => bot.unequip('hand'))
+    await interruptible(bot, () => delay(30)) // 装備解除完了を待つ（1.20.xでは30msで十分）
 
     // 素手確認してから測定
     if (bot.heldItem) {
@@ -188,17 +199,21 @@ async function findBestTool(bot, block) {
       }
     }
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     logger.info(`[TOOL] 素手: 計算失敗 - ${error.message}`)
   }
 
   // 元の手持ちアイテムを復元
   try {
     if (originalHeldItem) {
-      await bot.equip(originalHeldItem, 'hand')
+      await interruptible(bot, () => bot.equip(originalHeldItem, 'hand'))
     } else {
-      await bot.unequip('hand')
+      await interruptible(bot, () => bot.unequip('hand'))
     }
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     // 復元失敗は無視
   }
 
@@ -246,6 +261,8 @@ function calculateDigTimeManual(block, tool, mcData) {
       return hardness * 5
     }
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     return Infinity
   }
 }
@@ -288,10 +305,10 @@ async function collectDrops(bot, params = {}) {
   for (const drop of drops) {
     try {
       // ドロップに近づく（タイムアウト3秒）
-      await moveTo(bot, { position: drop.position, range: 1.2, timeout: 3000 })
+      await interruptible(bot, () => moveTo(bot, { position: drop.position, range: 1.2, timeout: 3000 }))
 
       // 少し待ってから再度エンティティの存在確認
-      await delay(params.waitMs ?? 50) // ドロップ接近後の待機（1.20.xでは短縮可能）
+      await interruptible(bot, () => delay(params.waitMs ?? 50)) // ドロップ接近後の待機（1.20.xでは短縮可能）
 
       // エンティティがまだ存在するか確認（既に自動ピックアップされた可能性）
       const stillExists = bot.entities[drop.id]
@@ -301,14 +318,16 @@ async function collectDrops(bot, params = {}) {
       }
 
       // より近づいて確実にピックアップを誘発（タイムアウト2秒）
-      await moveTo(bot, { position: drop.position, range: 0.8, timeout: 2000 })
-      await delay(50) // ピックアップ待機（1.20.xでは短縮可能）
+      await interruptible(bot, () => moveTo(bot, { position: drop.position, range: 0.8, timeout: 2000 }))
+      await interruptible(bot, () => delay(50)) // ピックアップ待機（1.20.xでは短縮可能）
 
       // もう一度存在確認
       if (!bot.entities[drop.id]) {
         pickedUpCount++
       }
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
       logger.info(`[COLLECT] ドロップ回収失敗（スキップ）: ${error.message}`)
       // ドロップ1個の回収失敗は許容して次に進む
@@ -344,8 +363,10 @@ async function craftItem(bot, params = {}) {
   }
 
   try {
-    await bot.craft(recipes[0], count, tableBlock)
+    await interruptible(bot, () => bot.craft(recipes[0], count, tableBlock))
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     if (/missing ingredient/i.test(error.message)) {
       throw new Error('必要な素材が不足しています')
     }
@@ -373,7 +394,7 @@ async function placeBlock(bot, params = {}) {
     throw new Error('手にブロックが装備されていません')
   }
 
-  await bot.placeBlock(referenceBlock, faceVector)
+  await interruptible(bot, () => bot.placeBlock(referenceBlock, faceVector))
 }
 
 async function equipItem(bot, params = {}) {
@@ -388,7 +409,7 @@ async function equipItem(bot, params = {}) {
     throw new Error(`インベントリに ${params.itemName} がありません`)
   }
 
-  await bot.equip(item, destination)
+  await interruptible(bot, () => bot.equip(item, destination))
 }
 
 function ensurePathfinder(bot) {

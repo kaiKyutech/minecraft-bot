@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const { checkCompositeState, buildStructuredDiagnosis } = require('../planner/diagnosis')
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
@@ -49,39 +50,39 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
 
   // プランニング前に必ず最新の状態を取得
   stateManager.silentRefresh = !bot.shouldLogCommand('goal')
-  await stateManager.refresh(bot)
+  await interruptible(bot, () => stateManager.refresh(bot))
   stateManager.silentRefresh = false
-  let worldState = await stateManager.getState(bot)
+  let worldState = await interruptible(bot, () => stateManager.getState(bot))
 
-  await goapPlanner.prepareDomain(bot?.version || process.env.MC_VERSION || '1.20.1')
+  await interruptible(bot, () => goapPlanner.prepareDomain(bot?.version || process.env.MC_VERSION || '1.20.1'))
 
   // ゴール前にツールを最低限用意する（minecraft-dataから直接判定）
   // サブゴールでも実行することで、diamond_sword → diamond → diamond_ore のような
   // 深い依存関係でも、最終的にブロック採掘が必要な時点でツール準備が行われる
   if (allowPrep) {
-    const pickaxeGoals = await buildPickaxePreparationGoals(goalName, worldState)
+    const pickaxeGoals = await interruptible(bot, () => buildPickaxePreparationGoals(goalName, worldState, bot))
     if (pickaxeGoals.length > 0) {
       const loggerPrep = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
       loggerPrep.info(`[GOAP] 事前準備: ツール確保 (${pickaxeGoals.join(' -> ')})`)
       for (const prepGoal of pickaxeGoals) {
-        await runGoal(bot, username, prepGoal, stateManager, signal, 0, maxDepth, missingPreconditions, attemptedGoals, false)
+        await interruptible(bot, () => runGoal(bot, username, prepGoal, stateManager, signal, 0, maxDepth, missingPreconditions, attemptedGoals, false))
         // 再取得して次の判断に使う
         stateManager.silentRefresh = !bot.shouldLogCommand('goal')
-        await stateManager.refresh(bot)
+        await interruptible(bot, () => stateManager.refresh(bot))
         stateManager.silentRefresh = false
       }
       // 事前準備後、最新状態を取得し直す
-      worldState = await stateManager.getState(bot)
+      worldState = await interruptible(bot, () => stateManager.getState(bot))
     }
   }
 
   // 連続プランニングの前にイベントループに制御を返す
   if (depth > 0) {
-    await new Promise((resolve) => setImmediate(resolve))
+    await interruptible(bot, () => new Promise((resolve) => setImmediate(resolve)))
   }
 
   const logger = createLogger({ bot, category: 'goap', commandName: bot.currentCommandName || 'goal' })
-  const result = await goapPlanner.plan(goalName, worldState, logger)
+  const result = await interruptible(bot, () => goapPlanner.plan(goalName, worldState, logger))
 
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
   const plan = result.plan
@@ -105,12 +106,12 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
       try {
         // 数量削減は深度を消費しない（同じ深度で再試行）
         // ツール準備も有効化（diamond:3 → diamond:1 でも diamond_ore 採掘にツールが必要）
-        await runGoal(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
+        await interruptible(bot, () => runGoal(bot, username, quantityRetry, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
 
         const parsedGoal = parseQuantityGoal(goalName)
         if (parsedGoal) {
-          await stateManager.refresh(bot)
-          const latestWorld = await stateManager.getState(bot)
+          await interruptible(bot, () => stateManager.refresh(bot))
+          const latestWorld = await interruptible(bot, () => stateManager.getState(bot))
           const goapState = buildState(latestWorld)
           const currentValue = Number(getNestedStateValue(goapState, parsedGoal.base)) || 0
           const remaining = parsedGoal.quantity - currentValue
@@ -126,7 +127,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
             const logger = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
             logger.info(`不足分 ${remaining} を取得します: 「${nextGoal}」`)
             attemptedGoals.delete(goalName)
-            return await runGoal(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
+            return await interruptible(bot, () => runGoal(bot, username, nextGoal, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
           }
         }
 
@@ -136,8 +137,10 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
 
         // 元のゴールを再度試す前に、試行済みセットから削除
         attemptedGoals.delete(goalName)
-        return await runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
+        return await interruptible(bot, () => runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
       } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
         // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
         bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
         // ここでエラーを握りつぶして、下の「サブゴール抽出」ロジックに進む
@@ -152,6 +155,8 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
     try {
       subgoal = extractFirstSubgoal(structuredDiagnosis, diagnosis, worldState)
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       // 環境状態が満たされていない → LLMの判断が必要
       const loggerPlan = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
       loggerPlan.info(`環境状態が満たされていません: ${error.missingEnvironment}`)
@@ -202,8 +207,10 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
         // サブゴールでもツール準備を有効化（allowPrep=true）
         // これにより、diamond_sword → diamond → diamond_ore のような深い依存で
         // diamond_ore 採掘時に正しくツール準備が行われる
-        await runGoal(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals, true)
+        await interruptible(bot, () => runGoal(bot, username, subgoal, stateManager, signal, depth + 1, maxDepth, missingPreconditions, attemptedGoals, true))
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       // サブゴールが失敗 → 親ゴール情報を追加してエラーを再スロー
       if (error.goalChain) {
         error.goalChain.unshift(goalName)
@@ -218,7 +225,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
     bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
     // 元のゴールを再度試す前に、試行済みセットから削除
     attemptedGoals.delete(goalName)
-    return await runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true)
+    return await interruptible(bot, () => runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
   }
 
   // プランニング成功 → 実行
@@ -230,7 +237,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
     bot.systemLog(`サブゴール「${goalName}」を実行します (深度: ${depth})`)
   }
 
-  await executePlanWithReplanning(bot, goalName, plan, stateManager, signal, missingPreconditions)
+  await interruptible(bot, () => executePlanWithReplanning(bot, goalName, plan, stateManager, signal, missingPreconditions))
 
   if (depth === 0) {
     const completeMessage = `目標「${goalName}」を完了しました`
@@ -553,7 +560,7 @@ module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
  * @param {Object} worldState - 現在の世界状態
  * @returns {Array<string>} 事前準備ゴールの配列（例: ["inventory.category.pickaxe:true", "inventory.category.stone_or_better_pickaxe:true"]）
  */
-async function buildPickaxePreparationGoals(goalName, worldState) {
+async function buildPickaxePreparationGoals(goalName, worldState, bot = null) {
   const inventoryCat = worldState?.inventory?.category || {}
   const logger = createLogger({ category: 'goap.prep' })
   const minecraftData = require('minecraft-data')
@@ -566,8 +573,10 @@ async function buildPickaxePreparationGoals(goalName, worldState) {
 
   let mcData
   try {
-    mcData = minecraftData(process.env.MC_VERSION || '1.20.1')
+    mcData = minecraftData(bot?.version || process.env.MC_VERSION || '1.20.1')
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     logger.warn(`[PREP] minecraft-data読み込み失敗: ${error.message}`)
     return []
   }

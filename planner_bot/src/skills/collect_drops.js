@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -33,7 +34,7 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
         logger.info('[COLLECT_DROPS] ドロップ回収完了（アイテムなし）')
         return
       }
-      await delay(200)
+      await interruptible(bot, () => delay(200))
       continue
     }
 
@@ -48,14 +49,14 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
         logger.info(`[COLLECT_DROPS] ドロップ位置: ${dropPosition.x.toFixed(1)}, ${dropPosition.y.toFixed(1)}, ${dropPosition.z.toFixed(1)}`)
 
         // ドロップに接近（1.2ブロック以内に入る）
-        await primitives.moveTo(bot, {
+        await interruptible(bot, () => primitives.moveTo(bot, {
           position: dropPosition,
           range: 1.2,
           timeout: 5000
-        })
+        }))
 
         // ピックアップ待機（サーバーの処理を待つ）
-        await delay(300)
+        await interruptible(bot, () => delay(300))
 
         // まだ存在するか確認
         if (!bot.entities[drop.id]) {
@@ -64,12 +65,12 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
         } else {
           logger.info(`[COLLECT_DROPS] アイテムがまだ存在します、さらに接近します`)
           // さらに近づく
-          await primitives.moveTo(bot, {
+          await interruptible(bot, () => primitives.moveTo(bot, {
             position: dropPosition,
             range: 0.5,
             timeout: 3000
-          })
-          await delay(300)
+          }))
+          await interruptible(bot, () => delay(300))
 
           if (!bot.entities[drop.id]) {
             collectedCount++
@@ -79,6 +80,8 @@ module.exports = async function collectDrops(bot, params = {}, stateManager) {
           }
         }
       } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
         logger.info(`[COLLECT_DROPS] ドロップ回収失敗（スキップ）: ${error.message}`)
         continue
       }

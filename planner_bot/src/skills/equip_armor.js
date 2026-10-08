@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -40,11 +41,13 @@ module.exports = async function equipArmor(bot, params = {}, stateManager) {
     }
 
     // 装備を実行（Mineflayer API: bot.equip(item, destination)）
-    await bot.equip(itemToEquip, destination)
+    await interruptible(bot, () => bot.equip(itemToEquip, destination))
 
     logger.info(`[EQUIP_ARMOR] ${item} の装備が完了しました`)
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`装備に失敗しました: ${error.message}`)
   }
 }

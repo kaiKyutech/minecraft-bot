@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 const minecraftData = require('minecraft-data')
@@ -18,7 +19,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   if (loopCount <= 0) return
   const logger = createLogger({ bot, category: 'skill', commandName: bot.currentCommandName })
 
-  const itemName = await resolveItemName(params, bot)
+  const itemName = await interruptible(bot, () => resolveItemName(params, bot))
   const matchCondition = itemName
   const collectName = params.collectItem === false ? null : itemName
 
@@ -32,13 +33,13 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   let selectedTool = null
   try {
     // サンプルブロックを探して、そのタイプに最適なツールを選択
-    const sampleBlockInfo = await primitives.findBlock(bot, {
+    const sampleBlockInfo = await interruptible(bot, () => primitives.findBlock(bot, {
       match: matchCondition,
       maxDistance
-    })
+    }))
     const sampleBlock = bot.blockAt(sampleBlockInfo.position)
     if (sampleBlock) {
-      selectedTool = await primitives.findBestTool(bot, sampleBlock)
+      selectedTool = await interruptible(bot, () => primitives.findBestTool(bot, sampleBlock))
       if (selectedTool) {
         const mcData = require('minecraft-data')(bot.version)
         const toolName = mcData.items[selectedTool.type].name
@@ -48,6 +49,8 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
     }
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     logger.info('[GATHER] ツール選択用のサンプルブロックが見つからず、素手で開始')
   }
 
@@ -74,13 +77,15 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const acquireTarget = async () => {
     let candidates
     try {
-      candidates = await primitives.findBlocks(bot, {
+      candidates = await interruptible(bot, () => primitives.findBlocks(bot, {
         match: matchCondition,
         maxDistance,
         count: searchSampleSize,
         useCube: params.useCube ?? true
-      })
+      }))
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       throw new Error('近くに対象ブロックが見つかりません')
     }
 
@@ -123,48 +128,56 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
     let blockInfo
     try {
-      blockInfo = await acquireTarget()
+      blockInfo = await interruptible(bot, () => acquireTarget())
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       throw new Error(error.message || '近くに対象ブロックが見つかりません')
     }
 
     try {
       // ブロックまで接近
-      await primitives.moveTo(bot, {
+      await interruptible(bot, () => primitives.moveTo(bot, {
         position: blockInfo.position,
         range: approachRange
-      })
+      }))
 
       // 掘削直前に選択したツールを再装備
       if (selectedTool) {
         try {
-          await bot.equip(selectedTool, 'hand')
-          await delay(50) // 装備完了を待つ
+          await interruptible(bot, () => bot.equip(selectedTool, 'hand'))
+          await interruptible(bot, () => delay(50)) // 装備完了を待つ
         } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
           logger.info(`[GATHER] ツール再装備に失敗: ${error.message}`)
         }
       } else {
         // 素手が最適な場合
         try {
-          await bot.unequip('hand')
-          await delay(50) // 装備解除完了を待つ
+          await interruptible(bot, () => bot.unequip('hand'))
+          await interruptible(bot, () => delay(50)) // 装備解除完了を待つ
         } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
           // 素手にできない場合は無視
         }
       }
 
       // 掘削
       logger.info(`[GATHER] ブロック掘削開始: ${blockInfo.position}`)
-      await primitives.digBlock(bot, { position: blockInfo.position })
+      await interruptible(bot, () => primitives.digBlock(bot, { position: blockInfo.position }))
       logger.info(`[GATHER] ブロック掘削完了`)
 
       completed += 1
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       rememberFailedTarget(blockInfo?.position)
 
       if (isRecoverableGatherError(error)) {
         logger.info(`[GATHER] ブロック収集でエラー: ${error.message} → 別候補で再試行`)
-        await delay(params.retryDelayMs ?? 100)
+        await interruptible(bot, () => delay(params.retryDelayMs ?? 100))
         continue
       }
 
@@ -174,16 +187,18 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   // 全ブロック掘削完了後、最後に1回だけドロップ回収
   if (collectName) {
-    await delay(collectDelayMs) // allow freshly spawned drops to register
+    await interruptible(bot, () => delay(collectDelayMs)) // allow freshly spawned drops to register
     logger.info(`[GATHER] 全${completed}個の掘削完了、ドロップ回収を開始`)
     try {
       const collectDropsSkill = require('./collect_drops')
-      await collectDropsSkill(bot, {
+      await interruptible(bot, () => collectDropsSkill(bot, {
         radius: collectRadius,
         maxAttempts: 3
-      }, stateManager)
+      }, stateManager))
       logger.info(`[GATHER] ドロップ回収完了`)
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       logger.info(`[GATHER] ドロップ回収でエラー: ${error.message}`)
       // ドロップ回収失敗は致命的ではないので続行
     }
@@ -209,7 +224,7 @@ async function resolveItemName(params, bot) {
   // カテゴリ名の場合は近くで最適なブロックを選択
   const categories = loadBlockCategories()
   if (categories?.categories?.[itemName]) {
-    return await selectBestBlockFromCategory(bot, itemName, categories, mcData, params)
+    return await interruptible(bot, () => selectBestBlockFromCategory(bot, itemName, categories, mcData, params))
   }
 
   // 個別ブロック名として存在するかチェック
@@ -256,6 +271,8 @@ async function selectBestBlockFromCategory(bot, categoryName, categories, mcData
         blockSelectionCache.delete(cacheKey)
       }
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       const logger = createLogger({ bot, category: 'skill' })
       logger.info(`[GATHER] キャッシュされたブロック「${cachedBlock}」の探索に失敗、再探索します`)
       blockSelectionCache.delete(cacheKey)
@@ -266,12 +283,12 @@ async function selectBestBlockFromCategory(bot, categoryName, categories, mcData
   const logger = createLogger({ bot, category: 'skill' })
   logger.info(`[GATHER] カテゴリ「${categoryName}」から最適なブロックを選択中...`)
 
-  const result = await scanBlocks(bot, {
+  const result = await interruptible(bot, () => scanBlocks(bot, {
     range: maxDistance,
     types: categoryBlocks,
     maxChecks: -1,  // 無制限（全範囲を探索）
     collectBlocks: true
-  })
+  }))
 
   if (result.blocks.length === 0) {
     throw new Error(`カテゴリ「${categoryName}」のブロックが範囲内に見つかりません: ${categoryBlocks.join(', ')}`)

@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const minecraftData = require('minecraft-data')
 const { createLogger } = require('../utils/logger')
 
@@ -37,12 +38,12 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
   const distance = bot.entity.position.distanceTo(furnaceBlock.position)
   if (distance > 4) {
     logger.info(`[FURNACE_SMELT] かまどに近づいています（距離: ${distance.toFixed(2)}）`)
-    await bot.pathfinder.goto(new (require('mineflayer-pathfinder').goals.GoalNear)(
+    await interruptible(bot, () => bot.pathfinder.goto(new (require('mineflayer-pathfinder').goals.GoalNear)(
       furnaceBlock.position.x,
       furnaceBlock.position.y,
       furnaceBlock.position.z,
       3
-    ))
+    )))
   }
 
   // 材料アイテムを探す
@@ -60,15 +61,15 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
   logger.info(`[FURNACE_SMELT] 材料: ${inputItem.name}, 燃料: ${fuelItem.name}`)
 
   // かまどを開く
-  const furnace = await bot.openFurnace(furnaceBlock)
+  const furnace = await interruptible(bot, () => bot.openFurnace(furnaceBlock), container => container.close())
 
   try {
     // 材料を配置
-    await furnace.putInput(inputItem.type, null, 1)
+    await interruptible(bot, () => furnace.putInput(inputItem.type, null, 1))
     logger.info(`[FURNACE_SMELT] 材料を配置しました`)
 
     // 燃料を配置
-    await furnace.putFuel(fuelItem.type, null, fuel_count)
+    await interruptible(bot, () => furnace.putFuel(fuelItem.type, null, fuel_count))
     logger.info(`[FURNACE_SMELT] 燃料を配置しました`)
 
     // 精錬が完了するまで待つ（最大30秒）
@@ -77,12 +78,12 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     const startTime = Date.now()
 
     while (Date.now() - startTime < timeout) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await interruptible(bot, () => new Promise(resolve => setTimeout(resolve, 1000)))
 
       // 出力スロットをチェック
       if (furnace.outputItem()) {
         logger.info(`[FURNACE_SMELT] 精錬完了`)
-        await furnace.takeOutput()
+        await interruptible(bot, () => furnace.takeOutput())
         logger.info(`[FURNACE_SMELT] ${output} を取得しました`)
         break
       }

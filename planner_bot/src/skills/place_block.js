@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -24,8 +25,8 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     }
 
     // ブロックを手に装備
-    await bot.equip(blockItem, 'hand')
-    await delay(50) // 装備待ち（1.20.xでは短縮可能）
+    await interruptible(bot, () => bot.equip(blockItem, 'hand'))
+    await interruptible(bot, () => delay(50)) // 装備待ち（1.20.xでは短縮可能）
 
     // ボットの位置を取得
     const botPos = bot.entity.position.floored()
@@ -56,16 +57,18 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
 
       try {
         // primitives.placeBlockを使用
-        await primitives.placeBlock(bot, {
+        await interruptible(bot, () => primitives.placeBlock(bot, {
           reference: referenceBlock.position,
           face: { x: 0, y: 1, z: 0 }  // 上面に設置
-        })
+        }))
 
         logger.info(`[PLACE_BLOCK] ${params.blockName}を${placePos}に設置完了`)
         placed = true
         break
 
       } catch (placeError) {
+      checkpoint(bot)
+      if (placeError?.name === 'AbortError') throw placeError
         logger.info(`[PLACE_BLOCK] ${placePos}への設置失敗、次の位置を試行`)
         continue
       }
@@ -76,6 +79,8 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     }
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`ブロック設置に失敗しました: ${error.message}`)
   }
 }

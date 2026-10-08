@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { Vec3 } = require('vec3')
 const { createLogger } = require('../utils/logger')
@@ -209,10 +210,10 @@ module.exports = {
 
     logger.info(`[NAVIGATION] 「${params.name}」へ移動開始: (${location.x}, ${location.y}, ${location.z})`)
 
-    await primitives.moveTo(bot, {
+    await interruptible(bot, () => primitives.moveTo(bot, {
       position: location,
       range: 3.0
-    })
+    }))
 
     logger.info(`[NAVIGATION] 「${params.name}」に到達しました`)
 
@@ -247,10 +248,10 @@ module.exports = {
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
     logger.info(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] へ移動開始`)
 
-    await primitives.moveTo(bot, {
+    await interruptible(bot, () => primitives.moveTo(bot, {
       position: { x, y, z },
       range: 3.0
-    })
+    }))
 
     logger.info(`[NAVIGATION] 座標 [${x}, ${y}, ${z}] に到達しました`)
 
@@ -375,15 +376,17 @@ module.exports = {
       targetY = findSurfaceHeight(bot, targetX, targetZ, verticalMode)
       logger.info(`[NAVIGATION] 目標Y座標: ${targetY} (verticalMode: ${verticalMode})`)
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       logger.error(`[NAVIGATION] ${error.message}`)
       throw error
     }
 
     // 移動実行
-    await primitives.moveTo(bot, {
+    await interruptible(bot, () => primitives.moveTo(bot, {
       position: { x: targetX, y: targetY, z: targetZ },
       range: 3.0
-    })
+    }))
 
     const finalPos = bot.entity.position
     logger.info(`[NAVIGATION] 到達: (${Math.floor(finalPos.x)}, ${Math.floor(finalPos.y)}, ${Math.floor(finalPos.z)})`)
@@ -430,7 +433,7 @@ module.exports = {
     // 対象プレイヤーなし: その場でドロップ
     if (!targetPlayer) {
       logger.info(`[NAVIGATION] その場で ${itemName} を ${dropCount}個ドロップします`)
-      await bot.toss(item.type, null, dropCount)
+      await interruptible(bot, () => bot.toss(item.type, null, dropCount))
       return {
         success: true,
         message: `その場で ${itemName} を ${dropCount}個ドロップしました`,
@@ -464,11 +467,12 @@ module.exports = {
     logger.info(`[NAVIGATION] ${targetPlayer} を追跡開始（移動しても追いかけます）`)
 
     // 2.5ブロック以内に入るまで待つ（最大30秒）
-    await new Promise((resolve, reject) => {
+    await interruptible(bot, () => new Promise((resolve, reject) => {
       const startTime = Date.now()
       const timeout = 30000 // 30秒
 
       const checkInterval = setInterval(() => {
+        try { checkpoint(bot) } catch (error) { clearInterval(checkInterval); reject(error); return }
         const currentDistance = bot.entity.position.distanceTo(player.entity.position)
 
         if (currentDistance <= 2.5) { // 2.5ブロック以内に入ったら成功
@@ -480,20 +484,20 @@ module.exports = {
           reject(new Error(`タイムアウト: ${targetPlayer} に近づけませんでした（30秒経過）`))
         }
       }, 100) // 100msごとにチェック
-    })
+    }))
 
     // 追跡停止
     bot.pathfinder.setGoal(null)
 
     // プレイヤーの方を向く（目の高さ）
     const targetPosition = player.entity.position.offset(0, player.entity.height, 0)
-    await bot.lookAt(targetPosition)
+    await interruptible(bot, () => bot.lookAt(targetPosition))
     logger.info(`[NAVIGATION] ${targetPlayer} の方を向きました`)
 
     logger.info(`[NAVIGATION] ${itemName} を ${dropCount}個ドロップします`)
 
     // アイテムをドロップ
-    await bot.toss(item.type, null, dropCount)
+    await interruptible(bot, () => bot.toss(item.type, null, dropCount))
 
     logger.info(`[NAVIGATION] ${targetPlayer} の近くに ${itemName} を ${dropCount}個ドロップしました`)
 
@@ -559,16 +563,18 @@ module.exports = {
 
     try {
       // 最も近いアイテムに移動すれば、範囲内の全アイテムが自動的に拾われる
-      await primitives.moveTo(bot, {
+      await interruptible(bot, () => primitives.moveTo(bot, {
         position: closestItem.position,
         range: 1.0
-      })
+      }))
 
       // 少し待機（アイテムが自動的に拾われるのを待つ）
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await interruptible(bot, () => new Promise(resolve => setTimeout(resolve, 500)))
 
       logger.info(`[NAVIGATION] アイテムを拾いました`)
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       logger.info(`[NAVIGATION] 移動に失敗しました: ${error.message}`)
     }
 
@@ -662,9 +668,11 @@ module.exports = {
     if (distance > 4.5) {
       logger.info(`[NAVIGATION] チェストまで移動中... (距離: ${Math.floor(distance)} ブロック)`)
       try {
-        await primitives.moveTo(bot, { position: targetPos, range: 4.5 })
+        await interruptible(bot, () => primitives.moveTo(bot, { position: targetPos, range: 4.5 }))
         logger.info(`[NAVIGATION] 移動完了`)
       } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
         return {
           success: false,
           error: `移動に失敗しました: ${error.message}`,
@@ -676,9 +684,11 @@ module.exports = {
     // チェストを開く
     let chest
     try {
-      chest = await bot.openContainer(block)
+      chest = await interruptible(bot, () => bot.openContainer(block), container => container.close())
       logger.info(`[NAVIGATION] チェストを開きました`)
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       return {
         success: false,
         error: `チェストを開けませんでした: ${error.message}`,
@@ -809,7 +819,7 @@ module.exports = {
     logger.info(`[NAVIGATION] チェストに預ける: ${item} x ${depositCount}`)
 
     try {
-      await bot.currentChest.deposit(inventoryItem.type, null, depositCount)
+      await interruptible(bot, () => bot.currentChest.deposit(inventoryItem.type, null, depositCount))
       logger.info(`[NAVIGATION] ${item} x ${depositCount} を預けました`)
 
       return {
@@ -820,6 +830,8 @@ module.exports = {
         count: depositCount
       }
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       return {
         success: false,
         error: `アイテムを預けられませんでした: ${error.message}`,
@@ -901,7 +913,7 @@ module.exports = {
         withdrawCount = availableCount
       }
 
-      await bot.currentChest.withdraw(chestItem.type, null, withdrawCount)
+      await interruptible(bot, () => bot.currentChest.withdraw(chestItem.type, null, withdrawCount))
       logger.info(`[NAVIGATION] ${item} x ${withdrawCount} を取り出しました`)
 
       return {
@@ -912,6 +924,8 @@ module.exports = {
         count: withdrawCount
       }
     } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
       return {
         success: false,
         error: `アイテムを取り出せませんでした: ${error.message}`,

@@ -20,10 +20,11 @@ function checkpoint(bot, signal = currentContext(bot).signal) {
 
 // Await the actual operation (including its rejection); never leave it running
 // after reporting cancellation. The next side effect must pass another check.
-async function interruptible(bot, fn) {
+async function interruptible(bot, fn, cleanup) {
   checkpoint(bot)
   try {
     const result = await fn()
+    if (currentContext(bot).signal?.aborted && cleanup) await cleanup(result)
     checkpoint(bot)
     return result
   } catch (error) {

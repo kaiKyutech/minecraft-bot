@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -42,15 +43,17 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
 
   try {
     // primitives.moveToを使用して移動
-    await primitives.moveTo(bot, {
+    await interruptible(bot, () => primitives.moveTo(bot, {
       position: targetPosition,
       range: params.range || 3.0
-    })
+    }))
 
     const logger = createLogger({ bot, category: 'skill' })
     logger.info(`[MOVE_TO] 目標位置に到着`)
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`移動に失敗しました: ${error.message}`)
   }
 }

@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -26,11 +27,13 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
     }
 
     // 手に持つ（メインハンド）
-    await bot.equip(itemToEquip, 'hand')
+    await interruptible(bot, () => bot.equip(itemToEquip, 'hand'))
 
     logger.info(`[EQUIP_MAINHAND] ${item} を手に持ちました`)
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`アイテムを手に持つのに失敗しました: ${error.message}`)
   }
 }

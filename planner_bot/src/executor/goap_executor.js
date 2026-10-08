@@ -1,3 +1,4 @@
+const { withContext, checkpoint } = require('../utils/context')
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
@@ -280,7 +281,8 @@ async function executeStep(bot, step, stateManager, signal = null) {
 
   try {
     // スキル実行
-    await skill(bot, step.params || {}, stateManager)
+    await withContext({ bot, signal }, () => skill(bot, step.params || {}, stateManager))
+    checkpoint(bot, signal)
 
       // アクション実行前に状態を更新　34行に移動してみた。実験です。うまくいかない可能性があります。
       //await stateManager.refresh(bot)

@@ -1,3 +1,4 @@
+const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 
@@ -27,15 +28,17 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
   try {
     const count = params.count || 1
     // GOAPが前提条件を保証済みのため、直接クラフト実行
-    await primitives.craftItem(bot, {
+    await interruptible(bot, () => primitives.craftItem(bot, {
       itemName: itemName,
       count: count,
       table: null  // 手クラフト（2x2グリッド）
-    })
+    }))
 
     logger.info(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)
 
   } catch (error) {
+      checkpoint(bot)
+      if (error?.name === 'AbortError') throw error
     throw new Error(`手クラフトに失敗しました: ${error.message}`)
   }
 }
