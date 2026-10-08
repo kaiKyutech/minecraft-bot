@@ -1,0 +1,41 @@
+{
+  "inventory": {
+    "category": {
+      "log": 0,
+      "plank": 0,
+      "pickaxe": false,
+      "axe": false,
+      "stone_or_better_pickaxe": false,
+      "iron_or_better_pickaxe": false,
+      "diamond_or_better_pickaxe": false,
+      "shovel": false,
+      "shears": false
+    }
+  },
+  "inventory_space": true,
+  "nearby_workbench": true,
+  "visible_workbench": true,
+  "nearby_furnace": true,
+  "visible_furnace": true,
+  "nearby_drops": false,
+  "nearby": {
+    "dirt": 22582,
+    "stone": 25,
+    "grass_block": 11163,
+    "bedrock": 11296,
+    "furnace": 1,
+    "chest": 1,
+    "glass": 127,
+    "oak_planks": 71,
+    "crafting_table": 1,
+    "oak_log": 5,
+    "stone_bricks": 58,
+    "category": {
+      "log": 5,
+      "plank": 71,
+      "basic_stone": 25
+    }
+  },
+  "is_day": true,
+  "equipment": {}
+}

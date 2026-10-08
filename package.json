@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test --test-concurrency=1 tests/offline/*.test.cjs",
+    "test:known": "node --test --test-concurrency=1 tests/known-failures/*.test.cjs",
+    "test:live": "node --test --test-concurrency=1 tests/live/*.test.cjs",
+    "observe:flat": "node tests/live/observe.cjs flat",
+    "observe:natural": "node tests/live/observe.cjs natural",
+    "observe:standalone": "node tests/tools/standalone.cjs",
+    "test:vision": "node --test tests/gpu/*.test.cjs"
   },
   "keywords": [],
   "author": "",

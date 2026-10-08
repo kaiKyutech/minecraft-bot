@@ -1,0 +1,69 @@
+{
+  "inventory": {
+    "oak_log": 3,
+    "wooden_pickaxe": 1,
+    "coal": 2,
+    "category": {
+      "log": 3,
+      "plank": 0,
+      "pickaxe": true,
+      "axe": false,
+      "stone_or_better_pickaxe": false,
+      "iron_or_better_pickaxe": false,
+      "diamond_or_better_pickaxe": false,
+      "shovel": false,
+      "shears": false
+    }
+  },
+  "inventory_space": true,
+  "nearby_workbench": false,
+  "visible_workbench": true,
+  "nearby_furnace": false,
+  "visible_furnace": false,
+  "nearby_drops": false,
+  "nearby": {
+    "grass_block": 8795,
+    "dirt": 27971,
+    "oak_leaves": 451,
+    "stone": 300230,
+    "granite": 24858,
+    "grass": 2816,
+    "tall_grass": 211,
+    "coal_ore": 3166,
+    "sand": 2635,
+    "poppy": 6,
+    "water": 32558,
+    "seagrass": 60,
+    "gravel": 6567,
+    "copper_ore": 2403,
+    "iron_ore": 1012,
+    "acacia_leaves": 1510,
+    "andesite": 25416,
+    "diorite": 20795,
+    "bubble_column": 114,
+    "lapis_ore": 224,
+    "magma_block": 44,
+    "oak_log": 38,
+    "acacia_log": 167,
+    "glow_lichen": 38,
+    "tall_seagrass": 48,
+    "dandelion": 1,
+    "sandstone": 90,
+    "redstone_ore": 9,
+    "clay": 124,
+    "sugar_cane": 2,
+    "crafting_table": 1,
+    "gold_ore": 14,
+    "pumpkin": 8,
+    "category": {
+      "log": 205,
+      "basic_stone": 300230,
+      "iron_ore": 1012,
+      "coal_ore": 3166
+    }
+  },
+  "is_day": true,
+  "equipment": {
+    "oak_log": true
+  }
+}

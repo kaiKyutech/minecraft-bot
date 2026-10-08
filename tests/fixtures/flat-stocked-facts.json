@@ -1,0 +1,55 @@
+{
+  "inventory": {
+    "oak_log": 3,
+    "wooden_pickaxe": 1,
+    "coal": 2,
+    "category": {
+      "log": 3,
+      "plank": 0,
+      "pickaxe": true,
+      "axe": false,
+      "stone_or_better_pickaxe": false,
+      "iron_or_better_pickaxe": false,
+      "diamond_or_better_pickaxe": false,
+      "shovel": false,
+      "shears": false
+    }
+  },
+  "inventory_space": true,
+  "nearby_workbench": false,
+  "visible_workbench": true,
+  "nearby_furnace": false,
+  "visible_furnace": false,
+  "nearby_drops": false,
+  "nearby": {
+    "blackstone": 36,
+    "grass_block": 11202,
+    "dirt": 22599,
+    "bedrock": 11280,
+    "nether_quartz_ore": 2,
+    "nether_gold_ore": 2,
+    "deepslate_lapis_ore": 1,
+    "deepslate_emerald_ore": 2,
+    "emerald_ore": 2,
+    "oak_planks": 24,
+    "deepslate_redstone_ore": 4,
+    "diamond_ore": 9,
+    "amethyst_cluster": 10,
+    "budding_amethyst": 2,
+    "iron_ore": 9,
+    "chest": 1,
+    "acacia_log": 6,
+    "crafting_table": 1,
+    "jungle_log": 1,
+    "category": {
+      "log": 7,
+      "plank": 24,
+      "iron_ore": 9,
+      "diamond_ore": 9
+    }
+  },
+  "is_day": true,
+  "equipment": {
+    "oak_log": true
+  }
+}

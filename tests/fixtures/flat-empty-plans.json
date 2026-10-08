@@ -1,0 +1,680 @@
+{
+  "inventory.oak_planks:4": {
+    "plan": [
+      {
+        "action": "auto_gather_oak_planks_barehand_x8",
+        "skill": "gather",
+        "params": {
+          "itemName": "oak_planks",
+          "count": 8
+        },
+        "cost": 10
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.stick:4": {
+    "plan": [
+      {
+        "action": "auto_gather_plank_category_barehand_x3",
+        "skill": "gather",
+        "params": {
+          "itemName": "plank",
+          "count": 3
+        },
+        "cost": 5
+      },
+      {
+        "action": "auto_hand_craft_stick",
+        "skill": "hand_craft",
+        "params": {
+          "recipe": "stick",
+          "count": 1
+        },
+        "cost": 10
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.crafting_table:1": {
+    "plan": [
+      {
+        "action": "auto_gather_crafting_table_x1",
+        "skill": "gather",
+        "params": {
+          "itemName": "crafting_table",
+          "count": 1
+        },
+        "cost": 5
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.wooden_pickaxe:1": {
+    "plan": [
+      {
+        "action": "auto_gather_plank_category_barehand_x8",
+        "skill": "gather",
+        "params": {
+          "itemName": "plank",
+          "count": 8
+        },
+        "cost": 8
+      },
+      {
+        "action": "auto_hand_craft_stick",
+        "skill": "hand_craft",
+        "params": {
+          "recipe": "stick",
+          "count": 1
+        },
+        "cost": 10
+      },
+      {
+        "action": "move_to_workbench",
+        "skill": "move_to",
+        "params": {
+          "blockType": "crafting_table",
+          "maxDistance": 100,
+          "range": 3
+        },
+        "cost": 5
+      },
+      {
+        "action": "auto_workbench_craft_wooden_pickaxe",
+        "skill": "workbench_craft",
+        "params": {
+          "recipe": "wooden_pickaxe",
+          "count": 1
+        },
+        "cost": 10
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.wooden_sword:1": {
+    "plan": [
+      {
+        "action": "auto_gather_plank_category_barehand_x3",
+        "skill": "gather",
+        "params": {
+          "itemName": "plank",
+          "count": 3
+        },
+        "cost": 5
+      },
+      {
+        "action": "move_to_workbench",
+        "skill": "move_to",
+        "params": {
+          "blockType": "crafting_table",
+          "maxDistance": 100,
+          "range": 3
+        },
+        "cost": 5
+      },
+      {
+        "action": "auto_gather_plank_category_barehand_x1",
+        "skill": "gather",
+        "params": {
+          "itemName": "plank",
+          "count": 1
+        },
+        "cost": 3
+      },
+      {
+        "action": "auto_hand_craft_stick",
+        "skill": "hand_craft",
+        "params": {
+          "recipe": "stick",
+          "count": 1
+        },
+        "cost": 10
+      },
+      {
+        "action": "auto_workbench_craft_wooden_sword",
+        "skill": "workbench_craft",
+        "params": {
+          "recipe": "wooden_sword",
+          "count": 1
+        },
+        "cost": 10
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.stone_pickaxe:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.stone_pickaxe",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.stone_pickaxe",
+          "action": "auto_workbench_craft_stone_pickaxe",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.cobblestone",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.stick",
+              "current": "なし",
+              "required": ">= 2",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.furnace:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.furnace",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.furnace",
+          "action": "auto_gather_furnace_x1",
+          "cost": 1,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory_space",
+              "current": true,
+              "required": true,
+              "satisfied": true
+            },
+            {
+              "key": "nearby.furnace",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.category.pickaxe",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.furnace",
+          "action": "auto_workbench_craft_furnace",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.cobblestone",
+              "current": "なし",
+              "required": ">= 8",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.torch:4": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.torch",
+          "current": "なし",
+          "target": "4個",
+          "deficit": 4
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.torch",
+          "action": "auto_gather_torch_x1",
+          "cost": 5,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory_space",
+              "current": true,
+              "required": true,
+              "satisfied": true
+            },
+            {
+              "key": "nearby.torch",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.torch",
+          "action": "auto_gather_wall_torch_x1",
+          "cost": 5,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory_space",
+              "current": true,
+              "required": true,
+              "satisfied": true
+            },
+            {
+              "key": "nearby.wall_torch",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.torch",
+          "action": "auto_hand_craft_torch",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.coal",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.stick",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.iron_ingot:3": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.iron_ingot",
+          "current": "なし",
+          "target": "3個",
+          "deficit": 3
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.iron_ingot",
+          "action": "auto_hand_craft_iron_ingot",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.iron_block",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.iron_ingot",
+          "action": "auto_workbench_craft_iron_ingot",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.iron_nugget",
+              "current": "なし",
+              "required": ">= 9",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.iron_ingot",
+          "action": "smelt_iron_ingot_with_charcoal",
+          "cost": 20,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.raw_iron",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.charcoal",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_furnace",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.iron_ingot",
+          "action": "smelt_iron_ingot_with_coal",
+          "cost": 20,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.raw_iron",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.coal",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_furnace",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.iron_ingot",
+          "action": "smelt_iron_ingot_with_log",
+          "cost": 20,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.raw_iron",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.category.log",
+              "current": 0,
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_furnace",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.iron_ingot",
+          "action": "smelt_iron_ingot_with_planks",
+          "cost": 20,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.raw_iron",
+              "current": "なし",
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.category.plank",
+              "current": 0,
+              "required": ">=1",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_furnace",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.iron_pickaxe:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.iron_pickaxe",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.iron_pickaxe",
+          "action": "auto_workbench_craft_iron_pickaxe",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.iron_ingot",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.stick",
+              "current": "なし",
+              "required": ">= 2",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.diamond_pickaxe:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.diamond_pickaxe",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.diamond_pickaxe",
+          "action": "auto_workbench_craft_diamond_pickaxe",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.diamond",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.stick",
+              "current": "なし",
+              "required": ">= 2",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.chest:1": {
+    "plan": [
+      {
+        "action": "auto_gather_chest_x1",
+        "skill": "gather",
+        "params": {
+          "itemName": "chest",
+          "count": 1
+        },
+        "cost": 5
+      }
+    ],
+    "diagnosis": null
+  },
+  "inventory.bread:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.bread",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.bread",
+          "action": "auto_workbench_craft_bread",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.wheat",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inventory.cake:1": {
+    "plan": null,
+    "diagnosis": {
+      "missingRequirements": [
+        {
+          "key": "inventory.cake",
+          "current": "なし",
+          "target": "1個",
+          "deficit": 1
+        }
+      ],
+      "suggestions": [
+        {
+          "target": "inventory.cake",
+          "action": "auto_gather_cake_x1",
+          "cost": 5,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory_space",
+              "current": true,
+              "required": true,
+              "satisfied": true
+            },
+            {
+              "key": "nearby.cake",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            }
+          ]
+        },
+        {
+          "target": "inventory.cake",
+          "action": "auto_workbench_craft_cake",
+          "cost": 10,
+          "allSatisfied": false,
+          "preconditions": [
+            {
+              "key": "inventory.milk_bucket",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.sugar",
+              "current": "なし",
+              "required": ">= 2",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.egg",
+              "current": "なし",
+              "required": ">= 1",
+              "satisfied": false
+            },
+            {
+              "key": "inventory.wheat",
+              "current": "なし",
+              "required": ">= 3",
+              "satisfied": false
+            },
+            {
+              "key": "nearby_workbench",
+              "current": false,
+              "required": true,
+              "satisfied": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
