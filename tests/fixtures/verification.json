@@ -1,0 +1,44 @@
+[
+  {
+    "name": "offline-run.log",
+    "lines": [
+      "ℹ tests 157",
+      "ℹ pass 157",
+      "ℹ fail 0",
+      "ℹ todo 0",
+      "ℹ duration_ms 40192.7899"
+    ]
+  },
+  {
+    "name": "live-final-run.log",
+    "lines": [
+      "✔ flat: repeatable command, skill, primitive and GOAP features (50604.5831ms)",
+      "✔ natural: repeatable empty-inventory wooden pickaxe, stone pickaxe, furnace (102352.7576ms)",
+      "ℹ tests 2",
+      "ℹ pass 2",
+      "ℹ fail 0",
+      "ℹ todo 0",
+      "ℹ duration_ms 180952.1243"
+    ]
+  },
+  {
+    "name": "vision-run.log",
+    "lines": [
+      "ℹ tests 1",
+      "ℹ pass 0",
+      "ℹ fail 0",
+      "ℹ todo 1",
+      "ℹ duration_ms 2974.6188"
+    ]
+  },
+  {
+    "name": "known-run.log",
+    "lines": [
+      "ℹ tests 2",
+      "ℹ pass 0",
+      "ℹ fail 0",
+      "ℹ todo 2",
+      "ℹ duration_ms 1802.622"
+    ]
+  }
+]

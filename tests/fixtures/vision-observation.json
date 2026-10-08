@@ -1,0 +1,9 @@
+{
+  "input": "!info vision {\"yaw\":90,\"pitch\":0,\"renderWait\":1000}",
+  "gpuAuthorizedOn": "2026-10-09",
+  "thrown": {
+    "name": "ReferenceError",
+    "message": "logger is not defined"
+  },
+  "durationMs": 2554
+}
