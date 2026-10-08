@@ -1,3 +1,4 @@
+require('node:test').before(() => require('../../planner_bot/src/planner/goap').prepareDomain('1.20.1'));
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { Vec3 } = require('vec3');

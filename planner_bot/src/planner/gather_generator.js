@@ -5,26 +5,29 @@ const minecraftData = require('minecraft-data');
 const { loadBlockCategories } = require('./state_builder');
 const { createLogger } = require('../utils/logger');
 
-const GENERATED_DIR = path.join(__dirname, '../../config/actions_generated');
-const GENERATED_FILE = path.join(GENERATED_DIR, 'gather_auto.yaml');
 const DEFAULT_COUNTS = [1, 3, 8];
 // null/undefined ならフィルタなし、Setならそのカテゴリのみ生成
 const TARGET_CATEGORIES = null;
 
-let generationPromise = null;
+const generationPromises = new Map();
 
 /**
  * gather_actions.yaml の代替として、起動時にminecraft-dataから自動生成する。
  * 毎回上書き生成し、GOAPのドメイン読み込み時に参照できるようにする。
  * @param {string} version - minecraft-dataで使用するバージョン（bot.version推奨）
  */
-function ensureGatherActionsGenerated(version) {
-  if (generationPromise) return generationPromise;
-  generationPromise = generateGatherActions(version);
-  return generationPromise;
+function ensureGatherActionsGenerated(version, outputDir) {
+  const key = String(version || '1.20.1') + ':' + (outputDir || '');
+  if (!generationPromises.has(key)) {
+    const promise = generateGatherActions(version, outputDir).catch(error => { generationPromises.delete(key); throw error; });
+    generationPromises.set(key, promise);
+  }
+  return generationPromises.get(key);
 }
 
-async function generateGatherActions(version) {
+async function generateGatherActions(version, outputDir) {
+  const GENERATED_DIR = outputDir || path.resolve(__dirname, '../../../.cache/minecraft-bot/actions', version || '1.20.1');
+  const GENERATED_FILE = path.join(GENERATED_DIR, 'gather_auto.yaml');
   const logger = createLogger({ category: 'setup' });
   const mcVersion = version || '1.20.1';
 
@@ -144,16 +147,12 @@ async function generateGatherActions(version) {
   // YAMLに出力
   try {
     fs.mkdirSync(GENERATED_DIR, { recursive: true });
-    if (fs.existsSync(GENERATED_FILE)) {
-      const backupPath = path.join(GENERATED_DIR, 'gather_auto.backup.yaml');
-      fs.copyFileSync(GENERATED_FILE, backupPath);
-      logger.info(`[AUTO-GATHER] 既存ファイルをバックアップ: ${path.relative(process.cwd(), backupPath)}`);
-    }
     const yaml = YAML.stringify({ actions });
     fs.writeFileSync(GENERATED_FILE, yaml, 'utf8');
     logger.info(`[AUTO-GATHER] ${actions.length} 個のgatherアクションを自動生成しました → ${path.relative(process.cwd(), GENERATED_FILE)}`);
   } catch (error) {
     logger.error(`[AUTO-GATHER] YAML出力に失敗: ${error.message}`);
+    throw error;
   }
 
   return actions;

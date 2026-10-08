@@ -5,27 +5,30 @@ const minecraftData = require("minecraft-data");
 const { createLogger } = require("../utils/logger");
 const { loadBlockCategories } = require("./state_builder");
 
-const GENERATED_DIR = path.join(__dirname, "../../config/actions_generated");
-const HAND_FILE = path.join(GENERATED_DIR, "hand_craft_auto.yaml");
-const WORKBENCH_FILE = path.join(GENERATED_DIR, "workbench_craft_auto.yaml");
 const DEFAULT_COST = 10;
 // countカテゴリを材料として扱う際に、カテゴリ化を許可するもの（plankは任意種で代用可）
 const CATEGORY_INGREDIENTS_ALLOWED = new Set(["plank"]);
 
-let generationPromise = null;
+const generationPromises = new Map();
 
 /**
  * hand_craft / workbench_craft のアクションを minecraft-data から自動生成する。
  * gather と同様に、起動ごとに毎回ファイルを上書き生成する。
  * @param {string} version - minecraft-data で使用するバージョン
  */
-function ensureCraftActionsGenerated(version) {
-  if (generationPromise) return generationPromise;
-  generationPromise = generateCraftActions(version);
-  return generationPromise;
+function ensureCraftActionsGenerated(version, outputDir) {
+  const key = String(version || '1.20.1') + ':' + (outputDir || '');
+  if (!generationPromises.has(key)) {
+    const promise = generateCraftActions(version, outputDir).catch(error => { generationPromises.delete(key); throw error; });
+    generationPromises.set(key, promise);
+  }
+  return generationPromises.get(key);
 }
 
-async function generateCraftActions(version) {
+async function generateCraftActions(version, outputDir) {
+  const GENERATED_DIR = outputDir || path.resolve(__dirname, '../../../.cache/minecraft-bot/actions', version || '1.20.1');
+  const HAND_FILE = path.join(GENERATED_DIR, 'hand_craft_auto.yaml');
+  const WORKBENCH_FILE = path.join(GENERATED_DIR, 'workbench_craft_auto.yaml');
   const logger = createLogger({ category: "setup" });
   const mcVersion = version || "1.20.1";
 
@@ -306,12 +309,13 @@ function buildLogToPlankCategoryAction() {
 
 function writeYaml(logger, filepath, actions, label) {
   try {
-    fs.mkdirSync(GENERATED_DIR, { recursive: true });
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
     const yaml = YAML.stringify({ actions });
     fs.writeFileSync(filepath, yaml, "utf8");
     logger.info(`[AUTO-CRAFT] ${actions.length} 個の${label}アクションを自動生成しました → ${path.relative(process.cwd(), filepath)}`);
   } catch (error) {
     logger.error(`[AUTO-CRAFT] ${label} の YAML 出力に失敗: ${error.message}`);
+    throw error;
   }
 }
 

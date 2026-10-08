@@ -4,24 +4,12 @@ const YAML = require('yaml')
 const { buildState, loadStateSchema, calculateCompositeStates } = require('./state_builder')
 const { createLogger } = require('../utils/logger')
 
-const ACTIONS_DIR = path.join(__dirname, '../../config/actions')
-const GENERATED_ACTIONS_DIR = path.join(__dirname, '../../config/actions_generated')
-// 自動生成アクションを使うかどうか（手動で切り替えやすいように固定値にしています）
-const USE_AUTO_GATHER = true
-const USE_AUTO_CRAFT = true
-const ACTION_FILES = [
-  'gather_actions.yaml',
-  'hand_craft_actions.yaml',
-  'workbench_craft_actions.yaml',
-  'movement_actions.yaml',
-  'furnace_actions.yaml',
-  'equipment_actions.yaml'
-]
 const MAX_ITERATIONS = process.env.GOAP_MAX_ITERATIONS ? Number(process.env.GOAP_MAX_ITERATIONS) : 200
 const YIELD_INTERVAL = process.env.GOAP_YIELD_INTERVAL ? Number(process.env.GOAP_YIELD_INTERVAL) : 50  // 50 → 25に短縮
 
-let domain
-let activeLogger = null
+const { AsyncLocalStorage } = require('node:async_hooks')
+const planningLog = new AsyncLocalStorage()
+const { prepareDomain, loadDomain, USE_AUTO_GATHER, USE_AUTO_CRAFT } = require('./domain')
 
 /**
  * 最小ヒープ（優先度キュー）
@@ -94,94 +82,19 @@ function yieldToEventLoop() {
 }
 
 function getLogger() {
-  if (activeLogger && typeof activeLogger.info === 'function') return activeLogger
-  // デフォルト: command/category指定なし、レベルは環境変数に従う
-  activeLogger = createLogger({ category: 'goap' })
-  return activeLogger
+  return planningLog.getStore() || createLogger({ category: 'goap' })
 }
 
-function loadDomain() {
-  if (domain) return domain
 
-  // 複数のアクションファイルを読み込んでマージ
-  let allActions = []
-  let hasGeneratedGather = false
-  let hasGeneratedHandCraft = false
-  let hasGeneratedWorkbenchCraft = false
 
-  // 1) 自動生成されたアクションを優先して読み込む（backup.yamlは除外）
-  if (fs.existsSync(GENERATED_ACTIONS_DIR)) {
-    const generatedFiles = fs.readdirSync(GENERATED_ACTIONS_DIR)
-      .filter(f => f.endsWith('.yaml') && !f.includes('.backup.'))
-    for (const filename of generatedFiles) {
-      const lower = filename.toLowerCase()
-      if (!USE_AUTO_GATHER && lower.includes('gather')) continue
-      if (!USE_AUTO_CRAFT && (lower.includes('hand_craft') || lower.includes('workbench_craft'))) continue
-      const filepath = path.join(GENERATED_ACTIONS_DIR, filename)
-      try {
-        const raw = fs.readFileSync(filepath, 'utf8')
-        const parsed = YAML.parse(raw)
-        if (parsed && Array.isArray(parsed.actions)) {
-          allActions = allActions.concat(parsed.actions)
-          const lower = filename.toLowerCase()
-          if (lower.includes('gather')) hasGeneratedGather = true
-          if (lower.includes('hand_craft')) hasGeneratedHandCraft = true
-          if (lower.includes('workbench_craft')) hasGeneratedWorkbenchCraft = true
-          const skillSet = new Set(parsed.actions.map(a => a && a.skill))
-          if (skillSet.has('gather')) hasGeneratedGather = true
-          if (skillSet.has('hand_craft')) hasGeneratedHandCraft = true
-          if (skillSet.has('workbench_craft')) hasGeneratedWorkbenchCraft = true
-          getLogger().info(`[GOAP] ${filename} (generated) から ${parsed.actions.length} 個のアクションを読み込みました`)
-        }
-      } catch (error) {
-        getLogger().error(`[GOAP] ${filename} (generated) の読み込みに失敗: ${error.message}`)
-      }
-    }
-  }
-
-  // 2) 静的ファイルを読み込む（生成済みgatherがある場合は元のgather_actions.yamlをスキップ）
-  for (const filename of ACTION_FILES) {
-    if (filename === 'gather_actions.yaml' && hasGeneratedGather && USE_AUTO_GATHER) {
-      getLogger().info('[GOAP] 自動生成されたgatherアクションを優先するため gather_actions.yaml はスキップしました')
-      continue
-    }
-    if (filename === 'hand_craft_actions.yaml' && hasGeneratedHandCraft && USE_AUTO_CRAFT) {
-      getLogger().info('[GOAP] 自動生成されたhand_craftアクションを優先するため hand_craft_actions.yaml はスキップしました')
-      continue
-    }
-    if (filename === 'workbench_craft_actions.yaml' && hasGeneratedWorkbenchCraft && USE_AUTO_CRAFT) {
-      getLogger().info('[GOAP] 自動生成されたworkbench_craftアクションを優先するため workbench_craft_actions.yaml はスキップしました')
-      continue
-    }
-    const filepath = path.join(ACTIONS_DIR, filename)
-    try {
-      const raw = fs.readFileSync(filepath, 'utf8')
-      const parsed = YAML.parse(raw)
-      if (parsed && Array.isArray(parsed.actions)) {
-        allActions = allActions.concat(parsed.actions)
-        getLogger().info(`[GOAP] ${filename} から ${parsed.actions.length} 個のアクションを読み込みました`)
-      }
-    } catch (error) {
-      getLogger().error(`[GOAP] ${filename} の読み込みに失敗: ${error.message}`)
-    }
-  }
-
-  if (allActions.length === 0) {
-    throw new Error('アクションが1つも読み込まれませんでした')
-  }
-
-  domain = { actions: allActions }
-  getLogger().info(`[GOAP] 合計 ${allActions.length} 個のアクションを読み込みました`)
-  return domain
+function plan(goalInput, worldState, logger = null, options = {}) {
+  return planningLog.run(logger, async () => {
+    await prepareDomain(options.version, getLogger())
+    return planPrepared(goalInput, worldState)
+  })
 }
 
-async function plan(goalInput, worldState, logger = null) {
-  // loggerがinfo/warn/errorを持たない場合はデフォルトを使用
-  if (logger && typeof logger.info === 'function' && typeof logger.warn === 'function') {
-    activeLogger = logger
-  } else {
-    activeLogger = null
-  }
+async function planPrepared(goalInput, worldState) {
   try {
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
@@ -450,7 +363,7 @@ async function plan(goalInput, worldState, logger = null) {
   return { plan: null, diagnosis }
 
   } finally {
-    activeLogger = null
+    // The logger belongs to this asynchronous call, not the module.
   }
 }
 
@@ -1632,13 +1545,14 @@ function isActionRelevant(action, relevantVars) {
 }
 
 // ゴール達成に不足しているリソース（ヒューリスティック推定）を取得
-async function collectShortages(goalInput, worldState, logger = null) {
-  if (logger && typeof logger.info === 'function' && typeof logger.warn === 'function') {
-    activeLogger = logger
-  } else {
-    activeLogger = null
-  }
+function collectShortages(goalInput, worldState, logger = null, options = {}) {
+  return planningLog.run(logger, async () => {
+    await prepareDomain(options.version, getLogger())
+    return collectShortagesPrepared(goalInput, worldState)
+  })
+}
 
+async function collectShortagesPrepared(goalInput, worldState) {
   try {
     const domainConfig = loadDomain()
     const actions = domainConfig.actions
@@ -1669,7 +1583,7 @@ async function collectShortages(goalInput, worldState, logger = null) {
     calculateHeuristic(initialState, heuristicContext)
     return shortageOut
   } finally {
-    activeLogger = null
+    // The logger belongs to this asynchronous call, not the module.
   }
 }
 
@@ -1686,6 +1600,7 @@ module.exports = {
   plan,
   collectShortages,
   loadDomain,
+  prepareDomain,
   getAllActions,
   evaluateCondition,
   arePreconditionsSatisfied,

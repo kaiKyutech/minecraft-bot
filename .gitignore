@@ -14,3 +14,4 @@ nul
 
 # doc/planner_bot/API.mdも除外
 !doc/planner_bot/API.md
+/.cache/minecraft-bot/

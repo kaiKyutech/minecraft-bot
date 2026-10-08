@@ -2,9 +2,6 @@ const { checkCompositeState, buildStructuredDiagnosis } = require('../planner/di
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
 const { executePlanWithReplanning } = require('../executor/goap_executor')
-const { ensureGatherActionsGenerated } = require('../planner/gather_generator')
-const { ensureCraftActionsGenerated } = require('../planner/craft_generator')
-const { ensureEquipmentActionsGenerated } = require('../planner/equipment_generator')
 const { createLogger } = require('../utils/logger')
 
 /**
@@ -56,16 +53,7 @@ async function handleGoalCommand(bot, username, goalName, stateManager, signal =
   stateManager.silentRefresh = false
   let worldState = await stateManager.getState(bot)
 
-  // gather / craft アクションを自動生成（初回のみ、bot.versionベース）
-  if (depth === 0) {
-    if (goapPlanner.USE_AUTO_GATHER) {
-      await ensureGatherActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
-    }
-    if (goapPlanner.USE_AUTO_CRAFT) {
-      await ensureCraftActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
-    }
-    await ensureEquipmentActionsGenerated(bot?.version || process.env.MC_VERSION || '1.20.1')
-  }
+  await goapPlanner.prepareDomain(bot?.version || process.env.MC_VERSION || '1.20.1')
 
   // ゴール前にツールを最低限用意する（minecraft-dataから直接判定）
   // サブゴールでも実行することで、diamond_sword → diamond → diamond_ore のような

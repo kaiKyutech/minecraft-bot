@@ -4,24 +4,27 @@ const YAML = require("yaml");
 const minecraftData = require("minecraft-data");
 const { createLogger } = require("../utils/logger");
 
-const GENERATED_DIR = path.join(__dirname, "../../config/actions_generated");
-const GENERATED_FILE = path.join(GENERATED_DIR, "equipment_auto.yaml");
 const DEFAULT_COST = 1;
 
-let generationPromise = null;
+const generationPromises = new Map();
 
 /**
  * equipment の自動生成（メインハンド装備）
  * 全アイテム（stackSize > 0, air/barrier除く）を equip_mainhand で持てるようにする。
  * @param {string} version - minecraft-data で使用するバージョン
  */
-function ensureEquipmentActionsGenerated(version) {
-  if (generationPromise) return generationPromise;
-  generationPromise = generateEquipmentActions(version);
-  return generationPromise;
+function ensureEquipmentActionsGenerated(version, outputDir) {
+  const key = String(version || '1.20.1') + ':' + (outputDir || '');
+  if (!generationPromises.has(key)) {
+    const promise = generateEquipmentActions(version, outputDir).catch(error => { generationPromises.delete(key); throw error; });
+    generationPromises.set(key, promise);
+  }
+  return generationPromises.get(key);
 }
 
-async function generateEquipmentActions(version) {
+async function generateEquipmentActions(version, outputDir) {
+  const GENERATED_DIR = outputDir || path.resolve(__dirname, '../../../.cache/minecraft-bot/actions', version || '1.20.1');
+  const GENERATED_FILE = path.join(GENERATED_DIR, 'equipment_auto.yaml');
   const logger = createLogger({ category: "setup" });
   const mcVersion = version || "1.20.1";
 
@@ -72,6 +75,7 @@ async function generateEquipmentActions(version) {
     );
   } catch (error) {
     logger.error(`[AUTO-EQUIP] YAML 出力に失敗: ${error.message}`);
+    throw error;
   }
 
   return actions;
