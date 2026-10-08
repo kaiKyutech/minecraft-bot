@@ -54,8 +54,8 @@ async function connect(world, username, options = {}) {
   } catch (error) { clearTimeout(timeout);bot.quit(); throw error; }
 }
 
-// Existing production generators write into the checkout. Preserve every byte,
-// including pre-existing ignored files, so an observation never changes the domain.
+// Keep the historical tracked domain byte-for-byte during observations.
+// Refactored generators now write only into the versioned cache.
 function preserveGenerated() {
   const dir = path.join(root, 'planner_bot/config/actions_generated');
   const files = new Map(fs.readdirSync(dir).map(name => [name, fs.readFileSync(path.join(dir, name))]));

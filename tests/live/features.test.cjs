@@ -15,6 +15,7 @@ test('flat: repeatable command, skill, primitive and GOAP features',{timeout:180
     bot=await connect('flat','RegressionFlat');peer=await connect('flat','RegressionPeer',{autoHandleWhisper:false});
     const run=async message=>{
       const start=Date.now();const value=await handleChatCommand(bot,'RegressionPeer',message,bot.stateManager);
+      assert.equal(typeof value.ok,'boolean');assert.ok(Object.hasOwn(value,'data'));assert.ok(Object.hasOwn(value,'error'));
       results.push({input:message,durationMs:Date.now()-start,returned:value===undefined?{$undefined:true}:clean(value)});return value;
     };
     await setup(['tp RegressionFlat 300 -60 300','tp RegressionPeer 300 -60 304']);await wait(1500);
@@ -24,59 +25,63 @@ test('flat: repeatable command, skill, primitive and GOAP features',{timeout:180
       'give RegressionFlat oak_planks 40','give RegressionFlat oak_log 2','give RegressionFlat cobblestone 4',
       'give RegressionFlat iron_helmet','give RegressionFlat raw_iron','give RegressionFlat coal 2']);
     await check('info, recipes, status and west scanning',async()=>{
-      assert.equal((await run('!info all')).success,true);assert.equal(await run('!status'),undefined);
+      assert.equal((await run('!info all')).ok,true);assert.equal((await run('!status')).ok,true);
       assert.ok((await run('!info recipesFor {"item":"wooden_pickaxe"}')).data.recipes.length);
       assert.ok((await run('!info recipesUsing {"ingredients":["stick"]}')).data.results.length);
       const scan=await run('!info scanBlocks {"range":5,"yaw":90,"coneAngle":30,"maxChecks":-1}');
       assert.ok(scan.data.blocks.every(b=>b.relativePosition.x<=0));
     });
     await check('named locations, coordinates, following and direction',async()=>{
-      assert.equal((await run('!navigation register {"name":"home"}')).success,true);
+      assert.equal((await run('!navigation register {"name":"home"}')).ok,true);
       await run('!navigation register {"name":"point","coords":[306,-60,300]}');
-      assert.equal((await run('!navigation goto {"name":"point"}')).success,true);
-      assert.equal((await run('!navigation gotoCoords {"coords":[300,-60,300]}')).success,true);
+      assert.equal((await run('!navigation goto {"name":"point"}')).ok,true);
+      assert.equal((await run('!navigation gotoCoords {"coords":[300,-60,300]}')).ok,true);
       for(const mode of ['nearest','below','surface']){
         await setup(['tp RegressionFlat 300 -60 300']);
-        assert.equal((await run(`!navigation moveInDirection {"yaw":90,"distance":2,"verticalMode":"${mode}"}`)).success,true);
+        assert.equal((await run(`!navigation moveInDirection {"yaw":90,"distance":2,"verticalMode":"${mode}"}`)).ok,true);
       }
-      await assert.rejects(()=>run('!navigation moveInDirection {"yaw":90,"distance":2,"verticalMode":"above"}'),/上に立てる地面/);
+      const above=await run('!navigation moveInDirection {"yaw":90,"distance":2,"verticalMode":"above"}');assert.equal(above.ok,false);assert.match(above.error.message,/上に立てる地面/);
       await setup(['tp RegressionFlat 300 -60 300']);
-      assert.equal((await run('!navigation follow {"username":"RegressionPeer"}')).success,true);
-      assert.equal((await run('!navigation stopFollow {}')).message,'追跡していません');assert.equal(bot.followTarget,null);
+      assert.equal((await run('!navigation follow {"username":"RegressionPeer"}')).ok,true);
+      assert.equal((await run('!navigation stopFollow {}')).data.message,'追跡していません');assert.equal(bot.followTarget,null);
     });
     await check('look, watch, idle and stop',async()=>{
-      assert.equal((await run('!look direction {"yaw":90,"pitch":10}')).success,true);
-      assert.equal((await run('!look player {"username":"RegressionPeer"}')).success,true);
+      assert.equal((await run('!look direction {"yaw":90,"pitch":10}')).ok,true);
+      assert.equal((await run('!look player {"username":"RegressionPeer"}')).ok,true);
       await run('!look watch {"username":"RegressionPeer","intervalMs":200}');await wait(250);
-      assert.ok((await run('!stop')).stoppedActions.includes('look_watch'));
-      await run('!idle_on {"intervalMs":200}');await wait(250);assert.ok((await run('!stop')).stoppedActions.includes('idle'));
+      assert.ok((await run('!stop')).data.stoppedActions.includes('look_watch'));
+      await run('!idle_on {"intervalMs":200}');await wait(250);assert.ok((await run('!stop')).data.stoppedActions.includes('idle'));
     });
     await check('whisper event, chat, echo, explicit history',async()=>{
       const event=new Promise(resolve=>bot.once('newNaturalMessage',resolve));peer.whisper(bot.username,'regression hello');
       assert.equal((await event).content,'regression hello');assert.equal(bot.getConversationHistory().length,0);
-      assert.equal((await run('!chat RegressionPeer hello')).success,true);
-      assert.equal((await run('!echo hello')).success,true);assert.equal((await run('!history')).count,0);
-      bot.addMessage('RegressionPeer','explicit','conversation');assert.equal((await run('!history RegressionPeer')).count,1);
+      assert.equal((await run('!chat RegressionPeer hello')).ok,true);
+      assert.equal((await run('!echo hello')).ok,true);assert.equal((await run('!history')).data.count,0);
+      bot.addMessage('RegressionPeer','explicit','conversation');assert.equal((await run('!history RegressionPeer')).data.count,1);
     });
     await check('open chest, deposit, withdraw, close and stopping an open chest',async()=>{
-      assert.equal((await run('!navigation chestOpen {"coords":[302,-60,300]}')).chest.totalSlots,27);
-      assert.equal((await run('!navigation chestDeposit {"item":"oak_planks","count":3}')).count,3);await wait(200);
-      assert.equal((await run('!navigation chestWithdraw {"item":"oak_planks","count":1}')).count,1);await wait(200);
-      assert.equal((await run('!navigation chestClose {}')).success,true);
-      await run('!navigation chestOpen {"coords":[302,-60,300]}');assert.ok((await run('!stop')).stoppedActions.includes('chest'));
+      assert.equal((await run('!navigation chestOpen {"coords":[302,-60,300]}')).data.chest.totalSlots,27);
+      assert.equal((await run('!navigation chestDeposit {"item":"oak_planks","count":3}')).data.count,3);await wait(200);
+      assert.equal((await run('!navigation chestWithdraw {"item":"oak_planks","count":1}')).data.count,1);await wait(200);
+      assert.equal((await run('!navigation chestClose {}')).ok,true);
+      await run('!navigation chestOpen {"coords":[302,-60,300]}');assert.ok((await run('!stop')).data.stoppedActions.includes('chest'));
+      await run('!navigation chestOpen {"coords":[302,-60,300]}');assert.equal((await run('!chat RegressionPeer closes chest')).ok,true);assert.equal(bot.currentChest,null);
     });
     await check('drop and pickup physically recover an RCON item entity',async()=>{
-      assert.equal((await run('!navigation dropItem {"itemName":"cobblestone"}')).droppedCount,1);
+      assert.equal((await run('!navigation dropItem {"itemName":"cobblestone"}')).data.droppedCount,1);
+      assert.equal((await run('!navigation dropItem {"targetPlayer":"RegressionPeer","itemName":"cobblestone"}')).data.droppedCount,1);
       await setup(['summon item 300 -60 302 {Item:{id:"minecraft:diamond",Count:1b},PickupDelay:0s}']);
-      assert.equal((await run('!navigation pickupItems {"range":6,"itemName":"diamond"}')).success,true);
+      assert.equal((await run('!navigation pickupItems {"range":6,"itemName":"diamond"}')).ok,true);
       await wait(300);assert.ok(bot.inventory.items().some(i=>i.name==='diamond'));
     });
     await check('creative and skill placements, hand/workbench craft and equipment',async()=>{
       await setup(['tp RegressionFlat 300 -60 300']);
-      assert.equal((await run('!creative placeBlock {"name":"oak_planks","coords":[300,-60,298]}')).success,true);
+      assert.equal((await run('!creative placeBlock {"name":"oak_planks","coords":[300,-60,298]}')).ok,true);
       assert.equal(bot.blockAt(new Vec3(300,-60,298)).name,'oak_planks');
-      assert.equal(await run('!skill hand_craft {"recipe":"stick","count":1}'),undefined);
-      assert.equal(await run('!skill workbench_craft {"recipe":"wooden_pickaxe"}'),undefined);
+      assert.equal((await run('!creative placeBlock {"name":"oak_planks","coords":[300,-60,298]}')).error.code,'PLACEMENT_FAILED');
+      assert.equal((await run('!creative placeBlock {"name":"oak_planks"}')).ok,true);
+      assert.equal((await run('!skill hand_craft {"recipe":"stick","count":1}')).ok,true);
+      assert.equal((await run('!skill workbench_craft {"recipe":"wooden_pickaxe"}')).ok,true);
       await run('!skill equip_mainhand {"item":"wooden_pickaxe"}');assert.equal(bot.heldItem.name,'wooden_pickaxe');
       await run('!skill equip_armor {"item":"iron_helmet","slot":"helmet"}');assert.equal(bot.inventory.slots[5].name,'iron_helmet');
       await run('!skill place_block {"blockName":"oak_planks"}');
@@ -94,21 +99,37 @@ test('flat: repeatable command, skill, primitive and GOAP features',{timeout:180
         '!primitive find_blocks {"match":["chest","furnace"],"count":2,"maxDistance":12}',
         '!primitive equip_item {"itemName":"wooden_pickaxe"}', '!primitive craft_item {"itemName":"stick"}',
         '!primitive move_to {"x":300,"y":-60,"z":300,"range":2,"timeout":2000}',
-        '!primitive collect_drops {"radius":3}'])assert.equal(await run(input),undefined);
+        '!primitive collect_drops {"radius":3}'])assert.equal((await run(input)).ok,true);
       await setup(['setblock 300 -60 298 oak_planks']);
       await run('!primitive dig_block {"x":300,"y":-60,"z":298}');assert.equal(bot.blockAt(new Vec3(300,-60,298)).name,'air');
       await run('!primitive equip_item {"itemName":"oak_planks"}');
       await run('!primitive place_block {"reference":{"x":299,"y":-61,"z":298}}');assert.equal(bot.blockAt(new Vec3(299,-60,298)).name,'oak_planks');
       const block=bot.blockAt(new Vec3(302,-60,300));const best=await primitives.findBestTool(bot,block);await primitives.equipBestToolForBlock(bot,block);
       results.push({input:'findBestTool / equipBestToolForBlock chest',returned:best?{name:best.name}:null});
-      await assert.rejects(()=>run('!primitive craft_item {}'),/itemName/);
+      assert.equal((await run('!primitive craft_item {}')).error.code,'INVALID_ARGUMENT');
     });
     await check('GOAP success, impossible goal and interruption',async()=>{
-      assert.equal((await run('!goal inventory.stick:4')).success,true);
-      assert.equal((await run('!goal inventory.cake:1')).success,false);
+      assert.equal((await run('!goal inventory.stick:4')).ok,true);
+      assert.equal((await run('!goal inventory.cake:1')).ok,false);
       await setup(['clear RegressionFlat','fill 294 -60 304 294 -56 304 oak_log']);
       const goal=run('!goal inventory.wooden_pickaxe:1');await wait(300);
-      assert.ok((await run('!stop')).stoppedActions.includes('GOAP task'));assert.equal((await goal).aborted,true);
+      assert.ok((await run('!stop')).data.stoppedActions.includes('GOAP task'));assert.equal((await goal).error.code,'CANCELLED');
+    });
+    await check('direct API signal, observations during movement and goal/movement replacement',async()=>{
+      const api=require('../../planner_bot/src/api').createBotApi(bot,{logLevel:'error'});
+      await setup(['tp RegressionFlat 300 -60 300','give RegressionFlat oak_planks 40']);
+      const controller=new AbortController(),moving=api.navigate('gotoCoords',{coords:[330,-60,300]},{signal:controller.signal});await wait(200);
+      const owner=bot.currentAbortController;
+      const [world,info,status,refresh]=await Promise.all([api.observe(),api.info('all'),api.status(),api.refresh()]);
+      assert.ok([world,info,status,refresh].every(x=>x.ok));
+      assert.equal((await api.planGoal('inventory.stick:4',{worldState:world.data})).ok,true);
+      assert.equal(bot.currentAbortController,owner);assert.equal(owner.signal.aborted,false);
+      controller.abort();assert.equal((await moving).error.code,'CANCELLED');assert.equal(bot.currentAbortController,null);
+      const goal=api.executeGoal('inventory.wooden_pickaxe:1');await wait(200);
+      assert.equal((await api.navigate('gotoCoords',{coords:[300,-60,300]})).ok,true);assert.equal((await goal).error.code,'CANCELLED');
+      const move=api.navigate('gotoCoords',{coords:[330,-60,300]});await wait(200);
+      assert.equal((await api.executeGoal('inventory.stick:4')).ok,true);assert.equal((await move).error.code,'CANCELLED');
+      const counts=bot.inventory.items().map(i=>[i.name,i.count]);await wait(500);assert.deepEqual(bot.inventory.items().map(i=>[i.name,i.count]),counts);
     });
   }catch(error){console.error('LIVE ROOT ERROR',error.stack);throw error;}finally{
     if(bot){try{await handleChatCommand(bot,'RegressionPeer','!stop',bot.stateManager);}catch{}bot.quit();}peer?.quit();restore();
@@ -120,8 +141,7 @@ test('natural: repeatable empty-inventory wooden pickaxe, stone pickaxe, furnace
   const restore=preserveGenerated();let bot;const results=[];const check=async(name,fn)=>{const start=Date.now();await fn();t.diagnostic(name+": "+(Date.now()-start)+"ms");};
   try{
     bot=await connect('natural','RegressionNat');
-    process.env.LOG_LEVEL='info';process.env.LOG_COMMANDS='all';bot.logFilter={enabled:false,allowed:new Set()};
-    let logs=[];bot.systemLog=message=>logs.push(String(message));
+    let logs=[];bot.logWriter=message=>logs.push(String(message));
     await rcon('natural',['tp RegressionNat 500 80 500']);await wait(2500);
     // Controlled resources on a natural-world test platform. Keeps tests reproducible
     // after the original trees and rock have been consumed by prior observations.
@@ -131,11 +151,11 @@ test('natural: repeatable empty-inventory wooden pickaxe, stone pickaxe, furnace
         'fill 495 80 498 495 80 502 oak_log','setblock 502 80 500 crafting_table',
         'clear RegressionNat','tp RegressionNat 500 80 500']);await wait(1000);
       logs=[];
-      const start=Date.now();const running=handleChatCommand(bot,'Observer',`!goal inventory.${item}:1`,bot.stateManager);
+      const start=Date.now();const running=item==='furnace' ? require('../../planner_bot/src/api').createBotApi(bot).executeGoal(`inventory.${item}:1`) : handleChatCommand(bot,'Observer',`!goal inventory.${item}:1`,bot.stateManager);
       const timer=setTimeout(()=>handleChatCommand(bot,'Observer','!stop',bot.stateManager),65000);
       let value;try{value=await running;}finally{clearTimeout(timer);}
       results.push({input:`!goal inventory.${item}:1`,durationMs:Date.now()-start,returned:value,position:clean(bot.entity.position),inventory:bot.inventory.items().map(i=>({name:i.name,count:i.count})),logs});
-      assert.equal(value.success,true);assert.ok(bot.inventory.items().some(i=>i.name===item));
+      assert.equal(value.ok,true);assert.ok(bot.inventory.items().some(i=>i.name===item));
     });
   }finally{bot?.quit();restore();fs.mkdirSync(path.join(root,'tests/results'),{recursive:true});fs.writeFileSync(path.join(root,'tests/results/live-natural.json'),JSON.stringify(results,null,2));}
 });

@@ -17,7 +17,8 @@ async function main(){
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'minecraft-bot-startup-'));
   try{results.push(await run('missing configuration',{MC_HOST:'',MC_PORT:''},/ERROR: .env file is not configured properly/,temp));}
   finally{fs.rmdirSync(temp);}
-  fs.writeFileSync(path.join(root,'tests/fixtures/standalone.json'),JSON.stringify(results,null,2));
+  fs.mkdirSync(path.join(root,'tests/results'),{recursive:true});
+  fs.writeFileSync(path.join(root,'tests/results/standalone.json'),JSON.stringify(results,null,2));
   console.log(results.map(x=>({label:x.label,durationMs:x.durationMs,exitCode:x.exitCode})));
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
