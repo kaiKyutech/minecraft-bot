@@ -7,7 +7,7 @@ function fixture({skills={},plan,analyse}={}){
   const checker={analyseStepPreconditions:async(bot,step)=>analyse?analyse(step):{satisfied:true,missing:[],goapState:{},worldState:world},getStateValue:(state,key)=>key.split('.').reduce((a,k)=>a?.[k],state)};
   const api=load(path.resolve(__dirname,'../../planner_bot/src/executor/goap_executor.js'),{
     '../planner/goap':planner,'../skills':skills,'./precondition_checker':checker,
-    '../commands/goal_command':{checkCompositeState:()=>null,buildStructuredDiagnosis:x=>x},
+    '../planner/diagnosis':{checkCompositeState:()=>null,buildStructuredDiagnosis:x=>x},
     '../utils/logger':{createLogger:()=>({info(){},warn(){},error(){}})}
   });
   return {calls,world,sm,bot,execute:async(steps,signal)=>api.executePlanWithReplanning(bot,'inventory.target:1',steps,sm,signal)};

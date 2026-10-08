@@ -80,7 +80,6 @@ async function handleChatCommand(bot, username, message, stateManager) {
   }
 
   if (trimmed === '!refresh') {
-    setCommand('refresh')
     const start = performance.now()
     stateManager.silentRefresh = !bot.shouldLogCommand('refresh')
     await stateManager.refresh(bot)

@@ -2,12 +2,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
 const { handleChatCommand } = require('../../planner_bot/src/commands');
-test('!refresh should complete state refresh', {todo:'Current master throws ReferenceError: setCommand is not defined'},async()=> {
+test('!refresh should complete state refresh', async()=> {
   let refreshed=false;
   const result=await handleChatCommand({systemLog(){},shouldLogCommand:()=>true},'Peer','!refresh',{refresh:async()=>{refreshed=true;}});
   assert.equal(refreshed,true);assert.equal(result.success,true);
 });
-test('replanning failure should produce a diagnostic without circular import TypeError', {todo:'goal_command-first import captures undefined buildStructuredDiagnosis'},()=> {
+test('replanning failure should produce a diagnostic without circular import TypeError', ()=> {
   const script=`require('./planner_bot/src/commands');
     const p=require('./planner_bot/src/planner/goap');
     p.plan=async()=>({plan:null,diagnosis:{suggestions:[{message:'missing'}],missingRequirements:[]}});

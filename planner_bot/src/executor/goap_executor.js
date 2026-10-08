@@ -1,7 +1,7 @@
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
-const { checkCompositeState, buildStructuredDiagnosis } = require('../commands/goal_command')
+const { checkCompositeState, buildStructuredDiagnosis } = require('../planner/diagnosis')
 const { createLogger } = require('../utils/logger')
 
 function makeLogger(bot) {

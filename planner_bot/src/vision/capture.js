@@ -20,6 +20,7 @@ const { createLogger } = require('../utils/logger');
  * @returns {Promise<Object>} 画像データとメタデータ
  */
 async function capture(bot, stateManager, params = {}) {
+  const logger = createLogger({ bot, category: 'vision', commandName: 'info' });
   let viewer = null;
   let browser = null;
   let port = null;
