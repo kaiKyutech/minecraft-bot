@@ -43,3 +43,17 @@ test('directional vision conflicts with an execution before opening a renderer',
   const bot={followTarget:'Peer'},api=createBotApi(bot,{stateManager:{}});
   assert.equal((await api.info('vision',{yaw:90})).error.code,'OPERATION_CONFLICT');assert.equal(bot.viewer,undefined);
 });
+test('status returns observed state without publishing execution cache',async()=>{
+  const state={inventory:{counts:{}},equipment:{},nearby:{},nearby_blocks:{}};
+  const sm={cache:{execution:true},refresh:async function(){this.cache=state},getState:async function(){return this.cache},getLocations:()=>({})};
+  const result=await createBotApi({systemLog(){}},{stateManager:sm}).status();
+  assert.equal(result.ok,true);assert.equal(result.data,state);assert.deepEqual(sm.cache,{execution:true});
+});
+test('logging inherits the owning bot level and does not share context across bots',async()=>{
+  const {withContext}=require('../../planner_bot/src/utils/context'),{createLogger}=require('../../planner_bot/src/utils/logger');
+  const logs=[[],[]],bots=logs.map(log=>({logLevel:'error',logWriter:x=>log.push(x)}));
+  await Promise.all(bots.map((bot,i)=>withContext({bot,commandName:'goal'},async()=>{
+    await tick();const logger=createLogger({category:'setup'});logger.info('hidden');logger.error(`error-${i}`);
+  })));
+  assert.deepEqual(logs,[['error-0'],['error-1']]);
+});

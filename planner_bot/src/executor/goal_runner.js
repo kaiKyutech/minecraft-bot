@@ -49,9 +49,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
   }
 
   // プランニング前に必ず最新の状態を取得
-  stateManager.silentRefresh = !bot.shouldLogCommand('goal')
   await interruptible(bot, () => stateManager.refresh(bot))
-  stateManager.silentRefresh = false
   let worldState = await interruptible(bot, () => stateManager.getState(bot))
 
   await interruptible(bot, () => goapPlanner.prepareDomain(bot?.version || process.env.MC_VERSION || '1.20.1'))
@@ -67,9 +65,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
       for (const prepGoal of pickaxeGoals) {
         await interruptible(bot, () => runGoal(bot, username, prepGoal, stateManager, signal, 0, maxDepth, missingPreconditions, attemptedGoals, false))
         // 再取得して次の判断に使う
-        stateManager.silentRefresh = !bot.shouldLogCommand('goal')
         await interruptible(bot, () => stateManager.refresh(bot))
-        stateManager.silentRefresh = false
       }
       // 事前準備後、最新状態を取得し直す
       worldState = await interruptible(bot, () => stateManager.getState(bot))

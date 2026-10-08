@@ -46,6 +46,8 @@ function startIdle(bot, options = {}, logger = null) {
   bot.idleLogger = logger || createLogger({ bot, category: 'idle', commandName: bot.currentCommandName || 'idle' })
 
   bot.idleInterval = setInterval(() => {
+    // Keep the promise for the tick that actually owns the camera operation.
+    if (bot._idleTicking) return
     bot._idleTickPromise = tickIdle(bot).catch((err) => {
       bot.idleLogger?.warn(`[IDLE] tick error: ${err.message}`)
     })

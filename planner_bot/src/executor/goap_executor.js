@@ -1,4 +1,4 @@
-const { withContext, checkpoint } = require('../utils/context')
+const { withContext, checkpoint, interruptible } = require('../utils/context')
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
@@ -28,7 +28,7 @@ function yieldToEventLoop() {
  * @param {AbortSignal} signal - キャンセル用シグナル（オプション）
  * @param {Array} missingPreconditions - 満たされていない前提条件のリスト（オプション）
  */
-async function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
+async function executePlanPrepared(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
   let currentPlan = [...initialPlan]
   let stepIndex = 0
 
@@ -49,11 +49,9 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
     }
 
     // アクション開始前に最新状態へ更新（各ステップ1回）もしかするとこれじゃgoapが崩れるかもしれない。実験的にここだけにしてみる。
-    stateManager.silentRefresh = !bot.shouldLogCommand('goal')
-    await stateManager.refresh(bot)
-    stateManager.silentRefresh = false
+    await interruptible(bot, () => stateManager.refresh(bot))
 
-    const preconditionStatus = await analyseStepPreconditions(bot, step, stateManager)
+    const preconditionStatus = await interruptible(bot, () => analyseStepPreconditions(bot, step, stateManager))
 
     if (!preconditionStatus.satisfied) {
       // 逆転前提（本来false要求だがtrueになっているなど）はスキップ扱いにする
@@ -73,7 +71,7 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
       // サブゴール探索
       goapExecLog(bot, `[REACTIVE_GOAP] 補助サブゴールを探索します...`)
-      const resolved = await tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus, signal)
+      const resolved = await interruptible(bot, () => tryResolveMissingPreconditions(bot, step, stateManager, preconditionStatus, signal))
 
       if (resolved) {
         // サブゴールで前提条件を満たしたので、同じステップを再評価
@@ -82,11 +80,8 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
       goapExecLog(bot, `[REACTIVE_GOAP] サブゴールでの解決に失敗。リプランニングを実行...`)
       goapExecLog(bot, `[REACTIVE_GOAP] 目標: ${goalName}`)
-
-      stateManager.silentRefresh = !bot.shouldLogCommand('goal')
-      await stateManager.refresh(bot)
-      stateManager.silentRefresh = false
-      const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
+      await interruptible(bot, () => stateManager.refresh(bot))
+      const newPlan = await interruptible(bot, () => replan(bot, goalName, stateManager, signal, missingPreconditions))
 
       goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -99,11 +94,11 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
 
     // ステップ実行（実行時エラーもリプランニングで対応）
     try {
-      await executeStep(bot, step, stateManager, signal)
+      await interruptible(bot, () => executeStep(bot, step, stateManager, signal))
       stepIndex++
 
       // アクション間でイベントループに制御を返す（keep-alive処理のため）
-      await yieldToEventLoop()
+      await interruptible(bot, () => yieldToEventLoop())
     } catch (error) {
       // キャンセルエラーは再スロー
       if (error.name === 'AbortError') {
@@ -113,8 +108,8 @@ async function executePlanWithReplanning(bot, goalName, initialPlan, stateManage
       goapExecLog(bot, `[REACTIVE_GOAP] 現在の状態から再度プランニングします...`)
 
       // 状態を更新してリプランニング
-      await stateManager.refresh(bot)
-      const newPlan = await replan(bot, goalName, stateManager, signal, missingPreconditions)
+      await interruptible(bot, () => stateManager.refresh(bot))
+      const newPlan = await interruptible(bot, () => replan(bot, goalName, stateManager, signal, missingPreconditions))
 
       goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
       goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン: ${newPlan.map(s => s.action).join(' -> ')}`)
@@ -147,8 +142,8 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
     throw error
   }
 
-  const currentState = await stateManager.getState(bot)
-  const result = await goapPlanner.plan(goalName, currentState, makeLogger(bot))
+  const currentState = await interruptible(bot, () => stateManager.getState(bot))
+  const result = await interruptible(bot, () => goapPlanner.plan(goalName, currentState, makeLogger(bot)))
 
   // 新しい戻り値形式に対応
   let newPlan = null
@@ -208,7 +203,7 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
               goapExecLog(bot, `[REPLAN] 複合状態 "${req.key}" を検出 → サブゴール "${compositeGoal}" を試行`)
 
               // サブゴールのプランニングを試みる
-              const subResult = await goapPlanner.plan(compositeGoal, currentState, makeLogger(bot))
+              const subResult = await interruptible(bot, () => goapPlanner.plan(compositeGoal, currentState, makeLogger(bot)))
               const subPlan = subResult?.plan
 
               if (subPlan && Array.isArray(subPlan) && subPlan.length > 0) {
@@ -281,7 +276,7 @@ async function executeStep(bot, step, stateManager, signal = null) {
 
   try {
     // スキル実行
-    await withContext({ bot, signal }, () => skill(bot, step.params || {}, stateManager))
+    await interruptible(bot, () => withContext({ bot, signal }, () => skill(bot, step.params || {}, stateManager)))
     checkpoint(bot, signal)
 
       // アクション実行前に状態を更新　34行に移動してみた。実験です。うまくいかない可能性があります。
@@ -381,13 +376,13 @@ async function executeSimplePlan(bot, plan, stateManager, signal = null) {
 
     if (!step.skill) continue
 
-    await stateManager.refresh(bot)
+    await interruptible(bot, () => stateManager.refresh(bot))
 
-    const status = await analyseStepPreconditions(bot, step, stateManager)
+    const status = await interruptible(bot, () => analyseStepPreconditions(bot, step, stateManager))
     if (!status.satisfied) {
       throw new Error(`サブプランのステップ ${step.action} の前提条件を満たせません`)
     }
-    await executeStep(bot, step, stateManager, signal)
+    await interruptible(bot, () => executeStep(bot, step, stateManager, signal))
   }
 }
 
@@ -401,7 +396,7 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
     goapExecLog(bot, `[REACTIVE_GOAP]   → 補助ゴール検討: ${missing.key} ${formatCondition(missing.condition)} / 現在値 ${missing.currentValue ?? 0}`)
     goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール候補: ${subGoalInput}`)
 
-    const subResult = await goapPlanner.plan(subGoalInput, status.worldState, makeLogger(bot))
+    const subResult = await interruptible(bot, () => goapPlanner.plan(subGoalInput, status.worldState, makeLogger(bot)))
 
     // 新しい戻り値形式に対応
     let subPlan = null
@@ -432,8 +427,8 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
     goapExecLog(bot, `[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
 
     try {
-      await executeSimplePlan(bot, subPlan, stateManager, signal)
-      await stateManager.refresh(bot)
+      await interruptible(bot, () => executeSimplePlan(bot, subPlan, stateManager, signal))
+      await interruptible(bot, () => stateManager.refresh(bot))
       goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
       return true
     } catch (error) {
@@ -442,11 +437,15 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
         throw error
       }
       goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
-      await stateManager.refresh(bot)
+      await interruptible(bot, () => stateManager.refresh(bot))
     }
   }
 
   return false
+}
+
+function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
+  return withContext({ bot, signal }, () => executePlanPrepared(bot, goalName, initialPlan, stateManager, signal, missingPreconditions))
 }
 
 module.exports = {

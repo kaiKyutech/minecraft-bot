@@ -346,19 +346,19 @@ async function capture(bot, stateManager, params = {}) {
 
   } finally {
     // 5. クリーンアップ
-    if (browser) {
-      await browser.close();
-      logger.info('[VISION] Browser closed');
+    try {
+      if (browser) {
+        await browser.close();
+        logger.info('[VISION] Browser closed');
+      }
+    } finally {
+      try {
+        if (viewer && viewer.close) await viewer.close();
+      } finally {
+        bot.viewer = null;
+        logger.info('[VISION] Viewer closed');
+      }
     }
-
-    // Viewerをクローズ
-    if (viewer && viewer.close) {
-      viewer.close();
-    }
-
-    // bot.viewerは常にクリア（エラー時も確実に）
-    bot.viewer = null;
-    logger.info('[VISION] Viewer closed');
   }
 }
 

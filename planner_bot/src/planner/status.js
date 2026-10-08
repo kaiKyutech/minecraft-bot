@@ -101,7 +101,6 @@ async function status(bot, stateManager) {
   const fullMessage = messages.join('\n')
   bot.systemLog(fullMessage)
 
-  bot.systemLog(`Status sent to ${username}`)
   return worldState
 
 }

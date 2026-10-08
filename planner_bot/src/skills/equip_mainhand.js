@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -11,8 +12,8 @@ const { createLogger } = require('../utils/logger')
  * @param {Object} stateManager - 状態マネージャー
  */
 module.exports = async function equipMainhand(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
-  if (!params.item) throw new Error('item パラメータが必要です')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
+  if (!params.item) throw failure('INVALID_ARGUMENT', 'item パラメータが必要です')
 
   const { item } = params
 
@@ -23,7 +24,7 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
     // インベントリから対象アイテムを探す
     const itemToEquip = bot.inventory.items().find(i => i.name === item)
     if (!itemToEquip) {
-      throw new Error(`${item} がインベントリに見つかりません`)
+      throw failure('ITEM_NOT_FOUND', `${item} がインベントリに見つかりません`)
     }
 
     // 手に持つ（メインハンド）
@@ -34,6 +35,6 @@ module.exports = async function equipMainhand(bot, params = {}, stateManager) {
   } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-    throw new Error(`アイテムを手に持つのに失敗しました: ${error.message}`)
+    throw failure(error.code || 'EXECUTION_FAILED', `アイテムを手に持つのに失敗しました: ${error.message}`)
   }
 }

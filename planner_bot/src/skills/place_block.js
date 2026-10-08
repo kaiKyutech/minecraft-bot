@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { skillCandidates, canPlaceBlockAt } = require('../navigation/placement_search')
@@ -12,8 +13,8 @@ const { createLogger } = require('../utils/logger')
  * - 簡単な建築ブロックの設置
  */
 module.exports = async function placeBlock(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
-  if (!params.blockName) throw new Error('blockName パラメータが必要です')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
+  if (!params.blockName) throw failure('INVALID_ARGUMENT', 'blockName パラメータが必要です')
 
   const logger = createLogger({ bot, category: 'skill' })
   logger.info(`[PLACE_BLOCK] ブロック「${params.blockName}」をボットの目の前に設置中`)
@@ -22,7 +23,7 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     // インベントリから指定されたブロックを検索
     const blockItem = bot.inventory.items().find(item => item.name === params.blockName)
     if (!blockItem) {
-      throw new Error(`${params.blockName}がインベントリにありません`)
+      throw failure('ITEM_NOT_FOUND', `${params.blockName}がインベントリにありません`)
     }
 
     // ブロックを手に装備
@@ -57,13 +58,13 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     }
 
     if (!placed) {
-      throw new Error('適切な設置位置が見つかりませんでした')
+      throw failure('PLACEMENT_FAILED', '適切な設置位置が見つかりませんでした')
     }
 
   } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-    throw new Error(`ブロック設置に失敗しました: ${error.message}`)
+    throw failure(error.code || 'PLACEMENT_FAILED', `ブロック設置に失敗しました: ${error.message}`)
   }
 }
 

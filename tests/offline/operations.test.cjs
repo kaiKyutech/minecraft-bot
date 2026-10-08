@@ -53,3 +53,13 @@ test('external abort drains a chest transfer and closes a legacy container', asy
   await tick();controller.abort();finish();assert.equal((await running).code,'CANCELLED');
   assert.equal(bot.currentChest,null);assert.equal(manager.busy(),false);assert.equal(events.at(-1),'close');
 });
+test('stop waits for an idle camera tick even when another interval elapsed',async()=>{
+  const {bot,manager}=fixture();const {Vec3}=require('vec3');let finish,calls=0,stopped=false;
+  Object.assign(bot,{entity:{position:new Vec3(0,0,0),yaw:0,pitch:0},players:{},logLevel:'error',look:()=>{calls++;return new Promise(resolve=>{finish=resolve})}});
+  try {
+    await require('../../planner_bot/src/navigation/idle').start(bot,{intervalMs:500});
+    await new Promise(resolve=>setTimeout(resolve,1100));
+    const stop=manager.stop().then(()=>{stopped=true});await tick();assert.equal(stopped,false);assert.equal(calls,1);
+    finish();await stop;assert.equal(bot.idleInterval,null);
+  }finally{finish?.();await manager.stop()}
+});

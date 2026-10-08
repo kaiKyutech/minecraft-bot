@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -10,7 +11,7 @@ const { createLogger } = require('../utils/logger')
  * リプランニング時の救済アクションとして使用される
  */
 module.exports = async function collectDrops(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
 
   const radius = params.radius ?? 12
   const maxAttempts = params.maxAttempts ?? 3

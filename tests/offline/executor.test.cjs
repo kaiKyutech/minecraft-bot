@@ -19,6 +19,13 @@ test('executor refreshes once before each skill; terminal actions skip execution
 test('executor rejects an already aborted signal before refreshing',async()=>{
   const f=fixture();const c=new AbortController();c.abort();await assert.rejects(()=>f.execute([{action:'a',skill:'s'}],c.signal),{name:'AbortError',message:'Cancelled'});assert.deepEqual(f.calls,[]);
 });
+test('abort during refresh prevents precondition evaluation and skill execution',async()=>{
+  const controller=new AbortController();let checked=false,ran=false;
+  const f=fixture({analyse:()=>{checked=true;return {satisfied:true}},skills:{s:async()=>{ran=true}}});
+  f.sm.refresh=async()=>{controller.abort()};
+  await assert.rejects(f.execute([{action:'a',skill:'s'}],controller.signal),{code:'CANCELLED'});
+  assert.equal(checked,false);assert.equal(ran,false);
+});
 test('skill abort listener stops movement and digging, then is removed',async()=>{
   const c=new AbortController();const f=fixture({skills:{s:async()=>{c.abort();const e=new Error('cancel');e.name='AbortError';throw e;}}});
   await assert.rejects(()=>f.execute([{action:'a',skill:'s'}],c.signal),{name:'AbortError'});

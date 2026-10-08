@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -13,8 +14,8 @@ const { goals } = require('mineflayer-pathfinder')
  * - その他3x3でのみ可能なレシピ
  */
 module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
-  if (!params.recipe) throw new Error('recipe パラメータが必要です')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
+  if (!params.recipe) throw failure('INVALID_ARGUMENT', 'recipe パラメータが必要です')
 
   const logger = createLogger({ bot, category: 'skill' })
   logger.info(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」を作業台で実行`)
@@ -27,7 +28,7 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   const workbenchData = state.blocks?.list?.find(b => b.name === 'crafting_table')
 
   if (!workbenchData) {
-    throw new Error('近くに作業台が見つかりません（GOAPの前提条件エラー）')
+    throw failure('ENVIRONMENT_MISSING', '近くに作業台が見つかりません（GOAPの前提条件エラー）')
   }
 
   logger.info(`[WORKBENCH_CRAFT] 作業台の位置: ${JSON.stringify(workbenchData.position)} (距離: ${workbenchData.distance.toFixed(1)}m)`)
@@ -53,7 +54,7 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   ))
 
   if (!workbench || workbench.name !== 'crafting_table') {
-    throw new Error('作業台の座標にブロックが見つかりません')
+    throw failure('ENVIRONMENT_MISSING', '作業台の座標にブロックが見つかりません')
   }
 
   logger.info(`[WORKBENCH_CRAFT] 作業台使用: ${JSON.stringify(workbench.position)}`)
@@ -72,6 +73,6 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
   } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-    throw new Error(`作業台クラフトに失敗しました: ${error.message}`)
+    throw failure(error.code || 'ENVIRONMENT_MISSING', `作業台クラフトに失敗しました: ${error.message}`)
   }
 }

@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const minecraftData = require('minecraft-data')
 const { createLogger } = require('../utils/logger')
@@ -9,12 +10,12 @@ const { createLogger } = require('../utils/logger')
  * - 材料と燃料を使って精錬を実行
  */
 module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
 
   const { input, fuel, output, fuel_count = 1 } = params
 
   if (!input || !fuel || !output) {
-    throw new Error('input, fuel, output パラメータが必要です')
+    throw failure('INVALID_ARGUMENT', 'input, fuel, output パラメータが必要です')
   }
 
   const logger = createLogger({ bot, category: 'skill' })
@@ -29,7 +30,7 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
   })
 
   if (!furnaceBlock) {
-    throw new Error('近くにかまどが見つかりません')
+    throw failure('ENVIRONMENT_MISSING', '近くにかまどが見つかりません')
   }
 
   logger.info(`[FURNACE_SMELT] かまどを発見: ${JSON.stringify(furnaceBlock.position)}`)
@@ -49,13 +50,13 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
   // 材料アイテムを探す
   const inputItem = resolveItemFromName(bot, mcData, input)
   if (!inputItem) {
-    throw new Error(`材料アイテム ${input} がインベントリに見つかりません`)
+    throw failure('ITEM_NOT_FOUND', `材料アイテム ${input} がインベントリに見つかりません`)
   }
 
   // 燃料アイテムを探す
   const fuelItem = resolveItemFromName(bot, mcData, fuel)
   if (!fuelItem) {
-    throw new Error(`燃料 ${fuel} がインベントリに見つかりません`)
+    throw failure('ITEM_NOT_FOUND', `燃料 ${fuel} がインベントリに見つかりません`)
   }
 
   logger.info(`[FURNACE_SMELT] 材料: ${inputItem.name}, 燃料: ${fuelItem.name}`)
@@ -90,7 +91,7 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
     }
 
     if (!furnace.outputItem() && Date.now() - startTime >= timeout) {
-      throw new Error('精錬がタイムアウトしました')
+      throw failure('EXECUTION_FAILED', '精錬がタイムアウトしました')
     }
 
   } finally {

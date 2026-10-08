@@ -1,6 +1,6 @@
 const { performance } = require('node:perf_hooks')
 const { withContext, interruptible } = require('./utils/context')
-const { failure, ok, errorResult, fromLegacy } = require('./utils/result')
+const { failure, errorResult, fromLegacy } = require('./utils/result')
 const { createLogger } = require('./utils/logger')
 const { operationsFor } = require('./executor/operation_manager')
 const goap = require('./planner/goap')
@@ -94,7 +94,7 @@ function createBotApi(bot, options = {}) {
         return value.data
       }
       return type === 'vision' ? operations.capture(get) : get()
-    }),
+    }, type === 'vision' ? 'VISION_CAPTURE_FAILED' : 'INTERNAL_ERROR'),
     status: () => call('status', () => status(bot, observationManager())),
     look: (name, params = {}) => call('look', () => look(bot, name, paramsObject(params))),
     startIdle: (params = {}) => call('idle_on', () => start(bot, paramsObject(params))),

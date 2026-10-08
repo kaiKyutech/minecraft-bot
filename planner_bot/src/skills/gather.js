@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -13,7 +14,7 @@ const { scanBlocks } = require('../utils/block_scanner')
  * - ブロック探索 → 接近 → 掘削 → ドロップ回収 を 1 ループとし、指定回数だけ繰り返します。
  */
 module.exports = async function gather(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
 
   const loopCount = Number.isFinite(params.count) ? params.count : 1
   if (loopCount <= 0) return
@@ -86,11 +87,11 @@ module.exports = async function gather(bot, params = {}, stateManager) {
     } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-      throw new Error('近くに対象ブロックが見つかりません')
+      throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
     }
 
     if (!Array.isArray(candidates) || candidates.length === 0) {
-      throw new Error('近くに対象ブロックが見つかりません')
+      throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
     }
 
     // Pre-calculate distances to avoid redundant calculations during sort
@@ -118,12 +119,12 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       }
     }
 
-    throw new Error('利用可能なブロック候補が見つかりません')
+    throw failure('BLOCK_NOT_FOUND', '利用可能なブロック候補が見つかりません')
   }
 
   while (completed < loopCount) {
     if (attempts++ > maxAttempts) {
-      throw new Error('資源の収集に失敗しました: 試行回数が上限に達しました')
+      throw failure('EXECUTION_FAILED', '資源の収集に失敗しました: 試行回数が上限に達しました')
     }
 
     let blockInfo
@@ -132,7 +133,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
     } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-      throw new Error(error.message || '近くに対象ブロックが見つかりません')
+      throw failure(error.code || 'BLOCK_NOT_FOUND', error.message || '近くに対象ブロックが見つかりません')
     }
 
     try {
@@ -181,7 +182,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         continue
       }
 
-      throw new Error(`資源の収集に失敗しました: ${error.message}`)
+      throw failure(error.code || 'EXECUTION_FAILED', `資源の収集に失敗しました: ${error.message}`)
     }
   }
 
@@ -211,11 +212,11 @@ module.exports = async function gather(bot, params = {}, stateManager) {
  */
 async function resolveItemName(params, bot) {
   if (!params.itemName || typeof params.itemName !== 'string' || params.itemName.length === 0) {
-    throw new Error('収集対象の素材名 (itemName) が指定されていません')
+    throw failure('INVALID_ARGUMENT', '収集対象の素材名 (itemName) が指定されていません')
   }
 
   if (!bot.version) {
-    throw new Error('bot.version が取得できるまで待ってください')
+    throw failure('BOT_NOT_READY', 'bot.version が取得できるまで待ってください')
   }
 
   const mcData = minecraftData(bot.version)
@@ -240,7 +241,7 @@ async function resolveItemName(params, bot) {
   }
 
   // どちらにも存在しない場合はエラー
-  throw new Error(`未知のアイテム名です: ${itemName} (Minecraft ${bot.version} には存在しません)`)
+  throw failure('BOT_NOT_READY', `未知のアイテム名です: ${itemName} (Minecraft ${bot.version} には存在しません)`)
 }
 
 // カテゴリ選択のキャッシュ（botごと、カテゴリごと）
@@ -291,7 +292,7 @@ async function selectBestBlockFromCategory(bot, categoryName, categories, mcData
   }))
 
   if (result.blocks.length === 0) {
-    throw new Error(`カテゴリ「${categoryName}」のブロックが範囲内に見つかりません: ${categoryBlocks.join(', ')}`)
+    throw failure('BLOCK_NOT_FOUND', `カテゴリ「${categoryName}」のブロックが範囲内に見つかりません: ${categoryBlocks.join(', ')}`)
   }
 
   // scanBlocks は距離順にソート済み

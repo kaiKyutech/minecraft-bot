@@ -133,7 +133,7 @@ function prepareDomain(version, logger = createLogger({ category: 'setup' })) {
     return next
   })().catch(error => {
     preparation = null
-    throw Object.assign(error, { code: error.code || 'DOMAIN_PREPARATION_FAILED' })
+    throw Object.assign(error, { code: 'DOMAIN_PREPARATION_FAILED' })
   })
   return preparation
 }

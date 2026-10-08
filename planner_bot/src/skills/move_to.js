@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -11,7 +12,7 @@ const { createLogger } = require('../utils/logger')
  * - 特定のブロック（作業台等）への移動
  */
 module.exports = async function moveTo(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
 
   let targetPosition
 
@@ -30,7 +31,7 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
     })
 
     if (!targetBlock) {
-      throw new Error(`${params.blockType}が近くに見つかりません`)
+      throw failure('EXECUTION_FAILED', `${params.blockType}が近くに見つかりません`)
     }
 
     targetPosition = targetBlock.position
@@ -38,7 +39,7 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
     logger.info(`[MOVE_TO] ${params.blockType}(${targetPosition})へ移動中`)
 
   } else {
-    throw new Error('position または blockType パラメータが必要です')
+    throw failure('INVALID_ARGUMENT', 'position または blockType パラメータが必要です')
   }
 
   try {
@@ -54,6 +55,6 @@ module.exports = async function moveTo(bot, params = {}, stateManager) {
   } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-    throw new Error(`移動に失敗しました: ${error.message}`)
+    throw failure(error.code || 'EXECUTION_FAILED', `移動に失敗しました: ${error.message}`)
   }
 }

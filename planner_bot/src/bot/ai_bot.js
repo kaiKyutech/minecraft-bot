@@ -60,7 +60,7 @@ function addLoggingSystem(bot) {
    */
   bot.speakNearby = async (message, radius = 15) => {
     const command = `/w @a[distance=..${radius}] ${message}`
-    console.log(`[${bot.username}] [SPEAK_NEARBY] Sending command: ${command}`)
+    createLogger({ bot, category: 'chat' }).debug(`[SPEAK_NEARBY] Sending command: ${command}`)
     bot.chat(command)
   }
 
@@ -91,7 +91,7 @@ function addLoggingSystem(bot) {
     bot.conversationHistory.push(messageObj)
 
     // 履歴追加をコンソールに出力（生データ）
-    console.log(`[${bot.username}] [HISTORY_ADD] ${JSON.stringify(messageObj)}`)
+    createLogger({ bot, category: 'chat' }).debug(`[HISTORY_ADD] ${JSON.stringify(messageObj)}`)
 
     // 会話履歴の上限管理（全体で100メッセージまで）
     const MAX_HISTORY = 100
@@ -135,7 +135,7 @@ function addLoggingSystem(bot) {
    * @deprecated 新しいコードでは bot.speak() を使用してください
    */
   bot.chatWithDelay = async (username, message) => {
-    console.warn('[DEPRECATED] bot.chatWithDelay is deprecated. Use bot.speak() instead.')
+    createLogger({ bot, category: 'chat' }).warn('[DEPRECATED] bot.chatWithDelay is deprecated. Use bot.speak() instead.')
     await bot.speak(username, message)
   }
 
@@ -235,7 +235,7 @@ function createAIBot(id, config, options = {}) {
             createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('='.repeat(80))
             createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('[COMMAND_RESULT] 最終的なコマンドの返り値:')
             createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info(JSON.stringify(result, null, 2))
-            console.log('='.repeat(80))
+            createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('='.repeat(80))
           }
         } catch (error) {
           // エラーをキャッチして統一的に出力
@@ -244,10 +244,10 @@ function createAIBot(id, config, options = {}) {
             error: error.message,
             stack: error.stack
           }
-          console.log('='.repeat(80))
-          console.log(`[${bot.username}] [COMMAND_ERROR] 最終的なコマンドの返り値:`)
-          console.log(JSON.stringify(errorResult, null, 2))
-          console.log('='.repeat(80))
+          createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('='.repeat(80))
+          createLogger({ bot, category: 'command' }).error('[COMMAND_ERROR] 最終的なコマンドの返り値:')
+          createLogger({ bot, category: 'command' }).error(JSON.stringify(errorResult, null, 2))
+          createLogger({ bot, category: 'command', commandName: bot.lastCommandName }).info('='.repeat(80))
           bot.systemLog(`Command error: ${error.message}`)
           bot.systemLog(`Stack trace: ${error.stack}`)
         }
@@ -261,7 +261,7 @@ function createAIBot(id, config, options = {}) {
           await options.onNaturalMessage(bot, username, message)
         } catch (error) {
           bot.systemLog(`Error in onNaturalMessage handler: ${error.message}`)
-          console.error(`[AI-BOT] ${botName} onNaturalMessage error:`, error)
+          createLogger({ bot, category: 'chat' }).error(`[AI-BOT] ${botName} onNaturalMessage error:`, error)
         }
       } else {
         // デフォルト: イベント発火のみ（LLMプロジェクトで購読可能）
@@ -281,11 +281,11 @@ function createAIBot(id, config, options = {}) {
 
   // エラーハンドリング
   bot.on('error', (err) => {
-    console.error(`[AI-BOT] ${botName} error:`, err.message)
+    createLogger({ bot, category: 'setup' }).error(`[AI-BOT] ${botName} error:`, err.message)
   })
 
   bot.on('kicked', (reason) => {
-    console.log(`[AI-BOT] ${botName} kicked:`, reason)
+    createLogger({ bot, category: 'setup' }).warn(`[AI-BOT] ${botName} kicked:`, reason)
   })
 
   bot.on('end', () => {

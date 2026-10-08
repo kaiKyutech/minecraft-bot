@@ -12,9 +12,9 @@ const LEVELS = ['error', 'warn', 'info', 'debug']
 const { currentContext } = require('./context')
 
 function createLogger(options = {}) {
-  const bot = options.bot || null
+  const context = currentContext(options.bot || null)
+  const bot = options.bot || context.bot || null
   const category = options.category || null
-  const context = currentContext(bot)
   const commandName = context.commandName || options.commandName || null
 
   const levelEnv = String(context.logLevel || options.level || bot?.logLevel || process.env.LOG_LEVEL || (process.env.PLANNER_DEBUG === '1' ? 'debug' : 'info')).toLowerCase()

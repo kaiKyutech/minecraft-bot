@@ -1,3 +1,4 @@
+const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
@@ -13,8 +14,8 @@ const { createLogger } = require('../utils/logger')
  * - その他2x2で可能なレシピ
  */
 module.exports = async function handCraft(bot, params = {}, stateManager) {
-  if (!stateManager) throw new Error('stateManager が提供されていません')
-  if (!params.recipe) throw new Error('recipe パラメータが必要です')
+  if (!stateManager) throw failure('INVALID_ARGUMENT', 'stateManager が提供されていません')
+  if (!params.recipe) throw failure('INVALID_ARGUMENT', 'recipe パラメータが必要です')
 
   const logger = createLogger({ bot, category: 'skill' })
   logger.info(`[HAND_CRAFT] レシピ「${params.recipe}」を手クラフトで実行`)
@@ -22,7 +23,7 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
   // 動的レシピ解決
   const itemName = resolveDynamicRecipe(bot, params.recipe)
   if (!itemName) {
-    throw new Error(`レシピ「${params.recipe}」の解決に失敗しました`)
+    throw failure('RECIPE_NOT_FOUND', `レシピ「${params.recipe}」の解決に失敗しました`)
   }
 
   try {
@@ -39,7 +40,7 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
   } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
-    throw new Error(`手クラフトに失敗しました: ${error.message}`)
+    throw failure(error.code || 'EXECUTION_FAILED', `手クラフトに失敗しました: ${error.message}`)
   }
 }
 
@@ -57,12 +58,12 @@ function resolveDynamicRecipe(bot, recipeType) {
       // インベントリから原木・幹を探し、対応する板アイテム名を算出する
       const logItem = inventory.find(item => /(_log|_stem)$/.test(item.name))
       if (!logItem) {
-        throw new Error('原木がインベントリにありません')
+        throw failure('ITEM_NOT_FOUND', '原木がインベントリにありません')
       }
 
       const logMatch = logItem.name.match(/^(stripped_)?(.+?)(_log|_stem)$/)
       if (!logMatch) {
-        throw new Error(`原木の名前を板に変換できません: ${logItem.name}`)
+        throw failure('ITEM_NOT_FOUND', `原木の名前を板に変換できません: ${logItem.name}`)
       }
 
       const [, , species] = logMatch
@@ -93,6 +94,6 @@ function resolveDynamicRecipe(bot, recipeType) {
       if (mcData && mcData.itemsByName[recipeType]) {
         return recipeType
       }
-      throw new Error(`未知のレシピタイプ: ${recipeType}`)
+      throw failure('RECIPE_NOT_FOUND', `未知のレシピタイプ: ${recipeType}`)
   }
 }
