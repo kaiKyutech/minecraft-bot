@@ -2,7 +2,7 @@ const {test}=require('node:test');const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {root,connect}=require('../helpers/live');
 const {handleChatCommand}=require('../../planner_bot/src/commands');
-test('!info vision returns a PNG and closes viewer/browser',{timeout:60000,todo:'Current capture.js references undefined logger; browser launch is not reached'},async()=>{
+test('!info vision returns a PNG and closes viewer/browser',{timeout:60000},async()=>{
   let bot;const start=Date.now();const record={input:'!info vision {"yaw":90,"pitch":0,"renderWait":1000}',gpuAuthorizedOn:'2026-10-09'};
   try{
     bot=await connect('flat','SurveyVision');

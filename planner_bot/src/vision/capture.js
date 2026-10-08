@@ -36,7 +36,8 @@ async function capture(bot, stateManager, params = {}) {
     const viewerStartTime = Date.now();
     if (!bot.viewer) {
       const { mineflayer: mineflayerViewer } = require('prismarine-viewer');
-      viewer = mineflayerViewer(bot, { port, firstPerson: true });
+      mineflayerViewer(bot, { port, firstPerson: true });
+      viewer = bot.viewer;
       logger.info(`[VISION] Viewer started on port ${port}`);
       // Viewerのサーバー起動を待つ
       await new Promise(resolve => setTimeout(resolve, 1000));
