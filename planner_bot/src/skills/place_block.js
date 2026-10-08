@@ -1,5 +1,6 @@
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
+const { skillCandidates, canPlaceBlockAt } = require('../navigation/placement_search')
 const { createLogger } = require('../utils/logger')
 
 /**
@@ -28,32 +29,13 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     await interruptible(bot, () => bot.equip(blockItem, 'hand'))
     await interruptible(bot, () => delay(50)) // 装備待ち（1.20.xでは短縮可能）
 
-    // ボットの位置を取得
-    const botPos = bot.entity.position.floored()
-
-    // 設置候補位置（ボットの目の前の位置）
-    const placeOptions = [
-      botPos.offset(1, 0, 0),   // 東側
-      botPos.offset(-1, 0, 0),  // 西側
-      botPos.offset(0, 0, 1),   // 南側
-      botPos.offset(0, 0, -1),  // 北側
-      botPos.offset(1, 0, 1),   // 南東
-      botPos.offset(-1, 0, -1)  // 北西
-    ]
+    const placeOptions = skillCandidates(bot)
 
     let placed = false
     for (const placePos of placeOptions) {
-      // 設置位置が空いているかチェック
-      const targetBlock = bot.blockAt(placePos)
-      if (!targetBlock || targetBlock.name !== 'air') {
-        continue // この位置は使用不可
-      }
-
-      // 参照ブロック（設置位置の下のブロック）をチェック
-      const referenceBlock = bot.blockAt(placePos.offset(0, -1, 0))
-      if (!referenceBlock || referenceBlock.name === 'air') {
-        continue // 参照ブロックがない
-      }
+      const check = canPlaceBlockAt(bot, placePos, 'skill')
+      if (!check.canPlace) continue
+      const referenceBlock = check.adjacentBlock
 
       try {
         // primitives.placeBlockを使用
