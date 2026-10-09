@@ -2,6 +2,21 @@ const { getLogger } = require('./logging')
 const { getStateValue, evaluateCondition } = require('./state_operations')
 const { loadCompositeStateDependencies } = require('./relevance')
 const { MAX_ITERATIONS } = require('./options')
+const effectIndexes = new WeakMap()
+function effectIndex(actions) {
+  let index = effectIndexes.get(actions)
+  if (!index) {
+    index = new Map()
+    for (const action of actions) {
+      for (const key of Object.keys(action.effects || {})) {
+        if (!index.has(key)) index.set(key, [])
+        index.get(key).push(action)
+      }
+    }
+    effectIndexes.set(actions, index)
+  }
+  return index
+}
 function buildHeuristicContext(finalGoal, goalAction, actions) {
   return {
     finalGoal,
@@ -397,7 +412,8 @@ function buildRequirementFromCondition(condition) {
 function findActionsForRequirement(key, requirement, actions) {
   const candidates = []
 
-  for (const action of actions) {
+  // Prepared action arrays are immutable; preserve their original tie order.
+  for (const action of (effectIndex(actions).get(key) || [])) {
     if (!action.effects || action.effects[key] === undefined) continue
 
     const contribution = computeActionContribution(action.effects[key], requirement)

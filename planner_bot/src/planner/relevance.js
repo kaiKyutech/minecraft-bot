@@ -1,8 +1,10 @@
 const { loadStateSchema } = require('./state_builder')
 const { getStateValue, evaluateCondition } = require('./state_operations')
 const { getLogger } = require('./logging')
+const dependencyTables = new WeakMap()
 function loadCompositeStateDependencies() {
   const schema = loadStateSchema()
+  if (dependencyTables.has(schema)) return dependencyTables.get(schema)
   const dependencies = {}
 
   // inventory_states, environment_states, world_statesの全てをチェック
@@ -25,6 +27,7 @@ function loadCompositeStateDependencies() {
     }
   }
 
+  dependencyTables.set(schema, dependencies)
   return dependencies
 }
 

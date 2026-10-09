@@ -6,7 +6,7 @@ async function scenario(adaptive, pathDecisionTimeout=false) {
  const positions=[new Vec3(1,64,0),new Vec3(2,64,0)], attempts=[],samples=[],dug=[];
  const bot={version:'1.20.1',username:'study',entity:{position:new Vec3(0,64,0)},logLevel:'error',logWriter(){},blockAt(p){return{name:'oak_log',position:p}},async unequip(){}};
  const primitives={async findBlock(){return {position:positions[0]}},async findBestTool(){return null},async findBlocks(bot,p){samples.push(p.count);return positions.slice(0,p.count).map(position=>({position,name:'oak_log'}))},async moveTo(bot,p){attempts.push(p.position.x);if(p.position.x===1)throw new Error(pathDecisionTimeout?'Took to long to decide path to goal!':'moveTo timeout (30000ms)')},async digBlock(bot,p){dug.push(p.position.x)}};
- let source=fs.readFileSync(filename,'utf8');if(adaptive){
+ let source=fs.readFileSync(path.join(__dirname,'fixtures/gather-before.js'),'utf8');if(adaptive){
   source=replace(source,'count: searchSampleSize,','count: Math.min(32, Math.max(searchSampleSize, avoidedPositionKeys.size + 1)),');
   source=replace(source,"message.includes('path was stopped') ||","message.includes('took to long to decide path to goal') || message.includes('path was stopped') ||");
  }

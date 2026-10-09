@@ -1,7 +1,7 @@
 const { MinHeap } = require('./priority_queue')
 const { parseGoalInput, getGoalStateFromParsed, adjustGoalForCurrentState } = require('./goals')
 const { buildHeuristicContext, isGoalSatisfied, calculateHeuristic, buildRequirementFromGoalTarget, computeRequirementDeficit, formatRequirement } = require('./heuristic')
-const { getStateValue, arePreconditionsSatisfied, applyEffects, evaluateCondition, serializeState, toPlanStep } = require('./state_operations')
+const { getStateValue, arePreconditionsSatisfied, applyEffects, evaluateCondition, createStateSerializer, toPlanStep } = require('./state_operations')
 const { analyzeRelevantVariables, isActionRelevant } = require('./relevance')
 const { diagnoseGoalFailure } = require('./failure_diagnosis')
 const { buildState } = require('./state_builder')
@@ -31,6 +31,7 @@ function checkBudget(options) {
 
 async function planPrepared(goalInput, worldState, options = {}) {
   try {
+  const serializeState = createStateSerializer()
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
 

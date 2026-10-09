@@ -1,4 +1,4 @@
-param([ValidateSet('before','G','AB')][string]$Phase, [int[]]$Cases = (0..13))
+param([ValidateSet('before','G','A','AB')][string]$Phase, [int[]]$Cases = (0..13), [switch]$Concurrent)
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $server = (Resolve-Path -LiteralPath (Join-Path $repo '../isg/server-natural')).Path
@@ -21,7 +21,8 @@ foreach ($index in $Cases) {
       if ((Listening) -and (Select-String -LiteralPath "$server\logs\latest.log" -Pattern 'Done \(' -Quiet)) { $ready=$true;break }
     }
     if (-not $ready) { throw 'Server startup timeout' }
-    & node (Join-Path $PSScriptRoot 'live.cjs') $Phase $index
+    $script = if ($Concurrent) { 'concurrent.cjs' } else { 'live.cjs' }
+    & node (Join-Path $PSScriptRoot $script) $Phase $index
     if ($LASTEXITCODE -ne 0) { throw 'Live trial script failed' }
   } finally {
     if (-not $process.HasExited) {

@@ -206,6 +206,22 @@ function serializeState(state) {
   return stableStringify(state)
 }
 
+// Search nodes and their shared subobjects are immutable. A fresh serializer is
+// required per plan; live observations and mutable API inputs use serializeState.
+function createStateSerializer() {
+  const cache = new WeakMap()
+  function encode(value) {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value)
+    if (cache.has(value)) return cache.get(value)
+    const encoded = Array.isArray(value)
+      ? '[' + value.map(encode).join(',') + ']'
+      : '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + encode(value[key])).join(',') + '}'
+    cache.set(value, encoded)
+    return encoded
+  }
+  return encode
+}
+
 function toPlanStep(action) {
   return {
     action: action.name,
@@ -215,4 +231,4 @@ function toPlanStep(action) {
   }
 }
 
-module.exports = { getStateValue, arePreconditionsSatisfied, applyEffects, evaluateCondition, serializeState, toPlanStep }
+module.exports = { getStateValue, arePreconditionsSatisfied, applyEffects, evaluateCondition, serializeState, createStateSerializer, toPlanStep }
