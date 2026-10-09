@@ -60,6 +60,13 @@ async function digBlock(bot, params = {}) {
     throw failure('INVALID_ARGUMENT', '掘削対象の座標が必要です')
   }
 
+  // digTime is captured once by mineflayer. Let a short fall finish before
+  // starting its timer; sustained flight/swimming retains the normal penalty.
+  const landingDeadline = Date.now() + 1000
+  while (bot.entity?.onGround === false && Date.now() < landingDeadline) {
+    await interruptible(bot, () => new Promise(resolve => setTimeout(resolve, 25)))
+  }
+  checkpoint(bot)
   const block = bot.blockAt(targetPos)
   if (!block) {
     throw failure('BLOCK_NOT_FOUND', '指定位置にブロックが存在しません')
