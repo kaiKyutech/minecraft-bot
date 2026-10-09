@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-09、01リファクタリング＋02/03＋05 G/A/B＋06実行修正版。Minecraft 1.20.1で回帰検証した。
+2026-10-09、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋08照度・松明API版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -176,7 +176,7 @@ primitiveはcamelCaseとsnake_caseの両方を受け付ける。
 | 新しい呼び出し | 既存の実行・移動等への作用 |
 |---|---|
 | observe / planGoal / refresh / info（vision以外）/ status | 継続 |
-| executeGoal / executeSkill / executePrimitive / placeBlock / navigate（下記chest続行以外） | 中断・終了を待つ。follow/idle/watchも停止、チェストを閉じる |
+| executeGoal / executeSkill / executePrimitive / placeBlock / placeTorch / navigate（下記chest続行以外） | 中断・終了を待つ。follow/idle/watchも停止、チェストを閉じる |
 | chestDeposit / chestWithdraw / chestClose | 開いたセッション内で逐次実行。stop・置換後の未開始続行はCANCELLED |
 | look / startIdle | 従来どおりカメラ操作を開始。実行の置換はしない |
 | chat / echo / history / speak系 | 継続。chatは開いたチェストを閉じる |
@@ -215,6 +215,39 @@ withdrawはcontainer側のスロットだけを参照し、プレイヤー側の
 02のexecuteGoalは、関連状態が変わらない失敗を有限回で終了する。時刻・視線・微小な位置変化は進展と扱わない。
 補助目標や道具準備も同じ実行の失敗記録を共有する。別のexecuteGoalは新しい記録から開始する。
 通常の計画内容・再計画・環境ブロックを資源にする動作は維持する。
+
+
+### ⑧：持っている松明を近くへ置く
+
+```js
+const observed = await api.observeFast({ darkBelow: 8, torchRadius: 5 })
+// 呼び出す側が必要と判断したときだけ実行する。
+const placed = await api.placeTorch({ signal: controller.signal })
+if (placed.ok) console.log(placed.data.position, placed.data.placement, placed.data.afterLight)
+```
+
+`placeTorch({ radius=3, placement='auto', darkBelow=8, torchRadius=5, signal }={})`。
+radiusは1〜4の整数。placementはauto / floor / wall。後者2つは設置形式を限定する。darkBelow/torchRadiusはobserveFastと同じ意味で、返却するbeforeLight/afterLightに使う。
+
+在庫の通常torchを1本だけ装備して設置する。作成・採集・自動点灯・移動は行わない。現在の床座標を中心とした半径radius、上下±1の読み込み済み空気（air/cave_air/void_air）を調べ、下面または水平の全面の固体を参照する。天井、草、水、葉、半ブロック等を参照しない。手が届く目から4.5ブロック以内の面に限定する。
+
+自分のXZ列と身体に重なるマス、視線方向の最初の約2ブロックの通路（横幅約1.6）を除外する。背面・側面、低い位置、近距離を優先し、最大8候補を試す。未来の経路を予約する保証はない。正面しか置けない通路ではPLACEMENT_FAILEDになり得る。通常の設置で回る視線を終了前に元に戻す（data.viewRestoredで確認できる）。中断後は新しい視線操作を開始しない。
+
+成功dataの例：
+
+```js
+{
+  position: { x: 200, y: 41, z: 199 },
+  block: 'wall_torch', placement: 'wall',
+  beforeLight: { block: 0, sky: 0, level: 0, dark: true, torchNearby: false },
+  afterLight: { block: 0, sky: 0, level: 0, dark: false, torchNearby: true },
+  attempts: 1, viewRestored: true
+}
+```
+
+結果は通常のResult。設置後の指定マスがtorch / wall_torchなら、mineflayerが例外を返しても成功。空気・別ブロック・未読込は成功にしない。光の配信が遅れる場合はafterLightのlevelが0でもtorchNearby=trueとなる。torchRadiusを設置位置より小さくすると、そのフラグはtrueを保証しない。通常torchがなければITEM_NOT_FOUND、置ける面や確認済みの設置がなければPLACEMENT_FAILED、中断はCANCELLED。発行済み設置の中断では、実際には1本置かれる場合がある。
+
+OperationManagerを通り、既存の実行・移動・follow/idle/watchを中断して終了を待つ。signal / stop / 新しい実行による中断でも、発行済みequip/place/lookの終了まで所有権を保持する。observeFastはこの操作を停止しない。引数不正・開始前にabort済みの要求は既存の操作を停止しない。
 
 ## カメラ・待機・会話
 
