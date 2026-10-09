@@ -20,9 +20,10 @@ test('navigation directly stops follow and returns previousTarget',async()=>{
 });
 test('skill placement keeps six candidates in east/west/south/north/diagonal order',async()=>{
   const visited=[];const attempts=[];
-  const skill=load(path.resolve(__dirname,'../../planner_bot/src/skills/place_block.js'),{'../primitives':{placeBlock:async(bot,params)=>{attempts.push(params);if(attempts.length<6)throw new Error('blocked');}}});
+  let placed=null;
+  const skill=load(path.resolve(__dirname,'../../planner_bot/src/skills/place_block.js'),{'../primitives':{placeBlock:async(bot,params)=>{attempts.push(params);if(attempts.length<6)throw new Error('blocked');placed=params.reference.offset(0,1,0);}}});
   const bot={entity:{position:new Vec3(0,1,0)},inventory:{items:()=>[{name:'chest'}]},equip:async()=>{},systemLog(){},blockAt:pos=>{
-    if(pos.y===1)visited.push([pos.x,pos.z]);return {name:pos.y===1?'air':'stone',position:pos};}};
-  await skill(bot,{blockName:'chest'},{});assert.deepEqual(visited,[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]]);
+    if(pos.y===1)visited.push([pos.x,pos.z]);return {name:placed?.equals(pos)?'chest':pos.y===1?'air':'stone',position:pos};}};
+  await skill(bot,{blockName:'chest'},{});assert.deepEqual(visited.filter((_,i)=>i%2===0),[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]]);
   assert.equal(attempts.length,6);
 });

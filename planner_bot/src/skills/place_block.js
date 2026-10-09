@@ -45,16 +45,19 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
           face: { x: 0, y: 1, z: 0 }  // 上面に設置
         }))
 
-        logger.info(`[PLACE_BLOCK] ${params.blockName}を${placePos}に設置完了`)
+      } catch (placeError) {
+        checkpoint(bot)
+        if (placeError?.name === 'AbortError') throw placeError
+      }
+      checkpoint(bot)
+      // A timeout can race with the authoritative block update. Conversely,
+      // a resolved mineflayer promise is not enough if the block is absent.
+      if (bot.blockAt(placePos)?.name === params.blockName) {
+        logger.info(`[PLACE_BLOCK] ${params.blockName}を${placePos}に設置確認`)
         placed = true
         break
-
-      } catch (placeError) {
-      checkpoint(bot)
-      if (placeError?.name === 'AbortError') throw placeError
-        logger.info(`[PLACE_BLOCK] ${placePos}への設置失敗、次の位置を試行`)
-        continue
       }
+      logger.info(`[PLACE_BLOCK] ${placePos}に対象ブロックなし、次の位置を試行`)
     }
 
     if (!placed) {
@@ -62,12 +65,15 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
         checkpoint(bot)
         try {
           await interruptible(bot, () => primitives.placeBlock(bot, { reference: candidate.adjacentBlock.position, face: candidate.face }))
-          placed = true
-          logger.info(`[PLACE_BLOCK] ${params.blockName}を${candidate.position}に設置完了（fallback）`)
-          break
         } catch (error) {
           checkpoint(bot)
           if (error.name === 'AbortError') throw error
+        }
+        checkpoint(bot)
+        if (bot.blockAt(candidate.position)?.name === params.blockName) {
+          placed = true
+          logger.info(`[PLACE_BLOCK] ${params.blockName}を${candidate.position}に設置確認（fallback）`)
+          break
         }
       }
     }
