@@ -36,3 +36,15 @@ test('02 underground: one-block passage places furnace and smelts or fails finit
   if(result.ok)assert.ok(bot.inventory.items().some(i=>i.name==='iron_ingot'));console.log('02 tunnel',Date.now()-start,JSON.stringify(result));
  }finally{await api.stop();bot.quit()}
 });
+test('02 fallback: snow, cave air and an upper niche remain usable after six legacy candidates fail',{timeout:45000},async()=>{
+ const bot=await connect('flat','PlacePolicy02'),api=createBotApi(bot,{logLevel:'error'});
+ try{
+  await rcon('flat',['tp PlacePolicy02 1200 -60 1200']);await wait(1200);
+  for(const replacement of ['snow[layers=1]','cave_air']){
+   await rcon('flat',['fill 1196 -61 1196 1204 -61 1204 stone','fill 1196 -60 1196 1204 -57 1204 air',`fill 1198 -60 1198 1202 -60 1202 ${replacement}`,'setblock 1200 -60 1200 air','clear PlacePolicy02','give PlacePolicy02 furnace','tp PlacePolicy02 1200.5 -60 1200.5']);await wait(400);
+   const result=await api.executeSkill('place_block',{blockName:'furnace'});assert.equal(result.ok,true,JSON.stringify(result));
+  }
+  await rcon('flat',['fill 1198 -61 1198 1202 -57 1202 stone','fill 1200 -60 1200 1200 -59 1200 air','setblock 1201 -59 1200 air','clear PlacePolicy02','give PlacePolicy02 furnace','tp PlacePolicy02 1200.5 -60 1200.5']);await wait(400);
+  const result=await api.executeSkill('place_block',{blockName:'furnace'});assert.equal(result.ok,true,JSON.stringify(result));assert.equal(bot.blockAt(new Vec3(1201,-59,1200)).name,'furnace');
+ }finally{await api.stop();bot.quit()}
+});

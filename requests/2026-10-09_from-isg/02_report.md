@@ -21,6 +21,7 @@ masterへの変更・merge・pushは行っていない。
 | 最後のrunnerループ補強後のrunner/executor | 13/13成功 |
 | npm run test:live（最終） | 4/4成功、243.2秒。自然3目標25.5/34.0/46.5秒 |
 | 草上の作業台・単体/ラージchest・timeout | ライブ成功。chestは130個deposit→1個withdraw→129個withdraw全部、空chestの全部失敗も確認 |
+| 追加のB2ライブ確認 | 雪の層・cave_air・従来6候補がすべて固体で塞がれた上段の窪みへのfurnace設置が成功（03の完了検証時に追加、1/1成功） |
 | 地下y=16・幅1通路でiron_ingot:1 | 2回成功。14.9秒・14.3秒。furnace/raw_iron3/acacia_planks3/丸石/木・石ツルハシを与え、設置から精錬まで確認 |
 | 既存flatライブ全機能 | 成功。最後の検証64.9秒 |
 | 自然資源配置区画の木/石ツルハシ/かまど | 成功。初回の回帰では25.7/32.3/42.9秒。元地形とは別条件 |
@@ -45,6 +46,6 @@ masterへの変更・merge・pushは行っていない。
 - キャッシュに02-offline-final.log、02-live-final.log、02-natural-run.log、02-natural-detail.log、02-03-results/02-natural*.jsonを保存。初期worldStateは大きいためコミットしない。
 - 61cd389：B1と承認済み計画。f34a9cc：B2。227b0c2：B4/B3回帰。残りのライブ試験と文書は02の完了コミットへまとめる。
 - 生成は版別cache。追跡YAML・golden・.gitignoreを変更していない。秘密を記録していない。①bのファイル、他プロジェクトのコード・設定、Minecraftクライアントに触れていない。
-- テストbotはquit。今回起動したflat PID9344、natural PID34672は03のライブ検証にも使用し、03完了時にRCON save-all→stopで終了する。
+- テストbotはquit。今回起動したflat PID9344、natural PID34672は03のライブ検証にも使用し、03完了時にRCON save-all→stopで終了する（終了確認は03_reportに記載）。
 
 02の最終ライブコマンドは終了コード0。計画変更が必要な回帰はないため、承認どおり03へ続行する。

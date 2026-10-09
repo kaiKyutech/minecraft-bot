@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-09、01リファクタリング版。Minecraft 1.20.1で回帰検証した。
+2026-10-09、01リファクタリング＋02バグ修正・03追加API版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -71,6 +71,7 @@ factoryと内部の低レベル関数にはこの契約を適用しない。
 | `CHEST_NOT_OPEN`, `CHEST_NOT_FOUND`, `PLACEMENT_FAILED` | チェスト操作・設置の失敗 |
 | `TIMEOUT`, `CANCELLED`, `OPERATION_CONFLICT` | 移動時間超過、中断、向き指定visionの競合 |
 | `VISION_CAPTURE_FAILED`, `EXECUTION_FAILED`, `INTERNAL_ERROR` | 撮影失敗、その他の実行失敗、想定外エラー |
+| `VISION_NOT_STARTED` | captureVision前にstartVisionが必要 |
 
 内部依存の例外に独自codeがある場合は保持する。未知の失敗は汎用codeとmessageを受け取る。
 
@@ -106,7 +107,7 @@ YAMLのaction名で指定する形式、`action count:8` の解析も維持し�
 方角は**北=0°（Z−）、西=90°（X−）、南=180°（Z＋）、東=270°または−90°（X＋）**。
 scanBlocksとmoveInDirectionも同じyaw規約。
 visionは1920×1080 PNGを取得し、`screenshots/screenshot_<username>.png` に保存する。
-撮影ごとにviewer/browserを閉じる。同じbotの撮影は逐次実行する。
+通常は撮影ごとにviewer/browserを閉じる。startVisionの常設viewerを利用した場合は、そのviewerを維持し、一時browserだけを閉じる。同じbotの撮影は逐次実行する。
 実行またはfollow中にyaw/pitchを指定すると `OPERATION_CONFLICT`。
 向きを省略した撮影は実行と並行でき、botの向きを変更しない。
 ChromeはPuppeteerのブラウザを使い、必要なら起動前に `PUPPETEER_EXECUTABLE_PATH` を指定する。
@@ -268,3 +269,138 @@ stateManager.silentRefreshとbot.logFilterは既存の互換用に残すが、�
 `npm run test:live` はフラット/自然の許可済みテストサーバーを必要とする。
 `npm run test:vision` はGPU撮影と後処理、競合を検証する。
 詳しい実行条件は `tests/README.md`、変更・残件は `requests/2026-10-09_from-isg/01_report.md`。
+
+## 03：isgの判断ループ用API
+
+### 候補をまとめて評価する（F1）
+
+```js
+const world = await api.observe()
+if (!world.ok) throw new Error(world.error.message)
+const evaluated = await api.evaluateGoals([
+  'inventory.wooden_pickaxe:1', 'inventory.stone_pickaxe:1',
+  'inventory.furnace:1', 'inventory.iron_pickaxe:1'
+], { worldState: world.data, maxMs: 1000 })
+if (evaluated.ok) {
+  const choices = evaluated.data.results.filter(r =>
+    r.status === 'plannable' && r.estimatedMs < 60000)
+}
+```
+
+`evaluateGoals(goals, { worldState, maxMs=1000, perGoalMs, signal }={})`。
+goalsは既存のgoal文字列の非空配列。worldStateは完全observeのdataを使う。
+省略時は独立した完全観測を行う。observeFastのdataはINVALID_ARGUMENT。
+観測・domain準備・資源要約・探索を全体の時間予算に含める。初回domain準備は同期処理もあり、予算の厳密な実時間保証ではない。毎回の判断には準備済みdomainと共有worldStateを使う。
+
+候補あたりの既定予算はmax(20, maxMs / 候補数)ms。`perGoalMs` で変更できる。
+重い1候補に全体の予算を使わせず、後続候補も試す。結果は入力順。
+全体の期限前に短い返却用の余裕を設け、探索・観測自体を終了する。返却後に探索を裏で続けない。
+signalは候補評価だけを中断し、実行中の移動/GOAPを停止しない。
+
+data：`{ results, durationMs, observationMs, preparationMs, timedOut }`。
+
+| resultsのフィールド | 意味 |
+|---|---|
+| goal / status | plannable / unplannable / unevaluated / invalid |
+| plan / stepCount | 通常planGoalと同じaction/skill/params/cost配列と手数。未評価/不能はnull |
+| estimatedMs | 行動種類・個数・最寄りブロックの直線距離からの実行時間目安 |
+| estimateDetails | モデル名、実測に基づく係数、step別内訳、distanceType、reachabilityKnown、資源要約の完全性 |
+| resources | block、count、usage（consume/station）、category、nearestPosition、nearestDistance、selection |
+| diagnosis | 通常plannerと同じ不足診断。未評価はnull |
+| reason | 未評価はbudget_exceeded。不能とは区別する |
+
+resourcesは計画が使う環境資源の見積もり。カテゴリ採集は最寄りの種類を参考として出しcategoryも併記する。
+実行スキルのカテゴリキャッシュや到達性によって実際の種類・採集先は変わる。selectionはnearest_estimate。
+同じ既存作業台/かまどの利用はstation・count=1としてまとめる。計画で新しく設置する設備は、既存の環境資源として数えない。
+距離が不明ならnull。到達できることを保証する値ではない（reachabilityKnown:false）。
+estimatedMsはGOAPのcostを変換した値ではなく、ライブ測定に基づく別のモデル。材料不足・地形・再計画によって差が出る。
+
+明らかな不足は、消費や負の制約・数量を無視して可能性を広げた資源依存の閉包から判定する。
+この緩い条件でも到達できない場合だけ早期診断し、計画可能とは判定しない。
+計画可能な候補は従来A*を最後まで実行し、同じ計画を返す。通常planGoalには事前判定も時間制限も適用しない。
+同一版・goal・GOAP factsの完了結果をbotごとに最大256件再利用する。状態内容が変わると別結果になり、距離の見積もりは毎回更新する。未評価はcacheしない。
+
+### 軽い観測（F3）
+
+`observeFast({ range=16, maxMs=50, maxChecks=12000 }={})`。
+rangeは1〜64の整数。dataは `kind:'fast_observation'` で、完全worldStateとは別の契約。
+
+- position、yaw/pitch（度）、health/food、time、inventory/equipment。
+- resources：種類ごとのcount / nearestPosition / nearestDistance。categories：同じ形式のカテゴリ要約。
+- players / drops：range内の名前・座標・距離と、取得可能な落下アイテム情報。
+- skyVisible（true/false/null）、location（surface/underground/unknown）、light（block/sky、不明はnull）。空の判定は読み込み済みの頭上の柱に基づく推定。
+- complete / scanComplete / unloadedChecks / checksUsed / totalChecks / observedAt / ageMs / durationMs / range。
+
+資源範囲は現在位置のfloorを中心とする球。座標・距離は実際の位置から計算する。
+部分走査を次回へ持ち越し、同じ位置・範囲の観測を再利用する。移動、範囲変更、近傍blockUpdate、chunkのload/unloadで無効化する。実行cacheは上書きしない。
+complete=falseの場合、countは走査済み部分の値であり、全範囲の総数や資源不存在を断定するために使わない。
+ageMsは資源走査開始からの経過時間。位置・在庫等は呼出時に取得する。
+完全観測は `observe()` を使い、F1へ同じdataを使い回す。
+
+### 時間内に座標へ近づく（F5）
+
+```js
+const result = await api.moveToward({ x: 120, z: -40 }, {
+  maxMs: 3000, range: 2, signal: controller.signal
+})
+```
+
+`moveToward({x,z,y?}, {maxMs=5000,range=2,signal}={})`。
+y省略はGoalNearXZで水平移動、指定時はGoalNearで3D移動。pathfinderの通常の移動能力を使い、特定の地表高さを推測・固定しない。
+
+到着・時間切れ・道なしはok:trueで、dataにtarget、startPosition/endPosition、startDistance/endDistance、distanceReduced、reached、reason、distanceTypeを返す。
+reasonはarrived/timeout/no_path。reachedはpathfinderの床座標goalによる到着判定で、distanceは実座標での直線距離。
+途中まで進んだtimeoutも正常な探索結果。進展0も距離で分かる。
+中断はok:false、error.code=CANCELLED、detailsに同じ移動結果とreason:cancelledを保持する。
+すでにabort済みの要求など、開始前に中断された場合は従来のOperationManagerのCANCELLED契約でdetailsがないこともある。
+
+予算は呼出から計測し、前の実行の停止待ちで期限に達した場合は新しい移動を始めない。
+発行済み作用のdrain・後処理は予算後にも待つ。終了時には目的地を解除し、次の所有者へ古い処理を残さない。
+観測・候補評価・撮影は移動と並行できる。従来gotoCoords/moveInDirectionは維持する。
+
+### 常設の一人称撮影（F4）
+
+```js
+await api.startVision({ port: 3108, width: 640, height: 360 })
+try {
+  const shot = await api.captureVision({ type: 'jpeg', quality: 80 })
+  if (shot.ok) console.log(shot.data.format, shot.data.durationMs)
+} finally {
+  await api.stopVision()
+}
+```
+
+startVisionの既定はwidth=640/height=360/viewDistance=4。port省略は空きポート。
+dataはurl/port/width/height/viewDistance/durationMs/alreadyStarted。デモにはurlを表示できる。
+初回だけviewer/browser起動と描画待ち（renderWait=4000ms）を行う。重複startは現在のセッションを返し、サイズ変更はstop後に再startする。
+ChromeはPUPPETEER_EXECUTABLE_PATH、またはWindowsの既知のChrome/Edge配置を使用できる。executablePath指定も可能。
+
+captureVisionはtype=jpeg/png、quality=0〜100（jpeg既定80）。PNGではqualityを使わない。
+dataはimage（base64）、format、width/height、metadata（position/yaw/pitch/timestamp）、durationMs。
+描画済みpageを撮り、首を動かさない。別方向のカメラ撮影は今回追加していない。
+ディスクには自動保存しない。保存が必要ならimageをBufferへ変換して書き込む。
+
+start/capture/stopと旧info visionはbotごとに逐次化する。使っていないときはGPUを起動しない。
+stopVisionは冪等でdata.stoppedを返す。通常stopは実行/移動だけを止め、常設撮影は維持する。
+botのend、CLIのshutdown、SIGINT/SIGTERMの通常終了経路でも解放する。強制的なOS終了ではJSの後処理を実行できない。
+ホスト側が独自の終了ハンドラを持つ場合、そのfinallyでstopVisionをawaitする。
+旧info visionのPNG/1920×1080/ファイル保存/方向指定の契約は維持する。常設viewerを閉じない。
+
+### 実行の進捗（F2）
+
+```js
+await api.executeGoal('inventory.stone_pickaxe:1', {
+  signal: controller.signal,
+  onProgress(event) { console.log(event.type, event.goal, event.stepIndex) }
+})
+```
+
+通知はgoal_start、plan、step_start/step_success/step_failure/step_skipped、replan、subgoal_enter/subgoal_exit、goal_end。
+共通フィールドはoperationId、sequence（単調増加）、timestamp、type、goal、depth。
+plan/replanにはplanId、plan、stepCount。stepにはplanId、0始まりstepIndex、stepCount、step（action/skill/params/cost）。
+失敗通知にはcode/messageまたはmissing、補助目標通知には親との関係・終了のok、goal_endにはok/code。
+道具準備と補助目標も通知し、再計画は新しいplanIdを使う。置換された実行の通知はoperationIdで識別する。
+完了Resultの契約は変わらない。callbackの戻り値は待たず、throw/rejectはログに記録して実行を続ける。
+callbackへ渡したplan/eventを書き換えても実行内容には影響しない。通知からAPIを呼ぶ場合は、そのAPIの所有権規則に従う。
+
+03の実測値・完了検証・残件は `requests/2026-10-09_from-isg/03_report.md`。

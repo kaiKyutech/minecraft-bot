@@ -5,7 +5,7 @@
 
 ## 実行
 
-- `npm test`：サーバーなし。184件（既知失敗修正の回帰2件を含む）。約43秒（CPU負荷で変動）。
+- `npm test`：サーバーなし。02/03の追加回帰を含む202件。約56秒（CPU負荷で変動）。
 - `npm run test:known`：refresh と再計画診断を通常の回帰テストとして検証。約2秒。
 - `npm run test:live`：フラット25565と自然25567を必要とする。約3分。
 - `npm run test:vision`：GPU撮影、再撮影、実行中の方向競合、起動・終了失敗時の後処理を検証。GPUは依頼者の許可済み。Chromeが未配置なら起動前に PUPPETEER_EXECUTABLE_PATH を指定する。
@@ -40,9 +40,14 @@ Windows の Start-Process は Hidden で起動する。終了は RCON save-all�
 | `offline/runner.test.cjs` | 数量削減、循環/深さ、診断metadata |
 | `offline/placement.test.cjs` | skill/creativeの別policy、順序、立体・同距離候補 |
 | `offline/navigation.test.cjs` | verticalMode 4種、直接stopFollow、設置6候補の順番 |
+| `offline/failure-guard.test.cjs`, `chest-all.test.cjs`, `timeout.test.cjs` | 反復失敗の上限、chest全量と境界、timeout後の停止 |
+| `offline/features03.test.cjs` | 評価70件一致、予算/中断/cache、資源不足事前判定、軽い観測、探索移動、通知の非破壊性 |
 | `known-failures/current.test.cjs` | refresh / CommonJS循環依存修正の回帰。TODOなし |
 | `live/features.test.cjs` | フラットの全機能群、自然の3GOAP目標 |
+| `live/bugfix.test.cjs` | 地下通路の鉄精錬、草設置、chest全量、timeout |
+| `live/features03.test.cjs` | 20候補評価・2ワールド軽い観測・途中移動/未ロード/到達不能/no_path・進捗 |
 | `gpu/vision.test.cjs` | vision の実GPU呼び出し・競合・後処理 |
+| `gpu/persistent.test.cjs` | 常設10枚、旧撮影併用、移動中、起動失敗、bot終了/SIGTERMのbrowser解放 |
 | `live/observe.cjs` | 実測記録と worldState を採る補助スクリプト |
 | `helpers/module.js` | 本体を改変せず require 依存だけ差し替える試験用ローダー |
 | `helpers/live.js` | 接続、RCON、接続版に合わせたキャッシュ生成（旧追跡ディレクトリの保存/復元も残す） |
@@ -80,3 +85,9 @@ executor の単体検証では plan/skill の結果を代用する。実-world�
 
 refresh・循環依存・visionのTODOは01で外した。未修正の動作問題は02へ回し、goldenを更新しない。
 既知失敗の扱いは `requests/2026-10-09_from-isg/00_observations.md` に記録した。
+
+02/03の追加実測は `.cache/minecraft-bot/02-03-results/` に保存する。
+`node tests/tools/02-natural.cjs` は元地形の調査（最大120秒/目標）。NATURAL_NAME/NATURAL_GOALSで対象を選ぶ。
+`node tests/tools/03-calibration.cjs` は自然の専用区画で3目標を実行し、見積もりとステップ通知の時刻を記録する。
+`node tests/tools/03-evaluation-warm.cjs` は03-live.jsonの20候補を、初回・準備・反復で評価する。
+GPUの子プロセス試験はOSの強制killと区別するため、子プロセス内のSIGTERM通常終了ハンドラを呼ぶ。

@@ -48,6 +48,8 @@ function createBotApi(bot, options = {}) {
   }
   const api = {
     observe: () => call('info', () => stateManager.observe(bot)),
+    observeFast: (params = {}) => call('info', () => { ready();paramsObject(params);return require('./planner/fast_observation').observeFast(bot,stateManager,params) }),
+    evaluateGoals: (goals, params = {}) => call('goal', () => { ready(); paramsObject(params); return require('./planner/goal_evaluator').evaluate(bot,stateManager,goals,params) }),
     refresh: () => call('refresh', async () => { const start = performance.now(); await stateManager.refresh(bot); return { durationMs: performance.now() - start } }),
     planGoal: (goal, params = {}) => call('goal', async () => {
       if (typeof goal !== 'string' || !goal.trim()) throw failure('INVALID_ARGUMENT', 'A goal string is required')
@@ -60,7 +62,14 @@ function createBotApi(bot, options = {}) {
     executeGoal: (goal, params = {}) => call('goal', async () => {
       if (typeof goal !== 'string' || !goal.trim()) throw failure('INVALID_ARGUMENT', 'A goal string is required')
       ready()
-      return operations.run('goal', async signal => { await runGoal(bot, params.username || 'api', goal, stateManager, signal); return { goal, message: `目標「${goal}」を完了しました` } }, params)
+      if(params.onProgress!==undefined&&typeof params.onProgress!=='function')throw failure('INVALID_ARGUMENT','onProgress must be a function')
+      const {Progress}=require('./executor/progress')
+      const progress=new Progress(bot,params.onProgress)
+      return operations.run('goal', signal => withContext({progress},async()=>{
+        progress.emit('goal_start',{goal})
+        try{await runGoal(bot, params.username || 'api', goal, stateManager, signal);progress.emit('goal_end',{goal,ok:true});return { goal, message: `目標「${goal}」を完了しました` }}
+        catch(error){progress.emit('goal_end',{goal,ok:false,code:error.name==='AbortError'?'CANCELLED':error.code||'EXECUTION_FAILED'});throw error}
+      }), params)
     }, 'EXECUTION_FAILED'),
     executeSkill: (name, params = {}, execution = {}) => call('skill', () => {
       const fn = action(skills, name, 'UNKNOWN_SKILL'); paramsObject(params)
@@ -81,6 +90,14 @@ function createBotApi(bot, options = {}) {
       const run = () => fn(bot, stateManager, params)
       return ['chestDeposit', 'chestWithdraw', 'chestClose'].includes(name) ? operations.continueChest(run, execution) : operations.run(name, run, execution)
     }, 'EXECUTION_FAILED'),
+    moveToward: (target, execution = {}) => call('navigation', () => {
+      ready();paramsObject(target);paramsObject(execution)
+      if(!Number.isFinite(target.x)||!Number.isFinite(target.z)||(target.y!==undefined&&!Number.isFinite(target.y)))throw failure('INVALID_ARGUMENT','Finite x/z and optional y required')
+      const maxMs=execution.maxMs??5000,range=execution.range??2
+      if(!Number.isFinite(maxMs)||maxMs<0||!Number.isFinite(range)||range<0)throw failure('INVALID_ARGUMENT','maxMs/range must be finite and non-negative')
+      const deadline=performance.now()+maxMs
+      return operations.run('moveToward',signal=>require('./navigation/move_toward').moveToward(bot,target,{...execution,range,deadline},signal),execution)
+    },'EXECUTION_FAILED'),
     placeBlock: (params = {}, execution = {}) => call('creative', () => {
       paramsObject(params)
       return operations.run('placeBlock', () => require('./navigation/placement').placeBlock(bot, stateManager, params), execution)
@@ -96,6 +113,9 @@ function createBotApi(bot, options = {}) {
       return type === 'vision' ? operations.capture(get) : get()
     }, type === 'vision' ? 'VISION_CAPTURE_FAILED' : 'INTERNAL_ERROR'),
     status: () => call('status', () => status(bot, observationManager())),
+    startVision: (params = {}) => call('info', () => {ready();paramsObject(params);return operations.capture(()=>require('./vision/persistent').start(bot,params))},'VISION_CAPTURE_FAILED'),
+    captureVision: (params = {}) => call('info', () => {ready();paramsObject(params);return operations.capture(()=>require('./vision/persistent').capture(bot,params))},'VISION_CAPTURE_FAILED'),
+    stopVision: () => call('info', () => operations.capture(()=>require('./vision/persistent').stop(bot)),'VISION_CAPTURE_FAILED'),
     look: (name, params = {}) => call('look', () => look(bot, name, paramsObject(params))),
     startIdle: (params = {}) => call('idle_on', () => start(bot, paramsObject(params))),
     stop: () => call('stop', () => operations.stop()),
