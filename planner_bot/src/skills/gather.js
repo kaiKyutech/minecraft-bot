@@ -6,6 +6,13 @@ const minecraftData = require('minecraft-data')
 const { loadBlockCategories } = require('../planner/state_builder')
 const { scanBlocks } = require('../utils/block_scanner')
 
+// Replanning invokes gather again. Keep failed physical targets per bot, without
+// retaining disconnected bots. TTL and FIFO bounds apply across item categories.
+const avoidedTargetsByBot = new WeakMap()
+function bounded(value, fallback, maximum) {
+  return Number.isFinite(value) ? Math.max(1, Math.min(maximum, Math.floor(value))) : fallback
+}
+
 /**
  * 中位スキル: gather
  * 前提：(必須)itemName (推奨)回数、範囲
@@ -28,7 +35,8 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   const approachRange = params.approachRange ?? 2
   const collectRadius = params.collectRadius ?? 30
   const collectDelayMs = params.collectDelayMs ?? 200
-  const maxAttempts = params.maxAttempts ?? 20
+  const maxAttempts = bounded(params.maxAttempts, 20, 64)
+  const moveTimeoutMs = bounded(params.moveTimeoutMs, 30000, 60000)
 
   // whileループ開始前に1回だけ最適ツールを決定
   let selectedTool = null
@@ -57,73 +65,91 @@ module.exports = async function gather(bot, params = {}, stateManager) {
 
   let completed = 0
   let attempts = 0
-  const avoidedPositionKeys = new Set()
-  const avoidedPositionOrder = []
-  const maxAvoidListSize = params.maxAvoidListSize ?? 32
-  const searchSampleSize = params.searchSampleSize ?? 1  // デフォルト候補数をさらに削減して探索負荷を軽減
+  let avoidedPositionKeys = avoidedTargetsByBot.get(bot)
+  if (!avoidedPositionKeys) {
+    avoidedPositionKeys = new Map()
+    avoidedTargetsByBot.set(bot, avoidedPositionKeys)
+  }
+  const maxAvoidListSize = bounded(params.maxAvoidListSize, 32, 64)
+  const avoidTtlMs = bounded(params.avoidTtlMs, 180000, 300000)
+  const maxCandidates = bounded(params.maxCandidates, 64, 64)
+  const searchSampleSize = bounded(params.searchSampleSize, 1, maxCandidates)
+  const pruneAvoidance = () => {
+    const now = Date.now()
+    for (const [key, failedAt] of avoidedPositionKeys) {
+      if (now - failedAt >= avoidTtlMs) avoidedPositionKeys.delete(key)
+    }
+    while (avoidedPositionKeys.size > maxAvoidListSize) {
+      avoidedPositionKeys.delete(avoidedPositionKeys.keys().next().value)
+    }
+  }
+  pruneAvoidance()
 
   const rememberFailedTarget = (position) => {
     if (!position) return
     const key = serializePosition(position)
-    if (avoidedPositionKeys.has(key)) return
-    avoidedPositionKeys.add(key)
-    avoidedPositionOrder.push(key)
-    while (avoidedPositionOrder.length > maxAvoidListSize) {
-      const oldest = avoidedPositionOrder.shift()
-      if (oldest) avoidedPositionKeys.delete(oldest)
-    }
+    avoidedPositionKeys.delete(key)
+    avoidedPositionKeys.set(key, Date.now())
+    pruneAvoidance()
     logger.info(`[GATHER] 失敗したターゲットを回避リストに追加: ${key}`)
   }
 
   const acquireTarget = async () => {
-    let candidates
-    try {
-      candidates = await interruptible(bot, () => primitives.findBlocks(bot, {
-        match: matchCondition,
-        maxDistance,
-        count: searchSampleSize,
-        useCube: params.useCube ?? true
+    pruneAvoidance()
+    let sampleSize = Math.min(maxCandidates, Math.max(searchSampleSize, avoidedPositionKeys.size + 1))
+    while (true) {
+      let candidates
+      try {
+        candidates = await interruptible(bot, () => primitives.findBlocks(bot, {
+          match: matchCondition,
+          maxDistance,
+          count: sampleSize,
+          useCube: params.useCube ?? true
+        }))
+      } catch (error) {
+        checkpoint(bot)
+        if (error?.name === 'AbortError') throw error
+        throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
+      }
+
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
+      }
+
+      // Pre-calculate distances to avoid redundant calculations during sort
+      const candidatesWithDistance = candidates.map(c => ({
+        candidate: c,
+        distance: bot.entity.position.distanceTo(c.position)
       }))
-    } catch (error) {
-      checkpoint(bot)
-      if (error?.name === 'AbortError') throw error
-      throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
-    }
+      candidatesWithDistance.sort((a, b) => a.distance - b.distance)
+      const sortedCandidates = candidatesWithDistance.map(c => c.candidate)
 
-    if (!Array.isArray(candidates) || candidates.length === 0) {
-      throw failure('BLOCK_NOT_FOUND', '近くに対象ブロックが見つかりません')
-    }
+      for (const candidate of sortedCandidates) {
+        const key = serializePosition(candidate.position)
+        if (avoidedPositionKeys.has(key)) continue
 
-    // Pre-calculate distances to avoid redundant calculations during sort
-    const candidatesWithDistance = candidates.map(c => ({
-      candidate: c,
-      distance: bot.entity.position.distanceTo(c.position)
-    }))
-    candidatesWithDistance.sort((a, b) => a.distance - b.distance)
-    const sortedCandidates = candidatesWithDistance.map(c => c.candidate)
+        const block = bot.blockAt(candidate.position)
+        if (!block) {
+          rememberFailedTarget(candidate.position)
+          continue
+        }
 
-    for (const candidate of sortedCandidates) {
-      const key = serializePosition(candidate.position)
-      if (avoidedPositionKeys.has(key)) continue
-
-      const block = bot.blockAt(candidate.position)
-      if (!block) {
-        rememberFailedTarget(candidate.position)
-        continue
+        return {
+          position: candidate.position.clone(),
+          name: candidate.name,
+          block
+        }
       }
 
-      return {
-        position: candidate.position.clone(),
-        name: candidate.name,
-        block
+      if (sampleSize >= maxCandidates || candidates.length < sampleSize) {
+        throw failure('BLOCK_NOT_FOUND', '利用可能なブロック候補が見つかりません')
       }
+      sampleSize = Math.min(maxCandidates, sampleSize * 2)
     }
-
-    throw failure('BLOCK_NOT_FOUND', '利用可能なブロック候補が見つかりません')
   }
 
   while (completed < loopCount) {
-    if (attempts++ > maxAttempts) {
+    if (attempts++ >= maxAttempts) {
       throw failure('EXECUTION_FAILED', '資源の収集に失敗しました: 試行回数が上限に達しました')
     }
 
@@ -140,7 +166,8 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       // ブロックまで接近
       await interruptible(bot, () => primitives.moveTo(bot, {
         position: blockInfo.position,
-        range: approachRange
+        range: approachRange,
+        timeout: moveTimeoutMs
       }))
 
       // 掘削直前に選択したツールを再装備
@@ -174,6 +201,7 @@ module.exports = async function gather(bot, params = {}, stateManager) {
     } catch (error) {
       checkpoint(bot)
       if (error?.name === 'AbortError') throw error
+      if (error?.code === 'REPEATED_FAILURE') throw error
       rememberFailedTarget(blockInfo?.position)
 
       if (isRecoverableGatherError(error)) {
@@ -327,6 +355,9 @@ function isRecoverableGatherError(error) {
   const message = error.message.toLowerCase()
 
   return (
+    message.includes('took to long to decide path to goal') ||
+    message.includes('took too long to decide path to goal') ||
+    message.includes('no path to the goal') ||
     message.includes('path was stopped') ||
     message.includes('goal was changed before it could be completed') ||
     message.includes('moveto timeout') ||
