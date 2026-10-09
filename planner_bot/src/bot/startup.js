@@ -132,6 +132,7 @@ async function shutdown(aiBots) {
   console.log('\n[SHUTDOWN] Shutting down...');
 
   console.log('[SHUTDOWN] Disconnecting AI Bots...');
+  await require('../vision/persistent').stopAll();
   for (const bot of aiBots) {
     bot.quit();
   }

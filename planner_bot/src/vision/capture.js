@@ -353,9 +353,9 @@ async function capture(bot, stateManager, params = {}) {
       }
     } finally {
       try {
-        if (viewer && viewer.close) await viewer.close();
+        if (viewer && viewer.close && !require('./persistent').owns(bot, viewer)) await viewer.close();
       } finally {
-        bot.viewer = null;
+        if (!require('./persistent').owns(bot, viewer)) bot.viewer = null;
         logger.info('[VISION] Viewer closed');
       }
     }
