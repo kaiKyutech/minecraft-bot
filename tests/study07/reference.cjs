@@ -1,0 +1,2 @@
+const fs=require('fs'),path=require('path'),vm=require('vm'),{createRequire}=require('module')
+module.exports=function(){const file=path.resolve(__dirname,'../../planner_bot/src/planner/state_manager.js'),module={exports:{}};const source=fs.readFileSync(path.join(__dirname,'fixtures/state-manager-before.js'),'utf8');vm.runInThisContext('(function(require,module,exports){'+source+'\n})',{filename:file})(createRequire(file),module,module.exports);return module.exports()}

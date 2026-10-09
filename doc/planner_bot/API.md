@@ -417,3 +417,11 @@ plan/replanにはplanId、plan、stepCount。stepにはplanId、0始まりstepIn
 callbackへ渡したplan/eventを書き換えても実行内容には影響しない。通知からAPIを呼ぶ場合は、そのAPIの所有権規則に従う。
 
 03の実測値・完了検証・残件は `requests/2026-10-09_from-isg/03_report.md`。
+
+## 07 O1：完全観測の差分更新
+
+observe/refreshはbotごとの同じブロックキャッシュを使う。初回は読み込み済みの全範囲を走査し、以降はblockUpdate、chunkColumnLoad/Unload、移動による境界部分だけをbot.blockAtから読み直す。respawnでリセットし、endでイベント購読を解除する。
+
+返却時には実座標を基準に、従来と同じ球・高度範囲・air除外・カテゴリ・整数距離順（同距離は従来のx/y/z走査順）で全一覧を作る。同期済みキャッシュの一時点を完全な観測として返し、その後に到着した更新は次の同期で取り込む。更新が続く間も返却でき、未完の初回/境界走査を完全な観測として返すことはない。予算やsignalで走査を中断した場合は次回に完全走査し直す。
+
+在庫・装備等の公開形と実行cacheの公開規則は維持する。STATE_SCAN_MAX_CHECKSを明示した有限prefix設定は従来scannerを使い、観測内容を変えない。通常の完全観測とobserveFastは短い単位でイベントループへ制御を返す。ただし大きなブロック一覧の割当て/GCと、O1段階の同期計画は残り、最大停止時間の保証はしない。
