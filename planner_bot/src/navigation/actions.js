@@ -4,6 +4,35 @@ const primitives = require('../primitives')
 const { Vec3 } = require('vec3')
 const { createLogger } = require('../utils/logger')
 
+function containerItems(chest) {
+  const end = chest.inventoryStart ?? Math.max(0, chest.slots.length - 36)
+  return chest.slots.slice(0, end).filter(Boolean)
+}
+
+async function transferAll(bot, item, direction) {
+  const chest = bot.currentChest
+  const items = direction === 'withdraw' ? containerItems(chest) : chest.slots.slice(chest.inventoryStart, chest.inventoryEnd).filter(Boolean)
+  const groups = new Map()
+  for (const stack of items.filter(i => i.name === item)) {
+    const key = JSON.stringify([stack.type, stack.metadata, stack.nbt])
+    const group = groups.get(key) || { ...stack, count: 0 }
+    group.count += stack.count; groups.set(key, group)
+  }
+  let transferredCount = 0
+  if (!groups.size) return { success:false, code:'ITEM_NOT_FOUND', error:`転送元に ${item} がありません`, transferredCount }
+  try {
+    for (const stack of groups.values()) {
+      await interruptible(bot, () => chest[direction](stack.type, stack.metadata, stack.count, stack.nbt))
+      transferredCount += stack.count
+    }
+    return {success:true,item,count:transferredCount,position:bot.currentChestPosition,message:`${item} x ${transferredCount} を転送しました`}
+  } catch(error) {
+    checkpoint(bot)
+    if(error.name==='AbortError')throw error
+    return {success:false,code:error.code||'EXECUTION_FAILED',error:error.message,item,transferredCount}
+  }
+}
+
 /**
  * Navigation Actions - 場所の登録と移動
  * GOAPではなくLLMが直接制御する創造的行動
@@ -783,6 +812,7 @@ module.exports = {
     }
 
     let depositCount
+    if (count === -1) return transferAll(bot, item, 'deposit')
     if (typeof count === 'number') {
       if (count === -1) {
         const inventoryItem = bot.inventory.items().find(i => i.name === item)
@@ -882,6 +912,7 @@ module.exports = {
     }
 
     let withdrawCount
+    if (count === -1) return transferAll(bot, item, 'withdraw')
     if (typeof count === 'number') {
       if (count === -1) {
         const chestItem = bot.currentChest.items().find(i => i.name === item)
@@ -916,14 +947,14 @@ module.exports = {
     const logger = createLogger({ bot, category: 'navigation', commandName: bot.currentCommandName })
     logger.info(`[NAVIGATION] チェストから取り出す: ${item} x ${withdrawCount}`)
 
-    const chestItem = bot.currentChest.items().find(i => i.name === item)
+    const chestItem = containerItems(bot.currentChest).find(i => i.name === item)
     if (!chestItem) {
       return {
         success: false,
         code: 'EXECUTION_FAILED',
         error: `チェストに ${item} がありません`,
         position: bot.currentChestPosition,
-        chestItems: bot.currentChest.items().map(i => ({ name: i.name, count: i.count }))
+        chestItems: containerItems(bot.currentChest).map(i => ({ name: i.name, count: i.count }))
       }
     }
 
