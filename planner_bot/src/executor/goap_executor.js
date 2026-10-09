@@ -1,5 +1,6 @@
 const { withContext, currentContext, checkpoint, interruptible } = require('../utils/context')
 const { FailureGuard } = require('./failure_guard')
+const { progress } = require('./progress')
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
@@ -32,6 +33,7 @@ function yieldToEventLoop() {
 async function executePlanPrepared(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
   let currentPlan = [...initialPlan]
   let stepIndex = 0
+  let planId = progress(bot)?.plan(goalName,currentPlan)
 
   while (stepIndex < currentPlan.length) {
     // キャンセルチェック
@@ -50,6 +52,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
     }
 
     // アクション開始前に最新状態へ更新（各ステップ1回）もしかするとこれじゃgoapが崩れるかもしれない。実験的にここだけにしてみる。
+    progress(bot)?.emit('step_start',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step})
     await interruptible(bot, () => stateManager.refresh(bot))
 
     const preconditionStatus = await interruptible(bot, () => analyseStepPreconditions(bot, step, stateManager))
@@ -63,11 +66,13 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
         return false
       })
       if (inverted) {
+        progress(bot)?.emit('step_skipped',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step,reason:'inverted_precondition'})
         goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" は前提が逆転(true化)しているためスキップします`)
         stepIndex++
         continue
       }
 
+      progress(bot)?.emit('step_failure',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step,code:'PRECONDITION_MISSING',missing:preconditionStatus.missing})
       currentContext(bot).failureGuard.note(goalName, step, { code: 'PRECONDITION_MISSING', message: JSON.stringify(preconditionStatus.missing) }, await stateManager.getState(bot), bot)
 
       goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
@@ -91,6 +96,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
       logReplanDetails(newPlan, bot)
 
       currentPlan = newPlan
+      planId = progress(bot)?.plan(goalName,newPlan,'replan')
       stepIndex = 0
       continue
     }
@@ -98,11 +104,13 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
     // ステップ実行（実行時エラーもリプランニングで対応）
     try {
       await interruptible(bot, () => executeStep(bot, step, stateManager, signal))
+      progress(bot)?.emit('step_success',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step})
       stepIndex++
 
       // アクション間でイベントループに制御を返す（keep-alive処理のため）
       await interruptible(bot, () => yieldToEventLoop())
     } catch (error) {
+      progress(bot)?.emit('step_failure',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step,code:error.name==='AbortError'?'CANCELLED':error.code||'EXECUTION_FAILED',message:error.message})
       // キャンセルエラーは再スロー
       if (error.name === 'AbortError' || error.code === 'REPEATED_FAILURE') {
         throw error
@@ -120,6 +128,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
       logReplanDetails(newPlan, bot)
 
       currentPlan = newPlan
+      planId = progress(bot)?.plan(goalName,newPlan,'replan')
       stepIndex = 0
       continue
     }
@@ -369,8 +378,9 @@ function deriveSubGoalInput(missing, goapState) {
   return null
 }
 
-async function executeSimplePlan(bot, plan, stateManager, signal = null) {
-  for (const step of plan) {
+async function executeSimplePlan(bot, plan, stateManager, signal = null, goal = null) {
+  const planId=progress(bot)?.plan(goal,plan)
+  for (const [stepIndex,step] of plan.entries()) {
     // キャンセルチェック
     if (signal && signal.aborted) {
       const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
@@ -386,7 +396,9 @@ async function executeSimplePlan(bot, plan, stateManager, signal = null) {
     if (!status.satisfied) {
       throw new Error(`サブプランのステップ ${step.action} の前提条件を満たせません`)
     }
-    await interruptible(bot, () => executeStep(bot, step, stateManager, signal))
+    progress(bot)?.emit('step_start',{goal,planId,stepIndex,stepCount:plan.length,step})
+    try {await interruptible(bot, () => executeStep(bot, step, stateManager, signal));progress(bot)?.emit('step_success',{goal,planId,stepIndex,stepCount:plan.length,step})}
+    catch(error){progress(bot)?.emit('step_failure',{goal,planId,stepIndex,stepCount:plan.length,step,code:error.code||'EXECUTION_FAILED',message:error.message});throw error}
   }
 }
 
@@ -430,10 +442,15 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
 
     goapExecLog(bot, `[REACTIVE_GOAP]     サブプラン: ${subPlan.map(s => s.action).join(' -> ')}`)
 
+    const reporter=progress(bot)
+    reporter?.emit('subgoal_enter',{goal:subGoalInput,parentGoal:reporter.stack.at(-1),depth:reporter.stack.length})
+    reporter?.stack.push(subGoalInput)
+    let subgoalOk=false
     try {
-      await interruptible(bot, () => executeSimplePlan(bot, subPlan, stateManager, signal))
+      await interruptible(bot, () => executeSimplePlan(bot, subPlan, stateManager, signal,subGoalInput))
       await interruptible(bot, () => stateManager.refresh(bot))
       goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール達成 (${subGoalInput})`)
+      subgoalOk=true
       return true
     } catch (error) {
       // キャンセルエラーは再スロー
@@ -442,6 +459,9 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
       }
       goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
       await interruptible(bot, () => stateManager.refresh(bot))
+    } finally {
+      reporter?.emit('subgoal_exit',{goal:subGoalInput,ok:subgoalOk})
+      reporter?.stack.pop()
     }
   }
 

@@ -66,3 +66,11 @@ test('successful auxiliary plans that do not repair a precondition are bounded',
   }});
   await assert.rejects(f.execute(steps),{code:'REPEATED_FAILURE'});assert.equal(checks,3);
 });
+test('progress reports failed steps and the replacement plan with a new identity',async()=>{
+ const {Progress}=require('../../planner_bot/src/executor/progress'),{withContext}=require('../../planner_bot/src/utils/context'),events=[];
+ const f=fixture({skills:{bad:async()=>{throw new Error('blocked')},good:async()=>{}},plan:()=>({plan:[{action:'replacement',skill:'good'}]})});
+ const progress=new Progress(f.bot,event=>events.push(event));
+ await withContext({bot:f.bot,progress},()=>f.execute([{action:'original',skill:'bad'}]));
+ assert.deepEqual(events.map(e=>e.type),['plan','step_start','step_failure','replan','step_start','step_success']);
+ assert.notEqual(events[0].planId,events[3].planId);assert.equal(events[4].planId,events[3].planId);
+});

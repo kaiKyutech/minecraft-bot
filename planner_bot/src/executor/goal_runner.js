@@ -1,5 +1,6 @@
 const { interruptible, checkpoint, withContext, currentContext } = require('../utils/context')
 const { FailureGuard } = require('./failure_guard')
+const { progress } = require('./progress')
 const { checkCompositeState, buildStructuredDiagnosis } = require('../planner/diagnosis')
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
@@ -17,7 +18,15 @@ const { createLogger } = require('../utils/logger')
  * @param {number} maxDepth - 最大再帰深度
  * @param {Array} executionHistory - 実行履歴（内部使用）
  */
-async function runGoal(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null, allowPrep = true) {
+async function runGoal(...args) {
+  const reporter=progress(args[0]),goal=args[2],nested=reporter?.stack.length>0
+  reporter?.stack.push(goal)
+  if(nested)reporter.emit('subgoal_enter',{goal,parentGoal:reporter.stack.at(-2)})
+  let ok=false
+  try{const result=await runGoalPrepared(...args);ok=true;return result}
+  finally{if(nested)reporter.emit('subgoal_exit',{goal,ok});reporter?.stack.pop()}
+}
+async function runGoalPrepared(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null, allowPrep = true) {
   // ルート呼び出しの場合のみ初期化
   if (depth === 0 && !missingPreconditions) {
     missingPreconditions = []
