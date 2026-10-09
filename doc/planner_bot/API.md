@@ -451,7 +451,14 @@ const result = await api.moveToward({ x: 120, z: -40 }, {
 y省略はGoalNearXZで水平移動、指定時はGoalNearで3D移動。pathfinderの通常の移動能力を使い、特定の地表高さを推測・固定しない。
 
 到着・時間切れ・道なしはok:trueで、dataにtarget、startPosition/endPosition、startDistance/endDistance、distanceReduced、reached、reason、distanceTypeを返す。
-reasonはarrived/timeout/no_path。reachedはpathfinderの床座標goalによる到着判定で、distanceは実座標での直線距離。
+reasonはarrived/timeout/no_path/no_progress。reachedはpathfinderのgoal_reached通知または床座標goalによる到着判定で、distanceは実座標での直線距離。水面等ではpathfinderが床座標+1で到着を通知する場合も到着とする。
+no_pathはpathfinderが経路なし・探索期限切れ等を返した場合。no_progressは現在の探索/実行で動けていない場合で、到達不能の証明ではない。
+追加のpathStatusは最後のpath_updateのstatus（更新前はnull）、walkingRetryは停止後に歩行で再探索したかを示す。
+
+moveTowardだけで、斜め移動は同じ高さの候補を使い、上り下りは正面の段差を使う。上りの直前と空中ではダッシュを抑え、平地の着地後に戻す。水への落下・泳ぎ・掘削・足場の能力はpathfinderの既存設定を維持する。
+100msごとに実座標を確認し、基準位置から水平0.75ブロックまたは垂直1.5ブロック進むと停止時計を更新する。迂回や後退も進展とする。
+成功経路があるのに800ms進まなければ、この呼び出しで1回だけダッシュを無効にして再探索する。その後2秒進まなければno_progressを返す。まだ成功経路がない場合も2秒進まなければno_progress。
+掘削/設置は待機猶予を設け、掘削はbot.digTime+1500ms（最低2秒）、設置は2秒を考慮する。maxMsが先に尽きればtimeout。後処理時間は別途必要。
 途中まで進んだtimeoutも正常な探索結果。進展0も距離で分かる。
 中断はok:false、error.code=CANCELLED、detailsに同じ移動結果とreason:cancelledを保持する。
 すでにabort済みの要求など、開始前に中断された場合は従来のOperationManagerのCANCELLED契約でdetailsがないこともある。
