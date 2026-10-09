@@ -17,12 +17,19 @@ function yieldToEventLoop() {
 
 function plan(goalInput, worldState, logger = null, options = {}) {
   return planningLog.run(planningLogger(logger), async () => {
+    checkBudget(options)
     await prepareDomain(options.version, getLogger())
-    return planPrepared(goalInput, worldState)
+    checkBudget(options)
+    return planPrepared(goalInput, worldState, options)
   })
 }
 
-async function planPrepared(goalInput, worldState) {
+function checkBudget(options) {
+  if (options.signal?.aborted) throw Object.assign(new Error('Cancelled'), { name:'AbortError', code:'CANCELLED' })
+  if (options.deadline !== undefined && performance.now() >= options.deadline) throw Object.assign(new Error('Evaluation budget exceeded'), { code:'BUDGET_EXCEEDED' })
+}
+
+async function planPrepared(goalInput, worldState, options = {}) {
   try {
   const domainConfig = loadDomain()
   const actions = domainConfig.actions
@@ -85,6 +92,13 @@ async function planPrepared(goalInput, worldState) {
 
   const heuristicContext = { ...buildHeuristicContext(adjustedGoal, goalAction, filteredActions), logShortage: true }
 
+  if(options.possibleFacts && Object.entries(adjustedGoal).some(([key,target])=>require('./reachability').needsPresence(target)&&!options.possibleFacts.has(key))) {
+    checkBudget(options)
+    const diagnosis=diagnoseGoalFailure(adjustedGoal,initialState,filteredActions,heuristicContext)
+    checkBudget(options)
+    return {plan:null,diagnosis}
+  }
+
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
   const initialH = calculateHeuristic(initialState, heuristicContext)
   getLogger().debug(`[GOAP] ヒューリスティック推定: h=${initialH} (最大イテレーション: ${MAX_ITERATIONS})`)
@@ -126,6 +140,7 @@ async function planPrepared(goalInput, worldState) {
   let iterations = 0
 
   while (open.size > 0 && iterations < MAX_ITERATIONS) {
+    checkBudget(options)
     iterations++
 
     if (YIELD_INTERVAL > 0 && iterations % YIELD_INTERVAL === 0) {
@@ -179,6 +194,7 @@ async function planPrepared(goalInput, worldState) {
     }
 
     for (const action of filteredActions) {
+      if (options.deadline !== undefined || options.signal) checkBudget(options)
       const satisfied = arePreconditionsSatisfied(action.preconditions, current.state)
 
       // デバッグ: 初回イテレーションのみ前提条件チェックの詳細を出力
@@ -287,7 +303,9 @@ async function planPrepared(goalInput, worldState) {
   }
 
   // 診断情報を追加
+  checkBudget(options)
   const diagnosis = diagnoseGoalFailure(adjustedGoal, initialState, filteredActions, heuristicContext)
+  checkBudget(options)
   return { plan: null, diagnosis }
 
   } finally {

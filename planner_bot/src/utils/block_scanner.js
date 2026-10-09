@@ -6,6 +6,11 @@ function yieldToEventLoop() {
 }
 
 async function scanBlocks(bot, params = {}) {
+  const checkBudget = () => {
+    if(params.signal?.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
+    if(params.deadline!==undefined&&performance.now()>=params.deadline)throw Object.assign(new Error('Observation budget exceeded'),{code:'BUDGET_EXCEEDED'})
+  }
+  checkBudget();
   if (!bot || !bot.entity || !bot.entity.position) {
     throw new Error('Bot position is not available for block scanning');
   }
@@ -134,6 +139,7 @@ async function scanBlocks(bot, params = {}) {
         }
 
         checkedCount++;
+        if((params.deadline!==undefined||params.signal)&&checkedCount%64===0)checkBudget();
 
         // 定期的にイベントループに制御を返す（keep-alive処理のため）
         if (checkedCount % YIELD_INTERVAL === 0) {

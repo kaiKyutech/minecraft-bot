@@ -44,8 +44,8 @@ class StateManager {
     return state
   }
 
-  async observe(bot) {
-    const blockData = await this.extractNearbyBlocks(bot)
+  async observe(bot, options = {}) {
+    const blockData = await this.extractNearbyBlocks(bot, options)
     const hasSpace = this.hasInventorySpace(bot)
 
     const state = {
@@ -124,7 +124,7 @@ class StateManager {
     return equipment
   }
 
-  async extractNearbyBlocks(bot) {
+  async extractNearbyBlocks(bot, options = {}) {
     // state_schema.yamlの環境設定を読み込み
     // 状態スキーマに基づいて動的にブロック検索
     const schema = loadStateSchema()
@@ -160,6 +160,8 @@ class StateManager {
     const scanMaxChecks = SCAN_MAX_CHECKS === Infinity ? -1 : SCAN_MAX_CHECKS
 
     const { summary, blocks } = await scanBlocks(bot, {
+      deadline: options.deadline,
+      signal: options.signal,
       range: scanRange,
       maxChecks: scanMaxChecks,
       collectBlocks: true,  // ★ ブロック座標リストを収集
