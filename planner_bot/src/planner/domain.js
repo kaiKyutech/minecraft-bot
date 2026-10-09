@@ -143,4 +143,14 @@ function loadDomain() {
   return preparedDomain
 }
 
-module.exports = { prepareDomain, loadDomain, USE_AUTO_GATHER, USE_AUTO_CRAFT }
+function selectVersion(version) {
+  if (typeof version !== 'string' || !/^\d+\.\d+(?:\.\d+)?$/.test(version)) throw domainError('INVALID_ARGUMENT','Minecraft version must be a version number')
+  if (selectedVersion && selectedVersion !== version) throw domainError('VERSION_CONFLICT', 'This process uses Minecraft '+selectedVersion+'; requested '+version)
+  selectedVersion=version
+}
+function adoptPreparedDomain(version, domain) {
+  selectVersion(version)
+  if (!preparedDomain) { preparedDomain=domain; preparation=Promise.resolve(domain) }
+  return preparedDomain
+}
+module.exports = { prepareDomain, loadDomain, USE_AUTO_GATHER, USE_AUTO_CRAFT, selectVersion, adoptPreparedDomain, getSelectedVersion: () => selectedVersion }

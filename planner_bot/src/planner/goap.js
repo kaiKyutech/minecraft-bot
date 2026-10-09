@@ -27,6 +27,12 @@ function yieldToEventLoop() {
 }
 
 function plan(goalInput, worldState, logger = null, options = {}) {
+  const context = require('../utils/context').currentContext()
+  if (require('node:worker_threads').isMainThread && options.worker !== false && (options.worker === true || context.bot)) {
+    return require('./planning_service').plan(goalInput,worldState,logger || getLogger(),{
+      ...options,version:options.version || context.bot?.version,signal:options.signal || context.signal
+    }).then(({result,planningFailure})=>{if(planningFailure)failedPlans.set(result,Object.freeze(planningFailure));return result})
+  }
   return planningLog.run(planningLogger(logger), async () => {
     checkBudget(options)
     await prepareDomain(options.version, getLogger())
@@ -434,7 +440,7 @@ module.exports = {
   plan,
   collectShortages,
   loadDomain,
-  prepareDomain,
+  prepareDomain: require('node:worker_threads').isMainThread ? (...args) => require('./planning_service').prepare(...args) : prepareDomain,
   getAllActions,
   getPlanFailure,
   evaluateCondition,
