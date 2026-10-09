@@ -1,0 +1,68 @@
+{
+  "base": "bfa1a1b",
+  "version": "1.20.1",
+  "capturedAt": "2026-10-09T06:07:18.979Z",
+  "starts": [
+    {
+      "x": 10.5,
+      "y": 63,
+      "z": 3.5
+    },
+    {
+      "x": 30.5,
+      "y": 71,
+      "z": 3.5
+    },
+    {
+      "x": 10.5,
+      "y": 72,
+      "z": -16.5
+    }
+  ],
+  "snapshots": [
+    {
+      "name": "surface-empty",
+      "position": {
+        "x": 10.5,
+        "y": 63,
+        "z": 3.5
+      },
+      "items": []
+    },
+    {
+      "name": "surface-stone",
+      "position": {
+        "x": 30.5,
+        "y": 71,
+        "z": 3.5
+      },
+      "items": [
+        "stone_pickaxe 1"
+      ]
+    },
+    {
+      "name": "surface-iron",
+      "position": {
+        "x": 10.5,
+        "y": 72,
+        "z": -16.5
+      },
+      "items": [
+        "iron_pickaxe 1",
+        "iron_ingot 3",
+        "stick 2"
+      ]
+    },
+    {
+      "name": "underground-stone",
+      "position": {
+        "x": 14.5,
+        "y": 40,
+        "z": 15.5
+      },
+      "items": [
+        "stone_pickaxe 1"
+      ]
+    }
+  ]
+}
