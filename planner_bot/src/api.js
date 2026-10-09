@@ -103,6 +103,12 @@ function createBotApi(bot, options = {}) {
       paramsObject(params)
       return operations.run('placeBlock', () => require('./navigation/placement').placeBlock(bot, stateManager, params), execution)
     }, 'PLACEMENT_FAILED'),
+    placeTorch: (params = {}) => call('placeTorch', () => {
+      ready(); paramsObject(params)
+      const { torchOptions, placeTorch } = require('./navigation/torch_placement')
+      const settings = torchOptions(params)
+      return operations.run('placeTorch', () => placeTorch(bot, settings), params)
+    }, 'PLACEMENT_FAILED'),
     info: (type, params = {}) => call('info', () => {
       if (!['all', 'vision', 'scanBlocks', 'recipesFor', 'recipesUsing'].includes(type)) throw failure(type ? 'UNKNOWN_ACTION' : 'INVALID_ARGUMENT', `Unknown information type: ${type}`)
       paramsObject(params)

@@ -2,6 +2,7 @@ const { performance } = require('node:perf_hooks')
 const { Vec3 } = require('vec3')
 const { failure } = require('../utils/result')
 const { loadBlockCategories } = require('./state_builder')
+const { lightInfo, lightOptions } = require('../utils/light_info')
 const sessions=new WeakMap()
 const AIR=new Set(['air','cave_air','void_air'])
 const axis=r=>[0,...Array.from({length:r},(_,i)=>[i+1,-i-1]).flat()]
@@ -17,6 +18,7 @@ function session(bot){
 async function observeFast(bot,stateManager,options={}){
   const start=performance.now(),range=options.range??16,maxMs=options.maxMs??50,maxChecks=options.maxChecks??12000
   if(!Number.isInteger(range)||range<1||range>64||!Number.isFinite(maxMs)||maxMs<0||!Number.isInteger(maxChecks)||maxChecks<0)throw failure('INVALID_ARGUMENT','range must be 1..64; budgets must be non-negative')
+  lightOptions(options)
   const position=bot.entity.position.clone(),base=position.floored(),state=session(bot),key=`${position.x},${position.y},${position.z},${range}`
   if(state.cache?.key!==key)state.cache={key,base,range,axis:axis(range),cursor:0,resources:{},missing:0,checks:0,observedAt:Date.now()}
   const cache=state.cache,n=cache.axis.length,total=n*n*n,deadline=start+maxMs;let checksUsed=0,sliceDeadline=performance.now()+2
@@ -47,14 +49,13 @@ async function observeFast(bot,stateManager,options={}){
     const b=bot.blockAt(new Vec3(base.x,y,base.z));if(!b){skyVisible=null;break}
     if(!b.transparent&&!AIR.has(b.name)){skyVisible=false;break}
   }
-  const eye=bot.blockAt(position.offset(0,1.62,0))
   const nearby=Object.values(bot.entities||{}).filter(e=>e?.position&&e.id!==bot.entity.id&&e.position.distanceTo(position)<=range)
   return {kind:'fast_observation',timestamp:Date.now(),position:{x:position.x,y:position.y,z:position.z},
     yaw:bot.entity.yaw*180/Math.PI,pitch:bot.entity.pitch*180/Math.PI,health:bot.health??null,food:bot.food??null,time:bot.time?{...bot.time}:null,
     inventory:stateManager.extractInventory(bot),equipment:stateManager.extractEquipment(bot),resources,categories,
     players:nearby.filter(e=>e.type==='player'||e.username).map(e=>({username:e.username,position: {...e.position},distance:e.position.distanceTo(position)})),
     drops:nearby.filter(e=>e.name==='item').map(e=>({id:e.id,position:{...e.position},distance:e.position.distanceTo(position),item:e.getDroppedItem?.()||null})),
-    skyVisible,location:skyVisible===null?'unknown':skyVisible?'surface':'underground',light:{block:eye?.light??null,sky:eye?.skyLight??null},
+    skyVisible,location:skyVisible===null?'unknown':skyVisible?'surface':'underground',light:lightInfo(bot,options),
     range,complete:cache.cursor===total&&cache.missing===0,scanComplete:cache.cursor===total,unloadedChecks:cache.missing,checksUsed,totalChecks:cache.checks,
     observedAt:cache.observedAt,ageMs:Date.now()-cache.observedAt,durationMs:performance.now()-start}
 }
