@@ -91,5 +91,8 @@ function client(bot) {
 function evaluate(bot,goals,world,options) {
   return request('evaluate',{client:client(bot),goals,world:planningWorld(world)},options)
 }
+function reachableFacts(world,goals,options) {
+  return request('reachableFacts',{goals,world:planningWorld(world)},options)
+}
 async function close() {const current=worker;if(current)await current.terminate()}
-module.exports={prepare,plan,evaluate,close,planningWorld}
+module.exports={prepare,plan,evaluate,reachableFacts,close,planningWorld}

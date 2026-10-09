@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-09、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋08照度・松明API版。Minecraft 1.20.1で回帰検証した。
+2026-10-10、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋07非同期観測・計画＋08照度・松明＋09到達事実API版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -370,6 +370,50 @@ estimatedMsはGOAPのcostを変換した値ではなく、ライブ測定に基�
 この緩い条件でも到達できない場合だけ早期診断し、計画可能とは判定しない。
 閉包で排除されない候補は従来A*を実行し、同じ計画を返す。通常planGoalにも同じ事前判定を適用するが、evaluateGoalsの時間予算は適用しない。
 同一版・goal・GOAP factsの完了結果をbotごとに最大256件再利用する。状態内容が変わると別結果になり、距離の見積もりは毎回更新する。200回上限・候補枯渇まで探索した結果は、その理由もcacheする。時間予算中断はcacheしない。timedOutはbudget_exceededが1件以上あるときtrueで、探索回数上限だけではfalse。
+
+### ⑨：到達できる事実を全部返す（R1）
+
+```js
+const world = await api.observe()
+if (!world.ok) throw new Error(world.error.message)
+const reachable = await api.reachableFacts({
+  worldState: world.data, maxMs: 1000, signal: controller.signal,
+  goals: ['inventory.iron_ingot:3', 'inventory.category.log:4', 'nearby_workbench:true']
+})
+if (reachable.ok) {
+  console.log(reachable.data.facts, reachable.data.goals)
+}
+```
+
+`reachableFacts({ worldState, goals=[], maxMs=1000, signal }={})` は `Promise<Result>`。
+worldState省略時は `observe()` と同じ独立した完全観測を行い、実行cacheを更新しない。
+observeFast、complete=false、配列等はINVALID_ARGUMENT。goalsは空配列でもよく、既存GOAP形式（状態・カテゴリ・action名・action count指定）の文字列を受け付ける。個別の解析失敗・未知actionはその目標だけinvalid。maxMsは有限の非負数。
+
+dataは以下を返す。木の種類等のフィルター・集約は一切行わない。
+
+| フィールド | 意味 |
+|---|---|
+| facts | 到達する全キーの配列。各要素は `{ key, initial, round, firstAction, source, derivedFrom }` |
+| goals | 入力順の `{ goal, status, provenImpossible, missingKeys, reason }` |
+| complete / timedOut | 閉包を固定点まで完了したか / 時間予算で途中終了したか |
+| observationComplete | 完全観測が返ったか（指定worldStateは完全観測として扱う）。予算内に観測が得られなければfalse |
+| durationMs / observationMs / preparationMs / closureMs | 全体 / 内部観測 / domain準備待ち / worker内のfacts構築・閉包・結果整形の時間。worldState指定時observationMs=0 |
+| rounds / actionCount | 実行した閉包の走査周回数（最後の変化なしの周も含む）/ 使用した全行動数。計算前の時間切れは0 / null |
+
+initial=trueは現在のGOAP factsに正の数またはtruthy値があること。round=0、firstAction=null、source='initial'。
+初期在庫・装備・環境・世界状態は、行動定義に登場しないキーも葉のドット記法で返す（例inventory.custom_item、equipment.custom_item、is_day）。値や個数自体はworldStateを参照する。
+生成された事実はinitial=false、roundは既存の閉包がそのキーを初めて加えた周（1以上）、firstActionは最初の行動名、source='action'。computed状態はsource='computed'、derivedFromに最初の依存キーを返し、firstActionはその依存キーの生成元を引き継ぐ（初期値由来ならnull）。
+同じ周の前の行動が加えたキーを後の行動が使う、従来の順番を維持する。このためroundは行動の並びに依存し、最短手数・必要行動数・所要時間ではない。firstActionとderivedFromも完全な計画や因果グラフではない。
+
+statusはpossible（届く可能性あり）、unreachable（閉包でも絶対に届かない）、unknown（時間切れで未判定）、invalid（目標不正）。unreachableだけprovenImpossible=true、reason='relaxed_unreachable'。missingKeysは必要な正の存在条件でまだ届いていないキー。
+途中の閉包でも必要キーがすべて得られていればpossibleだが、未発見のキーがあるとunknown / budget_exceededとし、不能を証明しない。観測や計算開始前の時間切れではfacts=[]、goalsはすべてunknown、missingKeys=[]。中断はok:false / CANCELLED。
+
+`evaluateGoals` と通常planが使う `reachability.js` の同じ閉包を、⑦の共有計画workerで実行する。新しい行動・計画・コスト・資源制限は追加しない。OperationManagerの所有権を取得せず、実行中のGOAP・移動・follow/idleを止めない。signalはこの要求だけを中断する。workerの待ち行列もmaxMsに含み、開始前の期限切れはスキップする。開始済み計算は期限・中断を確認して終了してから返す。
+
+maxMsは観測・準備・worker待ち・閉包を含む予算。初回共有domain準備は完了を待つため、maxMs超過や中断の返却が遅れることがある。準備はworker内だがdomain転送・採用、入力転送・結果整形等の固定処理もあり、厳密な実時間上限ではない。繰り返し呼ぶ場合は準備済みdomainと同じ完全worldStateの共有を推奨する。返却後にこの要求の閉包を継続しない。
+
+限界：数量・材料消費・負の条件を無視する存在だけの過大近似。例えば1本の原木があるだけでも原木999本の目標はpossibleになり得る。falseや0等、正の存在を要求しない条件も判定から外す。possibleはA*計画成功、在庫数、実地の移動・採掘・設置の成功を保証しない。
+unreachableは**この観測と行動モデルの中だけ**での不能。「見えていないから届かない」と「本当に作れない」は区別できない。observationComplete=trueも全世界・全チャンクの読込や資源不存在を保証せず、既存observeの範囲・設定・未読込の制約を引き継ぐ。
 
 ### 軽い観測（F3）
 

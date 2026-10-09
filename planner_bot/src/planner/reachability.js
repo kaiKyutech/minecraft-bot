@@ -21,21 +21,40 @@ function positive(effect){
  }
  return Boolean(effect)
 }
-function reachable(actions,state,deadline,signal){
+function reachable(actions,state,deadline=Infinity,signal,details){
+ const check=()=>{
+  if(signal?.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
+  if(performance.now()>=deadline){if(details)details.timedOut=true;return true}
+  return false
+ }
+ if(details){details.facts=new Map();details.rounds=0;details.timedOut=false;details.complete=false}
+ if(check())return null
  const keys=new Set(actions.flatMap(a=>[...Object.keys(a.preconditions||{}),...Object.keys(a.effects||{})]))
  const available=new Set([...keys].filter(key=>{const value=getStateValue(state,key);return typeof value==='number'?value>0:Boolean(value)}))
+ if(details)for(const key of available)details.facts.set(key,{key,initial:true,round:0,firstAction:null,source:'initial',derivedFrom:null})
  const schema=loadStateSchema(),computed=Object.values(schema).flatMap(section=>typeof section==='object'?Object.entries(section):[]).filter(([,c])=>c?.computed)
  let changed=true
  while(changed){
   changed=false
+  if(details)details.rounds++
   for(const action of actions){
-   if(signal?.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
-   if(performance.now()>=deadline)return null
+   if(check())return null
    if(!Object.entries(action.preconditions||{}).every(([key,c])=>!needsPresence(c)||available.has(key)))continue
-   for(const [key,effect]of Object.entries(action.effects||{}))if(positive(effect)&&!available.has(key)){available.add(key);changed=true}
+   for(const [key,effect]of Object.entries(action.effects||{}))if(positive(effect)&&!available.has(key)){
+    available.add(key);changed=true
+    if(details)details.facts.set(key,{key,initial:false,round:details.rounds,firstAction:action.name,source:'action',derivedFrom:null})
+   }
   }
-  for(const [key,c]of computed){const deps=c.depends_on||c.depends_on_inventory?.map(name=>'inventory.'+name)||[];if(deps.some(d=>available.has(d))&&!available.has(key)){available.add(key);changed=true}}
+  for(const [key,c]of computed){
+   const deps=c.depends_on||c.depends_on_inventory?.map(name=>'inventory.'+name)||[]
+   const dep=deps.find(d=>available.has(d))
+   if(dep!==undefined&&!available.has(key)){
+    available.add(key);changed=true
+    if(details)details.facts.set(key,{key,initial:false,round:details.rounds,firstAction:details.facts.get(dep)?.firstAction??null,source:'computed',derivedFrom:dep})
+   }
+  }
  }
+ if(details)details.complete=true
  return available
 }
 module.exports={reachable,needsPresence}
