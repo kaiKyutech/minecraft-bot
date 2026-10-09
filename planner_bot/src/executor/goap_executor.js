@@ -172,6 +172,12 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
   }
 
   if (!newPlan || !Array.isArray(newPlan)) {
+    const planningFailure = goapPlanner.getPlanFailure?.(result)
+    if (planningFailure?.provenImpossible) {
+      throw Object.assign(new Error('リプランニングに失敗しました。現在の計画モデルでは達成できません。'), {
+        code: 'REPLAN_FAILED', diagnosis, details: { goal: goalName, ...planningFailure }
+      })
+    }
     let errorMessage = 'リプランニングに失敗しました。実行可能なプランが見つかりません。'
 
     // 診断情報があればログに出力
@@ -234,7 +240,7 @@ async function replan(bot, goalName, stateManager, signal = null, missingPrecond
       }
     }
 
-    throw Object.assign(new Error(errorMessage), { code: 'REPLAN_FAILED', diagnosis })
+    throw Object.assign(new Error(errorMessage), { code: 'REPLAN_FAILED', diagnosis, details: { goal: goalName, ...planningFailure } })
   }
 
   return newPlan

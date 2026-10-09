@@ -93,8 +93,17 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
   const plan = result.plan
   const diagnosis = result.diagnosis
+  const planningFailure = goapPlanner.getPlanFailure?.(result)
 
   if (!plan || !Array.isArray(plan)) {
+    if (planningFailure?.provenImpossible) {
+      missingPreconditions.push(goalName)
+      throw Object.assign(new Error(`目標「${goalName}」は現在の計画モデルでは達成できません`), {
+        code: 'PLAN_NOT_FOUND', details: { goal: goalName, ...planningFailure },
+        diagnosis: buildStructuredDiagnosis(diagnosis, goalName), needsLLM: true,
+        missingPreconditions
+      })
+    }
     // プランニング失敗
     const loggerPlan = createLogger({ bot, category: 'goap.plan', commandName: bot.currentCommandName || 'goal' })
     loggerPlan.info(`目標「${goalName}」のプランニング失敗 (深度: ${depth}/${maxDepth})`)
@@ -179,6 +188,7 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
       // エラーとして投げる（会話履歴には保存しない - LLMプロジェクトで必要なら手動保存）
       const finalError = new Error(`目標「${goalName}」を実行できません: ${error.missingEnvironment} が見つかりません`)
       finalError.diagnosis = structuredDiagnosis
+      finalError.details = { goal: goalName, ...planningFailure }
       finalError.needsLLM = true
       finalError.missingPreconditions = missingPreconditions
       throw finalError
@@ -200,6 +210,7 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
 
       const error = new Error(`目標「${goalName}」を実行できません`)
       error.diagnosis = structuredDiagnosis
+      error.details = { goal: goalName, ...planningFailure }
       error.needsLLM = true
       error.missingPreconditions = missingPreconditions
       throw error

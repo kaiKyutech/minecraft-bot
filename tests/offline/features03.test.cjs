@@ -8,7 +8,7 @@ test('evaluation preserves all 70 fixture plans/diagnoses and cache cannot be mu
   const label=filename.replace('-plans.json',''),world=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,`../fixtures/${label}.json.gz`))));
   const expected=JSON.parse(fs.readFileSync(path.join(__dirname,'../fixtures',filename))),goals=Object.keys(expected);
   const result=await evaluate(bot,{},goals,{worldState:world,maxMs:15000,perGoalMs:15000});
-  for(const row of result.results){assert.notEqual(row.status,'unevaluated');assert.deepEqual({plan:row.plan,diagnosis:row.diagnosis},expected[row.goal])}
+  for(const row of result.results){assert.notEqual(row.reason,'budget_exceeded');if(row.status==='unevaluated')assert.ok(['iteration_limit','frontier_exhausted'].includes(row.reason));assert.deepEqual({plan:row.plan,diagnosis:row.diagnosis},expected[row.goal])}
   const row=result.results.find(r=>r.plan?.length);if(row){const saved=structuredClone(row.plan);row.plan[0].action='tampered';const repeated=await evaluate(bot,{},[row.goal],{worldState:world,maxMs:15000,perGoalMs:15000});assert.deepEqual(repeated.results[0].plan,saved)}
  }
 });

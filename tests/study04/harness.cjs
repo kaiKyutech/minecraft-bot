@@ -73,7 +73,7 @@ function makePlanner({ production = false, indexed = false, cachedSignature = fa
     try { result = await planModule.plan(goal, world, logger, options); } catch (e) { thrown = { code: e.code, message: e.message }; }
     const durationMs = performance.now() - start;
     const reason = thrown ? thrown.code : result.plan ? 'success' : logs.some(x => x.includes('イテレーション上限')) ? 'iteration_limit' : metrics.iterations ? 'frontier_exhausted' : 'relaxed_unreachable';
-    return { result, thrown, reason, durationMs, metrics: { ...metrics, uniqueExpanded: metrics.uniqueExpanded.size, discovered: metrics.discovered.size + 1 }, logs: [...logs] };
+    return { result, thrown, reason, planningFailure: planModule.getPlanFailure?.(result) || null, durationMs, metrics: { ...metrics, uniqueExpanded: metrics.uniqueExpanded.size, discovered: metrics.discovered.size + 1 }, logs: [...logs] };
   } };
 }
 function targetFor(goal, world, actions = domain.loadDomain().actions) {

@@ -78,16 +78,16 @@ async function evaluate(bot,stateManager,goals,options={}) {
   const results=[]
   for(const goal of goals){
     if(!world||!env||check(deadline,options.signal)){results.push({goal,status:'unevaluated',plan:null,stepCount:null,estimatedMs:null,resources:[],diagnosis:null,reason:'budget_exceeded'});continue}
-    const cacheKey=key+':'+goal;let result=cache.get(cacheKey)
+    const cacheKey=key+':'+goal,cached=cache.get(cacheKey);let result=cached?.result,planningFailure=cached?.planningFailure
     try{
-      if(!result){result=await goap.plan(goal,world,null,{version:bot.version,deadline:Math.min(deadline,performance.now()+perGoalMs),signal:options.signal,possibleFacts});cache.set(cacheKey,structuredClone(result));if(cache.size>256)cache.delete(cache.keys().next().value)}
-      const status=result.plan?'plannable':result.diagnosis?.error?'invalid':'unplannable'
-      results.push({goal,status,plan:result.plan?structuredClone(result.plan):null,stepCount:result.plan?.length??null,...(result.plan?estimate(result.plan,env):{estimatedMs:null,resources:[]}),diagnosis:structuredClone(result.diagnosis),reason:null})
+      if(!result){result=await goap.plan(goal,world,null,{version:bot.version,deadline:Math.min(deadline,performance.now()+perGoalMs),signal:options.signal,possibleFacts});planningFailure=goap.getPlanFailure(result);cache.set(cacheKey,{result:structuredClone(result),planningFailure});if(cache.size>256)cache.delete(cache.keys().next().value)}
+      const status=result.plan?'plannable':result.diagnosis?.error?'invalid':planningFailure?.provenImpossible?'unplannable':'unevaluated'
+      results.push({goal,status,plan:result.plan?structuredClone(result.plan):null,stepCount:result.plan?.length??null,...(result.plan?estimate(result.plan,env):{estimatedMs:null,resources:[]}),diagnosis:structuredClone(result.diagnosis),reason:status==='plannable'||status==='invalid'?null:planningFailure?.reason||'frontier_exhausted'})
     }catch(error){
       if(error.code!=='BUDGET_EXCEEDED')throw error
       results.push({goal,status:'unevaluated',plan:null,stepCount:null,estimatedMs:null,resources:[],diagnosis:null,reason:'budget_exceeded'})
     }
   }
-  return {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.status==='unevaluated')}
+  return {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.reason==='budget_exceeded')}
 }
 module.exports={evaluate,TIMING}

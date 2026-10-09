@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-09、01リファクタリング＋02バグ修正・03追加API版。Minecraft 1.20.1で回帰検証した。
+2026-10-09、01リファクタリング＋02/03＋05 G/A/B版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -63,7 +63,7 @@ factoryと内部の低レベル関数にはこの契約を適用しない。
 | `UNKNOWN_COMMAND`, `UNKNOWN_ACTION`, `UNKNOWN_SKILL`, `UNKNOWN_PRIMITIVE` | 未知の名前 |
 | `BOT_NOT_READY` | spawn前、版・pathfinderが利用できない |
 | `DOMAIN_NOT_READY`, `DOMAIN_PREPARATION_FAILED`, `VERSION_CONFLICT` | 行動定義が未準備、準備失敗、同一プロセスの版競合 |
-| `PLAN_NOT_FOUND`, `ENVIRONMENT_MISSING` | 計画不能、必要な環境がない |
+| `PLAN_NOT_FOUND`, `ENVIRONMENT_MISSING` | 計画未発見、必要な環境がない。未発見だけでは不能の証明にならない。details.reasonを参照 |
 | `GOAL_CYCLE`, `GOAL_DEPTH_EXCEEDED`, `REPLAN_FAILED` | 補助目標の循環、深さ制限、実行途中の再計画失敗 |
 | `REPEATED_FAILURE` | 同じ状態・行動・理由の失敗3回、または進展のない失敗/再計画10回で終了。detailsにgoal/action/params/code/reason/attempts/limit/limitKind |
 | `ITEM_NOT_FOUND`, `RECIPE_NOT_FOUND`, `BLOCK_NOT_FOUND` | アイテム・レシピ・ブロック不足 |
@@ -96,6 +96,19 @@ goalの例は `inventory.oak_planks:4`、`inventory.category.log:8`、`nearby_wo
 YAMLのaction名で指定する形式、`action count:8` の解析も維持している。
 計画は観測入力を変更しない。planの各stepは `{ action, skill, params, cost }`。
 
+通常の `planGoal` と実行中の計画・再計画も、消費・数量・負の制約を無視した閉包で事前判定する。不能は**与えられた観測と現在の行動モデル内**での証明であり、観測外の資源や実地の到達性の保証ではない。閉包で可能なだけでは計画成功にしない。
+
+`planGoal` の未発見codeは従来どおり `PLAN_NOT_FOUND`。`executeGoal` の証明済み不能も `PLAN_NOT_FOUND`、再計画失敗は従来の `REPLAN_FAILED`。既存の補助目標の循環・環境不足等のcodeは維持する。計画由来の失敗では既存のdetailsに `goal`、`reason`、`provenImpossible`、`iterations`、`maxIterations` を保持する。
+
+| details.reason | 意味 |
+|---|---|
+| `relaxed_unreachable` | 閉包でも必要な存在条件へ到達できない。provenImpossible=true、iterations=0 |
+| `iteration_limit` | 最大200回で計画未発見。provenImpossible=false。不能とは判定しない |
+| `frontier_exhausted` | 現行探索の候補が枯渇。provenImpossible=false。閉包による証明とは区別 |
+| `invalid_goal` | 目標の形式・名前が不正。診断を参照 |
+
+補助目標で失敗した場合のdetails.goalは、その計画対象を示す。goalChain等の既存情報も残す。道具準備・数量削減・補助目標は維持し、証明済み不能では同じ存在条件を解決できない数量再試行を省く。
+
 | info type | params・data |
 |---|---|
 | `all` | inventory、position（rotation/time/health/food）、locations、players、nearby |
@@ -125,7 +138,7 @@ primitiveはcamelCaseとsnake_caseの両方を受け付ける。
 
 | スキル名（9種類） | 主なparams・既定値 |
 |---|---|
-| `gather` | itemName、count=1、maxDistance=100、approachRange=2、collectRadius=30、collectDelayMs=200、maxAttempts=20、collectItem=falseで回収省略。カテゴリ指定も維持 |
+| `gather` | itemName、count=1、maxDistance=100、approachRange=2、collectRadius=30、collectDelayMs=200、maxAttempts=20（最大64）、collectItem=falseで回収省略。カテゴリ指定も維持。初回searchSampleSize=1、失敗後maxCandidates=64まで拡張。回避はmaxAvoidListSize=32（最大64）・avoidTtlMs=180000（最大300000）、移動はmoveTimeoutMs=30000（最大60000） |
 | `collect_drops` | radius=12、maxAttempts=3 |
 | `hand_craft` | recipe、count=1（クラフト回数）。動的な板レシピも維持 |
 | `workbench_craft` | recipe、count=1。周囲の作業台を使う |
@@ -290,7 +303,7 @@ if (evaluated.ok) {
 `evaluateGoals(goals, { worldState, maxMs=1000, perGoalMs, signal }={})`。
 goalsは既存のgoal文字列の非空配列。worldStateは完全observeのdataを使う。
 省略時は独立した完全観測を行う。observeFastのdataはINVALID_ARGUMENT。
-観測・domain準備・資源要約・探索を全体の時間予算に含める。初回domain準備は同期処理もあり、予算の厳密な実時間保証ではない。毎回の判断には準備済みdomainと共有worldStateを使う。
+観測・domain準備・資源要約・閉包・探索を全体の時間予算に含める。初回domain準備は同期処理もあり、予算の厳密な実時間保証ではない。毎回の判断には準備済みdomainと共有worldStateを使う。
 
 候補あたりの既定予算はmax(20, maxMs / 候補数)ms。`perGoalMs` で変更できる。
 重い1候補に全体の予算を使わせず、後続候補も試す。結果は入力順。
@@ -301,13 +314,13 @@ data：`{ results, durationMs, observationMs, preparationMs, timedOut }`。
 
 | resultsのフィールド | 意味 |
 |---|---|
-| goal / status | plannable / unplannable / unevaluated / invalid |
+| goal / status | plannable / unplannable（閉包で証明済み） / unevaluated（探索上限等） / invalid |
 | plan / stepCount | 通常planGoalと同じaction/skill/params/cost配列と手数。未評価/不能はnull |
 | estimatedMs | 行動種類・個数・最寄りブロックの直線距離からの実行時間目安 |
 | estimateDetails | モデル名、実測に基づく係数、step別内訳、distanceType、reachabilityKnown、資源要約の完全性 |
 | resources | block、count、usage（consume/station）、category、nearestPosition、nearestDistance、selection |
-| diagnosis | 通常plannerと同じ不足診断。未評価はnull |
-| reason | 未評価はbudget_exceeded。不能とは区別する |
+| diagnosis | 通常plannerと同じ不足診断。探索上限の場合も返すが、不能の証明ではない。時間予算中断はnull |
+| reason | unplannableはrelaxed_unreachable。unevaluatedはbudget_exceeded / iteration_limit / frontier_exhausted。成功・invalidはnull |
 
 resourcesは計画が使う環境資源の見積もり。カテゴリ採集は最寄りの種類を参考として出しcategoryも併記する。
 実行スキルのカテゴリキャッシュや到達性によって実際の種類・採集先は変わる。selectionはnearest_estimate。
@@ -317,8 +330,8 @@ estimatedMsはGOAPのcostを変換した値ではなく、ライブ測定に基�
 
 明らかな不足は、消費や負の制約・数量を無視して可能性を広げた資源依存の閉包から判定する。
 この緩い条件でも到達できない場合だけ早期診断し、計画可能とは判定しない。
-計画可能な候補は従来A*を最後まで実行し、同じ計画を返す。通常planGoalには事前判定も時間制限も適用しない。
-同一版・goal・GOAP factsの完了結果をbotごとに最大256件再利用する。状態内容が変わると別結果になり、距離の見積もりは毎回更新する。未評価はcacheしない。
+閉包で排除されない候補は従来A*を実行し、同じ計画を返す。通常planGoalにも同じ事前判定を適用するが、evaluateGoalsの時間予算は適用しない。
+同一版・goal・GOAP factsの完了結果をbotごとに最大256件再利用する。状態内容が変わると別結果になり、距離の見積もりは毎回更新する。200回上限・候補枯渇まで探索した結果は、その理由もcacheする。時間予算中断はcacheしない。timedOutはbudget_exceededが1件以上あるときtrueで、探索回数上限だけではfalse。
 
 ### 軽い観測（F3）
 

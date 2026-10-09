@@ -9,6 +9,17 @@ const { buildState } = require('./state_builder')
 const { MAX_ITERATIONS, YIELD_INTERVAL } = require('./options')
 const { planningLog, getLogger, planningLogger } = require('./logging')
 const { prepareDomain, loadDomain, USE_AUTO_GATHER, USE_AUTO_CRAFT } = require('./domain')
+const { reachable, needsPresence } = require('./reachability')
+
+// Keep the public { plan, diagnosis } shape, including historical diagnoses.
+// Callers and evaluation caches carry this private outcome separately.
+const failedPlans = new WeakMap()
+function failedPlan(diagnosis, reason, iterations = 0) {
+  const result = { plan: null, diagnosis }
+  failedPlans.set(result, Object.freeze({ reason, provenImpossible: reason === 'relaxed_unreachable', iterations, maxIterations: MAX_ITERATIONS }))
+  return result
+}
+function getPlanFailure(result) { return failedPlans.get(result) || null }
 
 function yieldToEventLoop() {
   // setImmediate()を使用してI/Oフェーズまで到達させる
@@ -39,7 +50,7 @@ async function planPrepared(goalInput, worldState, options = {}) {
   const parsedGoal = parseGoalInput(goalInput)
   if (!parsedGoal) {
     getLogger().warn(`無効な目標形式です: ${goalInput}`)
-    return { plan: null, diagnosis: { error: `無効な目標形式です: ${goalInput}` } }
+    return failedPlan({ error: `無効な目標形式です: ${goalInput}` }, 'invalid_goal')
   }
 
   let goalAction = null
@@ -47,7 +58,7 @@ async function planPrepared(goalInput, worldState, options = {}) {
     goalAction = actions.find(a => a.name === parsedGoal.actionName) || null
     if (!goalAction) {
       getLogger().warn(`未知の目標です: ${goalInput}`)
-      return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
+      return failedPlan({ error: `未知の目標です: ${goalInput}` }, 'invalid_goal')
     }
   }
 
@@ -55,7 +66,7 @@ async function planPrepared(goalInput, worldState, options = {}) {
   const goalState = getGoalStateFromParsed(parsedGoal, actions, goalAction)
   if (!goalState) {
     getLogger().warn(`未知の目標です: ${goalInput}`)
-    return { plan: null, diagnosis: { error: `未知の目標です: ${goalInput}` } }
+    return failedPlan({ error: `未知の目標です: ${goalInput}` }, 'invalid_goal')
   }
 
   const initialState = buildState(worldState)
@@ -93,11 +104,18 @@ async function planPrepared(goalInput, worldState, options = {}) {
 
   const heuristicContext = { ...buildHeuristicContext(adjustedGoal, goalAction, filteredActions), logShortage: true }
 
-  if(options.possibleFacts && Object.entries(adjustedGoal).some(([key,target])=>require('./reachability').needsPresence(target)&&!options.possibleFacts.has(key))) {
-    checkBudget(options)
+  checkBudget(options)
+  const possibleFacts = options.possibleFacts || reachable(actions, initialState, options.deadline ?? Infinity, options.signal)
+  checkBudget(options)
+  if(possibleFacts && Object.entries(adjustedGoal).some(([key,target]) => {
+    const actual = getStateValue(initialState, key)
+    const present = typeof actual === 'number' ? actual > 0 : Boolean(actual)
+    // Presence of a goal key need not appear among the domain's action keys.
+    return needsPresence(target) && !present && !possibleFacts.has(key)
+  })) {
     const diagnosis=diagnoseGoalFailure(adjustedGoal,initialState,filteredActions,heuristicContext)
     checkBudget(options)
-    return {plan:null,diagnosis}
+    return failedPlan(diagnosis, 'relaxed_unreachable')
   }
 
   // 初期状態のヒューリスティック推定値を計算（情報表示のみ）
@@ -307,7 +325,7 @@ async function planPrepared(goalInput, worldState, options = {}) {
   checkBudget(options)
   const diagnosis = diagnoseGoalFailure(adjustedGoal, initialState, filteredActions, heuristicContext)
   checkBudget(options)
-  return { plan: null, diagnosis }
+  return failedPlan(diagnosis, iterations >= MAX_ITERATIONS && open.size > 0 ? 'iteration_limit' : 'frontier_exhausted', iterations)
 
   } finally {
     // The logger belongs to this asynchronous call, not the module.
@@ -418,6 +436,7 @@ module.exports = {
   loadDomain,
   prepareDomain,
   getAllActions,
+  getPlanFailure,
   evaluateCondition,
   arePreconditionsSatisfied,
   USE_AUTO_GATHER,

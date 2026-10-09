@@ -18,6 +18,7 @@ async function main(){
  const record={phase,source:source||'working-tree',username,position,goals,evaluations:[],plans:[],failures:[]};
  try{
   await rcon('natural',[`clear ${username}`,`tp ${username} ${position.x} ${position.y} ${position.z}`]);await wait(800);
+  record.initialPosition=clean(bot.entity.position);record.initialInventory=clean(bot.inventory.items());
   const warm=await api.observe();if(!warm.ok)throw Error(warm.error.message);
   record.warm=await api.evaluateGoals(goals,{worldState:warm.data,maxMs:20000,perGoalMs:3000});
   const lag=monitorEventLoopDelay({resolution:10});lag.enable();let running=true;
@@ -30,8 +31,13 @@ async function main(){
   const t=performance.now();record.execution=await api.executeGoal('inventory.category.log:4',{signal:AbortSignal.timeout(120000),onProgress:e=>{if(e.type==='step_failure')record.failures.push(e)}});record.executionMs=performance.now()-t;
   running=false;await Promise.all(side);lag.disable();
   record.eventLoopDelayMs={mean:lag.mean/1e6,p99:lag.percentile(99)/1e6,max:lag.max/1e6};record.inventory=clean(bot.inventory.items());record.finalPosition=clean(bot.entity.position);
+  const names=require('../../planner_bot/src/planner/state_builder').loadBlockCategories().categories.log.blocks;
+  record.logQuantity=record.inventory.filter(i=>names.includes(i.name)).reduce((n,i)=>n+i.count,0);
+  record.confirmedSuccess=Boolean(record.execution?.ok&&record.logQuantity>=4);
  }finally{await api.stop();bot.quit()}
  fs.writeFileSync(path.join(dir,`concurrent-${phase}.json`),JSON.stringify(record,null,2));
+ if(record.execution?.ok&&!record.confirmedSuccess)throw Error('Execution succeeded without collecting four logs');
+ if(phase==='AB'&&JSON.parse(fs.readFileSync(path.join(dir,'concurrent-A.json'),'utf8')).execution?.ok&&!record.confirmedSuccess)throw Error('Previously successful concurrent execution regressed; stop for requester judgement');
  console.log(JSON.stringify({phase,execution:record.execution,ms:record.executionMs,samples:record.evaluations.length,maxObserveEvaluateMs:Math.max(...record.evaluations.map(r=>r.totalMs)),eventLoopDelayMs:record.eventLoopDelayMs}));
 }
 main().then(()=>process.exit(0),e=>{console.error(e.message);process.exit(1)});

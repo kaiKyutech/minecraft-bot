@@ -25,9 +25,14 @@ async function main(){
      assert.equal(cost,old.cost);assert.equal(r.metrics.iterations,old.iterations);
     }
     if(plan)assert.equal(replay(goal,world,plan).valid,true);
+    if(phase==='B'&&variant==='production'&&!plan){
+     assert.equal(r.planningFailure.provenImpossible,old.provedImpossible);
+     assert.equal(r.metrics.iterations,old.provedImpossible?0:old.iterations);
+     assert.equal(r.reason,old.provedImpossible?'relaxed_unreachable':old.reason);
+    }
     const paired=rows.find(row=>row.state===state.name&&row.goal===goal&&row.repeat===repeat&&row.variant!==variant);
     if(paired)assert.deepEqual(plan,paired.plan,`${state.name}/${goal} full plan changed`);
-    rows.push({state:state.name,goal,variant,repeat,durationMs:r.durationMs,iterations:r.metrics.iterations,reason:r.reason,plan,cost,provedImpossible:old.provedImpossible});
+    rows.push({state:state.name,goal,variant,repeat,durationMs:r.durationMs,iterations:r.metrics.iterations,reason:r.reason,planningFailure:r.planningFailure,plan,cost,provedImpossible:old.provedImpossible});
    }
   }
   assert.equal(JSON.stringify(world),before,'planner mutated input');

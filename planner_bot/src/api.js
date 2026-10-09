@@ -56,7 +56,7 @@ function createBotApi(bot, options = {}) {
       const version = ready()
       const worldState = params.worldState || await stateManager.observe(bot)
       const result = await goap.plan(goal, worldState, createLogger({ bot, category: 'goap.plan' }), { version })
-      if (!result.plan) throw failure('PLAN_NOT_FOUND', 'No plan found for this goal', { goal, diagnosis: result.diagnosis })
+      if (!result.plan) throw failure('PLAN_NOT_FOUND', 'No plan found for this goal', { goal, diagnosis: result.diagnosis, ...goap.getPlanFailure?.(result) })
       return result
     }),
     executeGoal: (goal, params = {}) => call('goal', async () => {
