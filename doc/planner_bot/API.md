@@ -340,13 +340,13 @@ estimatedMsはGOAPのcostを変換した値ではなく、ライブ測定に基�
 
 ### 軽い観測（F3）
 
-`observeFast({ range=16, maxMs=50, maxChecks=12000 }={})`。
+`observeFast({ range=16, maxMs=50, maxChecks=12000, darkBelow=8, torchRadius=5 }={})`。
 rangeは1〜64の整数。dataは `kind:'fast_observation'` で、完全worldStateとは別の契約。
 
 - position、yaw/pitch（度）、health/food、time、inventory/equipment。
 - resources：種類ごとのcount / nearestPosition / nearestDistance。categories：同じ形式のカテゴリ要約。
 - players / drops：range内の名前・座標・距離と、取得可能な落下アイテム情報。
-- skyVisible（true/false/null）、location（surface/underground/unknown）、light（block/sky、不明はnull）。空の判定は読み込み済みの頭上の柱に基づく推定。
+- skyVisible（true/false/null）、location（surface/underground/unknown）、light（block/sky/level/dark/torchNearby、不明はnull）。空の判定は読み込み済みの頭上の柱に基づく推定。
 - complete / scanComplete / unloadedChecks / checksUsed / totalChecks / observedAt / ageMs / durationMs / range。
 
 資源範囲は現在位置のfloorを中心とする球。座標・距離は実際の位置から計算する。
@@ -354,6 +354,13 @@ rangeは1〜64の整数。dataは `kind:'fast_observation'` で、完全worldSta
 complete=falseの場合、countは走査済み部分の値であり、全範囲の総数や資源不存在を断定するために使わない。
 ageMsは資源走査開始からの経過時間。位置・在庫等は呼出時に取得する。
 完全観測は `observe()` を使い、F1へ同じdataを使い回す。
+
+
+⑧L1のlightは目の高さ（足元+1.62）で読む。既存のblock/skyは変更せず、levelは両方既知ならmax(block, sky)、片方でも不明ならnull。skyはmineflayerの生のskylightで、時刻・雨・雷による減光補正は行わない（夜の地表でも高く見積もり得る）。描画の明るさや敵の出現判定を保証する値ではない。
+
+torchNearbyは床座標を中心とした半径torchRadiusの球内のtorch / wall_torchのみを調べる。soul/redstoneのたいまつ、lantern等はこのフラグに含めないが、届いたblock lightはlevelに含まれる。darkBelowは0〜16、torchRadiusは0〜8の整数。既定の8はlevel < 8を暗いとする。torchNearby=trueならlight更新前のlevel=0でもdark=false。明るさが閾値以上でもdark=false。残りは照度・近傍がすべて既知の場合だけdark=true、未読込があればnull。
+
+たいまつ検索は資源走査のrange・持越しcache・maxChecks/maxMsから独立し、呼出ごとに最大2109セル（半径8）を読む。maxMsは従来の資源・空の走査予算で、light等の固定上限の観測を含む厳密な全体期限ではない。これは情報を返すだけで、たいまつの作成・設置・GOAP変更は行わない。
 
 ### 時間内に座標へ近づく（F5）
 
