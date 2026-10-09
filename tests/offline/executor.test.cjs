@@ -51,3 +51,18 @@ test('missing numeric precondition generates only the deficit subgoal',async()=>
 test('replan accepts legacy plan-array result',async()=>{
   const f=fixture({skills:{s:async()=>{throw new Error('failure');}},plan:()=>[]});await f.execute([{action:'a',skill:'s'}]);
 });
+test('unchanged placement failures stop after three attempts with structured details',async()=>{
+  let attempts=0;const steps=[{action:'place_furnace',skill:'bad',params:{blockName:'furnace'}}];
+  const f=fixture({skills:{bad:async()=>{attempts++;if(attempts>4)throw Object.assign(new Error('safety sentinel'),{name:'AbortError'});throw Object.assign(new Error('No placement'),{code:'PLACEMENT_FAILED'});}},plan:()=>({plan:steps})});
+  await assert.rejects(f.execute(steps),error=>error.code==='REPEATED_FAILURE'&&error.details.attempts===3&&error.details.action==='place_furnace');
+  assert.equal(attempts,3);
+});
+test('successful auxiliary plans that do not repair a precondition are bounded',async()=>{
+  let checks=0;const steps=[{action:'target',skill:'target'}];
+  const f=fixture({skills:{prepare:async()=>{},target:async()=>{}},plan:()=>({plan:[{action:'prepare',skill:'prepare'}]}),analyse:step=>{
+    if(step.action!=='target')return {satisfied:true,missing:[]};
+    if(++checks>4)throw Object.assign(new Error('safety sentinel'),{name:'AbortError'});
+    return {satisfied:false,missing:[{key:'inventory.stick',condition:'>= 4',currentValue:0}],goapState:{inventory:{stick:0}},worldState:{inventory:{counts:{}}}};
+  }});
+  await assert.rejects(f.execute(steps),{code:'REPEATED_FAILURE'});assert.equal(checks,3);
+});

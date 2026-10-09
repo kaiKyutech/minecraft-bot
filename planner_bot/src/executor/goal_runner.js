@@ -1,4 +1,5 @@
-const { interruptible, checkpoint } = require('../utils/context')
+const { interruptible, checkpoint, withContext, currentContext } = require('../utils/context')
+const { FailureGuard } = require('./failure_guard')
 const { checkCompositeState, buildStructuredDiagnosis } = require('../planner/diagnosis')
 const goapPlanner = require('../planner/goap')
 const { buildState } = require('../planner/state_builder')
@@ -136,7 +137,7 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
         return await interruptible(bot, () => runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
       } catch (error) {
       checkpoint(bot)
-      if (error?.name === 'AbortError') throw error
+      if (error?.name === 'AbortError' || error?.code === 'REPEATED_FAILURE') throw error
         // 数量1でも失敗 → 前提条件（サブゴール）の解決に進む
         bot.systemLog(`数量1でも失敗。前提条件を解決します...`)
         // ここでエラーを握りつぶして、下の「サブゴール抽出」ロジックに進む
@@ -542,7 +543,10 @@ function logPlanDetails(bot, goalName, plan) {
   logger.info('========================')
 }
 
-module.exports = runGoal
+module.exports = function (...args) {
+  const bot = args[0]
+  return withContext({ bot, failureGuard: currentContext(bot).failureGuard || new FailureGuard() }, () => runGoal(...args))
+}
 module.exports.checkCompositeState = checkCompositeState
 module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
 

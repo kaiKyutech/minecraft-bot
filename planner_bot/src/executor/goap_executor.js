@@ -1,4 +1,5 @@
-const { withContext, checkpoint, interruptible } = require('../utils/context')
+const { withContext, currentContext, checkpoint, interruptible } = require('../utils/context')
+const { FailureGuard } = require('./failure_guard')
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
@@ -67,6 +68,8 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
         continue
       }
 
+      currentContext(bot).failureGuard.note(goalName, step, { code: 'PRECONDITION_MISSING', message: JSON.stringify(preconditionStatus.missing) }, await stateManager.getState(bot), bot)
+
       goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の前提条件が満たされていません。`)
 
       // サブゴール探索
@@ -101,7 +104,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
       await interruptible(bot, () => yieldToEventLoop())
     } catch (error) {
       // キャンセルエラーは再スロー
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.code === 'REPEATED_FAILURE') {
         throw error
       }
       goapExecLog(bot, `[REACTIVE_GOAP] ステップ "${step.action}" の実行中にエラーが発生: ${error.message}`)
@@ -109,6 +112,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
 
       // 状態を更新してリプランニング
       await interruptible(bot, () => stateManager.refresh(bot))
+      currentContext(bot).failureGuard.note(goalName, step, error, await stateManager.getState(bot), bot)
       const newPlan = await interruptible(bot, () => replan(bot, goalName, stateManager, signal, missingPreconditions))
 
       goapExecLog(bot, `[REACTIVE_GOAP] 新しいプラン長: ${newPlan.length}`)
@@ -433,7 +437,7 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
       return true
     } catch (error) {
       // キャンセルエラーは再スロー
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.code === 'REPEATED_FAILURE') {
         throw error
       }
       goapExecLog(bot, `[REACTIVE_GOAP]     サブゴール実行に失敗: ${error.message}`)
@@ -445,7 +449,8 @@ async function tryResolveMissingPreconditions(bot, step, stateManager, status, s
 }
 
 function executePlanWithReplanning(bot, goalName, initialPlan, stateManager, signal = null, missingPreconditions = null) {
-  return withContext({ bot, signal }, () => executePlanPrepared(bot, goalName, initialPlan, stateManager, signal, missingPreconditions))
+  const failureGuard = currentContext(bot).failureGuard || new FailureGuard()
+  return withContext({ bot, signal, failureGuard }, () => executePlanPrepared(bot, goalName, initialPlan, stateManager, signal, missingPreconditions))
 }
 
 module.exports = {
