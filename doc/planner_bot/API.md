@@ -65,6 +65,7 @@ factoryと内部の低レベル関数にはこの契約を適用しない。
 | `DOMAIN_NOT_READY`, `DOMAIN_PREPARATION_FAILED`, `VERSION_CONFLICT` | 行動定義が未準備、準備失敗、同一プロセスの版競合 |
 | `PLAN_NOT_FOUND`, `ENVIRONMENT_MISSING` | 計画不能、必要な環境がない |
 | `GOAL_CYCLE`, `GOAL_DEPTH_EXCEEDED`, `REPLAN_FAILED` | 補助目標の循環、深さ制限、実行途中の再計画失敗 |
+| `REPEATED_FAILURE` | 同じ状態・行動・理由の失敗3回、または進展のない失敗/再計画10回で終了。detailsにgoal/action/params/code/reason/attempts/limit/limitKind |
 | `ITEM_NOT_FOUND`, `RECIPE_NOT_FOUND`, `BLOCK_NOT_FOUND` | アイテム・レシピ・ブロック不足 |
 | `PLAYER_NOT_FOUND`, `ENTITY_NOT_AVAILABLE`, `OUT_OF_RANGE` | 相手がいない、位置未取得、距離外 |
 | `CHEST_NOT_OPEN`, `CHEST_NOT_FOUND`, `PLACEMENT_FAILED` | チェスト操作・設置の失敗 |
@@ -128,7 +129,7 @@ primitiveはcamelCaseとsnake_caseの両方を受け付ける。
 | `hand_craft` | recipe、count=1（クラフト回数）。動的な板レシピも維持 |
 | `workbench_craft` | recipe、count=1。周囲の作業台を使う |
 | `furnace_smelt` | input、fuel、output、fuel_count=1 |
-| `place_block` | blockName。同じ高さの東・西・南・北・南東・北西をこの順に試す。下面参照のみ |
+| `place_block` | blockName。従来の同じ高さの東・西・南・北・南東・北西、下面参照を先に試す。失敗時は半径5の立体候補・6方向の固体参照へフォールバック。空気各種・草・雪の層を置換候補とする。creativeの探索は維持 |
 | `equip_mainhand` | item |
 | `equip_armor` | item、slot='helmet'/'chestplate'/'leggings'/'boots' |
 | `move_to` | position、またはblockType |
@@ -188,7 +189,13 @@ coords省略時、半径5の3次元候補を距離順で探す。自分のXZ列�
 上下東西南北の参照をこの順に試す。skillの6候補policyとは別に保持している。
 dataは `{ block, position, message }`。置き場所探索は共通のplacement_searchにある。
 
-chest count=-1は既存の不具合を01では修正していない。通常の正数での転送を検証した。
+chest count=-1は02で修正。転送元の全スタックを合算し、metadata/NBTごとに転送する。
+withdrawはcontainer側のスロットだけを参照し、プレイヤー側の持ち物を含めない。
+転送失敗はok:falseで、details.transferredCountに完了済みの転送グループの数を返す（失敗したグループ内の途中転送数は含まない）。
+
+02のexecuteGoalは、関連状態が変わらない失敗を有限回で終了する。時刻・視線・微小な位置変化は進展と扱わない。
+補助目標や道具準備も同じ実行の失敗記録を共有する。別のexecuteGoalは新しい記録から開始する。
+通常の計画内容・再計画・環境ブロックを資源にする動作は維持する。
 
 ## カメラ・待機・会話
 

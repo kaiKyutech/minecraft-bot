@@ -220,6 +220,9 @@ async function runGoal(bot, username, goalName, stateManager, signal = null, dep
 
     // サブゴール成功 → 元のゴールを再試行
     bot.systemLog(`サブゴール「${subgoal}」完了。目標「${goalName}」を再試行中...`)
+    currentContext(bot).failureGuard.note(goalName, { action: 'retry_goal', params: { goal: goalName, subgoal } },
+      { code: 'PRECONDITION_MISSING', message: 'Auxiliary goal completed but parent requires another plan' },
+      await stateManager.getState(bot), bot)
     // 元のゴールを再度試す前に、試行済みセットから削除
     attemptedGoals.delete(goalName)
     return await interruptible(bot, () => runGoal(bot, username, goalName, stateManager, signal, depth, maxDepth, missingPreconditions, attemptedGoals, true))
