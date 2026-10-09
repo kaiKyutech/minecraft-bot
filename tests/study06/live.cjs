@@ -13,16 +13,24 @@ const out = path.resolve(__dirname,'../../.cache/minecraft-bot/06-study',phase |
 
 function instrument(bot, record) {
   record.digs=[]; record.placements=[]; const active=new Map();
-  const original=bot.dig.bind(bot);
-  bot.dig=async(block,...rest)=>{
+  const start=block=>{
     const t0=performance.now(), p=bot.entity.position;
     const entry={position:clean(block.position),block:block.name,startedAt:Date.now(),t0,
       predictedMs:bot.digTime(block),onGround:bot.entity.onGround,inWater:bot.entity.isInWater,
       botPosition:clean(p),held:bot.heldItem?.name,serverChanges:[]};
-    record.digs.push(entry);active.set(block.position.toString(),entry);
-    try { const result=await original(block,...rest);entry.clientDoneMs=performance.now()-t0;entry.clientDoneAt=Date.now();return result; }
-    catch(e){entry.error=e.message;entry.errorMs=performance.now()-t0;throw e;}
+    record.digs.push(entry);active.set(block.position.toString(),entry);return entry;
   };
+  if(phase==='before'){
+    const original=bot.dig.bind(bot);
+    bot.dig=async(block,...rest)=>{const entry=start(block);
+      try{const result=await original(block,...rest);entry.clientDoneMs=performance.now()-entry.t0;entry.clientDoneAt=Date.now();return result;}
+      catch(e){entry.error=e.message;entry.errorMs=performance.now()-entry.t0;throw e;}};
+  }else{
+    bot.on('digExecutionAttempt',d=>start(d.block));
+    bot.on('digExecutionClientDone',d=>{const entry=active.get(d.block.position.toString());if(!entry)return;
+      if(d.error){entry.error=d.error.message;entry.errorMs=performance.now()-entry.t0;}
+      else{entry.clientDoneMs=performance.now()-entry.t0;entry.clientDoneAt=Date.now();}});
+  }
   const change=(pos,stateId,packet)=>{
     const entry=active.get(pos.toString());
     if(entry)entry.serverChanges.push({ms:performance.now()-entry.t0,at:Date.now(),stateId,packet});
@@ -40,7 +48,7 @@ function instrument(bot, record) {
 }
 async function main(){
   if(phase==='stop'){await rcon('natural',['save-all','stop']);return;}
-  if(!['before','D1','D2','P1','after'].includes(phase)||(!cases[index]&&index!==9&&index!==10&&index!==11))throw Error('Invalid trial');
+  if(!['before','D1','D2','P1','after'].includes(phase)||(!cases[index]&&![9,10,11,12].includes(index)))throw Error('Invalid trial');
   fs.mkdirSync(out,{recursive:true});
   const username=`S06${phase}${index}${Date.now().toString(36).slice(-5)}`;
   const bot=runtime.createAIBot(1,{host:'127.0.0.1',port:25567,username,version:'1.20.1',aiBotCount:1},{autoHandleWhisper:false});
@@ -57,7 +65,12 @@ async function main(){
       // Supplemental controlled dig/place reproductions, distinct from empty-inventory goals.
       await rcon('natural',['fill 99 74 99 103 85 103 air','fill 100 74 100 100 79 100 stone',`clear ${username}`,`give ${username} wooden_pickaxe`, `tp ${username} 100.5 80 100.5`]);await wait(800);
       await api.executePrimitive('equipItem',{itemName:'wooden_pickaxe'});
-      if(index===9){record.label='six blocks straight down';record.results=[];for(let y=79;y>=74;y--)record.results.push(await api.executePrimitive('digBlock',{position:{x:100,y,z:100}}));}
+      if(index===9){
+        // Direct low-level calls avoid the API's post-operation observation delay.
+        const primitives=phase==='before'?require(path.resolve(__dirname,'../../.cache/minecraft-bot/05-study/runtime-42ac72b/planner_bot/src/primitives')):require('../../planner_bot/src/primitives');
+        record.label='six blocks straight down';record.results=[];
+        for(let y=79;y>=74;y--){try{await primitives.digBlock(bot,{position:{x:100,y,z:100}});record.results.push({ok:true});}catch(e){record.results.push({ok:false,code:e.code,message:e.message});break;}}
+      }
       if(index===10){
         record.label='server rejection: suppress first FINISH packet';
         const write=bot._client.write.bind(bot._client);let suppressed=false;
@@ -70,6 +83,11 @@ async function main(){
         await rcon('natural',['fill 99 79 99 103 79 103 stone',`give ${username} crafting_table`,`tp ${username} 100.5 80 100.5`]);await wait(500);
         const place=bot.placeBlock.bind(bot);bot.placeBlock=async(...args)=>{await place(...args);throw Error('Injected blockUpdate timeout after actual placement');};
         record.result=await api.executeSkill('place_block',{blockName:'crafting_table'});
+      }
+      if(index===12){
+        record.label='occluded lower stone, upper stone left intact';
+        record.result=await api.executePrimitive('digBlock',{position:{x:100,y:78,z:100}});
+        record.serverCheck=await rcon('natural',['execute if block 100 78 100 air run say S06_LOWER_AIR','execute if block 100 79 100 stone run say S06_UPPER_STONE']);
       }
     }
     await wait(300);record.inventory=clean(bot.inventory.items());record.finalPosition=clean(bot.entity.position);

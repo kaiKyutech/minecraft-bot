@@ -4,6 +4,7 @@ const { Vec3 } = require('vec3')
 const minecraftData = require('minecraft-data')
 const { goals, Movements } = require('mineflayer-pathfinder')
 const { createLogger } = require('./utils/logger')
+const { installDigExecution } = require('./utils/dig_execution')
 
 const movementCache = new WeakMap()
 
@@ -54,47 +55,12 @@ async function moveTo(bot, params = {}) {
 }
 
 async function digBlock(bot, params = {}) {
-  // 指定座標のブロックを採掘する
   const targetPos = resolvePosition(params)
-  if (!targetPos) {
-    throw failure('INVALID_ARGUMENT', '掘削対象の座標が必要です')
-  }
-
-  // digTime is captured once by mineflayer. Let a short fall finish before
-  // starting its timer; sustained flight/swimming retains the normal penalty.
-  const landingDeadline = Date.now() + 1000
-  while (bot.entity?.onGround === false && Date.now() < landingDeadline) {
-    await interruptible(bot, () => new Promise(resolve => setTimeout(resolve, 25)))
-  }
-  checkpoint(bot)
+  if (!targetPos) throw failure('INVALID_ARGUMENT', '掘削対象の座標が必要です')
   const block = bot.blockAt(targetPos)
-  if (!block) {
-    throw failure('BLOCK_NOT_FOUND', '指定位置にブロックが存在しません')
-  }
-
-  if (!bot.canDigBlock(block)) {
-    throw failure('BLOCK_NOT_FOUND', `このブロックは掘れません: ${block.name}`)
-  }
-
-  const digTime = bot.digTime(block)
-  const startTime = Date.now()
-  const logger = createLogger({ bot, category: 'primitive', commandName: bot.currentCommandName })
-  logger.info(`[DIG] ${block.name} 採掘開始、予想時間: ${(digTime / 1000).toFixed(2)}秒、ツール: ${bot.heldItem?.name || '素手'}`)
-
-  // 採掘中断を検知
-  const digAbortHandler = () => {
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
-    logger.info(`[DIG] ⚠️  採掘が中断されました！経過時間: ${elapsed}秒 / 予想時間: ${(digTime / 1000).toFixed(2)}秒`)
-  }
-  bot.once('diggingAborted', digAbortHandler)
-
-  try {
-    await interruptible(bot, () => bot.dig(block))
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
-    logger.info(`[DIG] ${block.name} 採掘完了、実際の時間: ${elapsed}秒`)
-  } finally {
-    bot.removeListener('diggingAborted', digAbortHandler)
-  }
+  if (!block) throw failure('BLOCK_NOT_FOUND', '指定位置にブロックが存在しません')
+  installDigExecution(bot)
+  await interruptible(bot, () => bot.dig(block))
 }
 
 // 指定ブロックに最適なツールを装備する

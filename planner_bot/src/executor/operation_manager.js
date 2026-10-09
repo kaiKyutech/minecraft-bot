@@ -1,6 +1,7 @@
 const { withContext, checkpoint, cancelled } = require('../utils/context')
 const { stopIdle } = require('../navigation/idle')
 const { stopLookWatch } = require('../navigation/look')
+const { drainDigging } = require('../utils/dig_execution')
 
 const managers = new WeakMap()
 
@@ -37,6 +38,7 @@ class OperationManager {
 
   async cleanup() {
     const bot = this.bot
+    await drainDigging(bot)
     stopIdle(bot)
     stopLookWatch(bot)
     await Promise.allSettled([bot._idleTickPromise, ...(bot._lookWatchPending || [])].filter(Boolean))
@@ -91,6 +93,7 @@ class OperationManager {
         entry.stopPhysical()
         throw error
       } finally {
+        await drainDigging(this.bot)
         entry.running = false
         if (!this.bot.followTarget && !this.bot.currentChest) this.release(entry)
         else if (this.bot.currentAbortController === entry.controller) this.bot.currentAbortController = null

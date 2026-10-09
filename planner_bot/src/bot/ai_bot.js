@@ -8,6 +8,7 @@ const mineflayer = require('mineflayer')
 const { pathfinder } = require('mineflayer-pathfinder')
 const createStateManager = require('../planner/state_manager')
 const { handleChatCommand } = require('../commands')
+const { installDigExecution } = require('../utils/dig_execution')
 
 /**
  * デバッグログ関数
@@ -213,6 +214,7 @@ function createAIBot(id, config, options = {}) {
 
   // スポーン時
   bot.once('spawn', () => {
+    installDigExecution(bot)
     createLogger({ bot, category: 'setup' }).info(`[AI-BOT] ${botName} spawned`)
     debugLog(`${botName} spawned, ready to receive goals`)
   })
