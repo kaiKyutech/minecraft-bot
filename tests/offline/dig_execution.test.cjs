@@ -58,6 +58,20 @@ test('D2 cancellation after optimistic air restores the block before ownership i
   await assert.rejects(withContext({bot,signal:controller.signal},()=>digBlock(bot,{position:p})),{code:'CANCELLED'});
   assert.equal(state,1);assert.equal(bot._client.listenerCount('block_change'),0);
 });
+test('D2 a movement timeout cancels a pending landing wait before a later dig can start', async()=>{
+  const {diggingScope}=require('../../planner_bot/src/utils/dig_execution'),bot=botFixture(false);
+  const close=diggingScope(bot),work=bot.dig(bot.blockAt(new Vec3(0,10,0)));
+  const rejected=assert.rejects(work,{code:'CANCELLED'});await close();await rejected;
+  await wait(50);assert.equal(bot.calls.length,0);assert.equal(bot._client.listenerCount('block_change'),0);
+});
+test('D2 late server air between attempts is accepted without digging an air block',async()=>{
+  const bot=botFixture(true),p=new Vec3(0,10,0);let state=1,attempts=0;
+  bot.blockAt=()=>({name:state===0?'air':'stone',stateId:state,position:p});bot._updateBlockState=(pos,id)=>{state=id;};bot.canDigBlock=b=>b.name==='stone';
+  bot.dig=async()=>{attempts++;state=0;bot.entity.onGround=false;
+    setTimeout(()=>{state=0;bot._client.emit('block_change',{location:p,type:0});},1100);
+    setTimeout(()=>{bot.entity.onGround=true;},1200);};
+  await digBlock(bot,{position:p});assert.equal(attempts,1);assert.equal(bot._client.listenerCount('block_change'),0);
+});
 test('D1 sustained non-grounded mining is bounded and retains mineflayer timing', async () => {
   const bot = botFixture(false), t=Date.now();await digBlock(bot, {position:new Vec3(0,10,0)});
   assert.ok(Date.now()-t>=1000&&Date.now()-t<1600);assert.deepEqual(bot.calls,[{onGround:false,predictedMs:5650}]);

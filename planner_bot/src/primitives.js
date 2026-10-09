@@ -4,7 +4,7 @@ const { Vec3 } = require('vec3')
 const minecraftData = require('minecraft-data')
 const { goals, Movements } = require('mineflayer-pathfinder')
 const { createLogger } = require('./utils/logger')
-const { installDigExecution } = require('./utils/dig_execution')
+const { installDigExecution, diggingScope } = require('./utils/dig_execution')
 
 const movementCache = new WeakMap()
 
@@ -33,8 +33,10 @@ async function moveTo(bot, params = {}) {
 
   checkpoint(bot)
   let timer
-  const movement = bot.pathfinder.goto(goal)
+  const closeDigging = diggingScope(bot)
+  let movement
   try {
+    movement = bot.pathfinder.goto(goal)
     if (timeout === null) {
       await movement
     } else {
@@ -51,6 +53,7 @@ async function moveTo(bot, params = {}) {
     throw error
   } finally {
     clearTimeout(timer)
+    await closeDigging()
   }
 }
 

@@ -2,6 +2,7 @@ const { performance } = require('node:perf_hooks')
 const { goals, Movements } = require('mineflayer-pathfinder')
 const { failure } = require('../utils/result')
 const { cancelled } = require('../utils/context')
+const { diggingScope } = require('../utils/dig_execution')
 
 async function moveToward(bot,target,options,signal){
   const start=bot.entity.position.clone(),range=options.range??2
@@ -14,8 +15,10 @@ async function moveToward(bot,target,options,signal){
   bot.pathfinder.setMovements(movement)
   const goal=target.y===undefined?new goals.GoalNearXZ(target.x,target.z,range):new goals.GoalNear(target.x,target.y,target.z,range)
   let timer,abort
-  const running=bot.pathfinder.goto(goal)
+  const closeDigging=diggingScope(bot,signal)
+  let running
   try{
+    running=bot.pathfinder.goto(goal)
     const reason=await Promise.race([
       running.then(()=>goal.isEnd(bot.entity.position.floored())?'arrived':'no_path',error=>{
         if(signal.aborted)return 'cancelled'
@@ -27,6 +30,6 @@ async function moveToward(bot,target,options,signal){
     bot.pathfinder.setGoal(null);await running.catch(()=>{})
     if(signal.aborted||reason==='cancelled'){const e=cancelled();e.details=result('cancelled');throw e}
     return result(reason)
-  }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);bot.pathfinder.setGoal(null);await running.catch(()=>{})}
+  }finally{clearTimeout(timer);if(abort)signal.removeEventListener('abort',abort);bot.pathfinder.setGoal(null);await Promise.resolve(running).catch(()=>{});await closeDigging()}
 }
 module.exports={moveToward}
