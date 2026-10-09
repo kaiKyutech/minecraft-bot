@@ -1,6 +1,13 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const {Vec3}=require('vec3');
 const {canPlaceBlockAt,findNearestPlaceablePosition,skillCandidates}=require('../../planner_bot/src/navigation/placement_search');
 const key=p=>[p.x,p.y,p.z].join(',');
+test('GOAP fallback replaces grass and uses a solid side face without changing creative',()=>{
+  const {goapFallbackCandidates}=require('../../planner_bot/src/navigation/placement_search');
+  const bot={entity:{position:new Vec3(0,10,0)},blockAt:p=>({name:key(p)==='1,10,0'?'grass':key(p)==='2,10,0'?'stone':'air',boundingBox:key(p)==='2,10,0'?'block':'empty',position:p})};
+  const found=goapFallbackCandidates(bot).find(c=>key(c.position)==='1,10,0');
+  assert.ok(found);assert.equal(key(found.face),'-1,0,0');
+  assert.equal(canPlaceBlockAt(bot,new Vec3(1,10,0)).canPlace,false);
+});
 const fixture=solids=>({entity:{position:new Vec3(0.8,10.7,0.2)},blockAt:p=>({name:solids.has(key(p))?'stone':'air',position:p})});
 test('skill candidates retain the six positions and their original order',()=>{
   assert.deepEqual(skillCandidates(fixture(new Set())).map(key),['1,10,0','-1,10,0','0,10,1','0,10,-1','1,10,1','-1,10,-1']);

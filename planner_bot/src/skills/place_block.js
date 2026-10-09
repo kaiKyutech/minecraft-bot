@@ -1,7 +1,7 @@
 const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
-const { skillCandidates, canPlaceBlockAt } = require('../navigation/placement_search')
+const { skillCandidates, canPlaceBlockAt, goapFallbackCandidates } = require('../navigation/placement_search')
 const { createLogger } = require('../utils/logger')
 
 /**
@@ -57,6 +57,20 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
       }
     }
 
+    if (!placed) {
+      for (const candidate of goapFallbackCandidates(bot)) {
+        checkpoint(bot)
+        try {
+          await interruptible(bot, () => primitives.placeBlock(bot, { reference: candidate.adjacentBlock.position, face: candidate.face }))
+          placed = true
+          logger.info(`[PLACE_BLOCK] ${params.blockName}を${candidate.position}に設置完了（fallback）`)
+          break
+        } catch (error) {
+          checkpoint(bot)
+          if (error.name === 'AbortError') throw error
+        }
+      }
+    }
     if (!placed) {
       throw failure('PLACEMENT_FAILED', '適切な設置位置が見つかりませんでした')
     }

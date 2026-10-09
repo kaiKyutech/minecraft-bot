@@ -102,4 +102,24 @@ function skillCandidates(bot) {
   return [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[1,0,1],[-1,0,-1]].map(([x,y,z]) => pos.offset(x,y,z))
 }
 
-module.exports = { canPlaceBlockAt, findNearestPlaceablePosition, skillCandidates }
+const REPLACEABLE = new Set(['air','cave_air','void_air','grass','short_grass','tall_grass','snow'])
+function goapFallbackCandidates(bot, radius = 5) {
+  const base = bot.entity.position.floored(), candidates = []
+  const eye = bot.entity.position.offset(0, 1.62, 0)
+  for(let x=-radius;x<=radius;x++) for(let y=-radius;y<=radius;y++) for(let z=-radius;z<=radius;z++) {
+    const position=base.offset(x,y,z), distance=base.distanceTo(position)
+    if(distance>radius || (x===0&&z===0) || eye.distanceTo(position.offset(.5,.5,.5))>4.5)continue
+    // Exclude any cube that intersects the player's body, including fractional positions.
+    const p=bot.entity.position
+    if(position.x+1>p.x-.3&&position.x<p.x+.3&&position.z+1>p.z-.3&&position.z<p.z+.3&&position.y+1>p.y&&position.y<p.y+1.8)continue
+    const target=bot.blockAt(position)
+    if(!target||!REPLACEABLE.has(target.name))continue
+    for(const [dx,dy,dz] of [[0,-1,0],[0,1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]) {
+      const reference=bot.blockAt(position.offset(dx,dy,dz))
+      if(!reference||REPLACEABLE.has(reference.name)||reference.boundingBox!=='block')continue
+      candidates.push({position,distance,adjacentBlock:reference,face:new Vec3(-dx,-dy,-dz)})
+    }
+  }
+  return candidates.sort((a,b)=>a.distance-b.distance)
+}
+module.exports = { canPlaceBlockAt, findNearestPlaceablePosition, skillCandidates, goapFallbackCandidates }
