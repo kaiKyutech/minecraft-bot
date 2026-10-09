@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-10、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋07非同期観測・計画＋08照度・松明＋09到達事実API版。Minecraft 1.20.1で回帰検証した。
+2026-10-10、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋07非同期観測・計画＋08照度・松明＋09到達事実＋10地形API版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -506,6 +506,50 @@ plan/replanにはplanId、plan、stepCount。stepにはplanId、0始まりstepIn
 callbackへ渡したplan/eventを書き換えても実行内容には影響しない。通知からAPIを呼ぶ場合は、そのAPIの所有権規則に従う。
 
 03の実測値・完了検証・残件は `requests/2026-10-09_from-isg/03_report.md`。
+
+## 周囲の地表格子（10 M1）
+
+```js
+const result = await api.observeTerrain({ radius: 64, maxMs: 1000, signal })
+if (result.ok) {
+  const d = result.data
+  const row = 10, col = 20
+  const cell = d.cells[row * d.width + col]
+  if (cell) {
+    const x = d.bounds.minX + col * d.step
+    const z = d.bounds.minZ + row * d.step
+    console.log(x, z, cell[0], d.names[cell[1]]) // 地面の床Yと名前
+  }
+}
+```
+
+`observeTerrain({radius=64,step=1,maxMs=1000,signal}={})` は `Promise<Result>`。
+radius は0〜128、stepは1〜32の整数。maxMsは0以上の有限値。通常の観測と同じく実行・移動の所有権を取らず、進行中の操作を停止しない。読み込み済みのbot.world/registryと次元のminY/heightが必要。spawn前・未準備・走査中のworld/次元変更はBOT_NOT_READY（spawn後に再試行）、不正入力はINVALID_ARGUMENT、中断はCANCELLED（data:null）。
+
+中心は呼出開始時の足元の床座標 `center:{x,y,z}`。円ではなく正方形を、北（Z−）から南へ、西（X−）から東へ返す。`width=height=floor(2*radius/step)+1`。`bounds` のminX/minZはcenter−radius、maxX/maxZは最後の**採用された**格子座標。stepが2*radiusを割り切らなければ南端・東端は指定半径に届かず、中心も格子点に入らない場合がある。各列の全高度（minY〜maxY）を空から調べ、地下断面は作らない。
+
+`cells` は長さwidth*heightの一次元配列。未読込・未処理はnull。それ以外は次の6要素の配列：
+
+| index / fields | 意味 |
+|---|---|
+| 0 / groundY | 地面のブロックの床Y。見つからなければnull |
+| 1 / groundName | 地面の名前の辞書index（`names[index]`、0はnull） |
+| 2 / topY | air/cave_air/void_airだけを除いた最上部の床Y。植物・流体を含む |
+| 3 / topName | 最上部の名前の辞書index |
+| 4 / fluidY | 地面に至るまでに最初に見つかったwater/lavaブロックの床Y |
+| 5 / fluidName | その流体の名前の辞書index（水か溶岩かを判別できる） |
+
+高さはブロック座標であり、衝突形状や液面の小数高さではない。地面はminecraft-dataのboundingBoxがblockの最上部。ただしmaterialのplant、葉・原木・木材（`_wood`）・幹・菌糸・根・ネザーウォートブロック・カーペット（名前末尾の`_leaves/_log/_wood/_stem/_hyphae/_roots/_wart_block/_carpet`）、竹、サボテン、サトウキビ、雪層、sea_pickle、lily_pad、chorus_plant/flower、巨大キノコの3ブロック、azalea/flowering_azaleaを除く。草花などboundingBoxがemptyのものも除く。grass_block、石、土、砂、雪ブロック、氷、建築用の板・屋根等は地面に含む。自然地形と人工構造物を判別するAPIではない。地面を決めるためのこの分類はGOAPの環境知識には適用しない。
+
+木の下ではground=土／top=葉、水上の植物があればground=湖底／top=植物／fluid=水を別々に返す。地面より下の地下水・溶岩は返さない。waterloggedな固体の内部の水も流体面には数えない。読み込み済みの空だけの列は6要素のnull/0配列で、未読込のnull列と区別できる。
+
+dataには`radius/step/width/height/bounds/order/fields/names/cells`のほか、`known/unknown/unknownRatio/unloaded/pending/timedOut/complete/reads/cacheHits/durationMs`がある。unknown=unloaded+pending、unknownRatio=unknown/(width*height)。completeは全格子点を処理した意味で、未読込列があってもtrue。maxMsに達するとok:trueでtimedOut=trueと途中結果を返す（maxMs:0では全列pending）。完了した列と走査途中の列を次回に使い回す。再開は同じ中心・radius・stepが効率的。ただし返却用格子の投影も毎回予算を使うため、極小のmaxMsでは繰り返すだけで完了しない場合がある。必要ならmaxMsを増やすかstep/radiusを調整する。待機・yield・GCも予算を消費し、返却処理やOSの遅延で厳密な返却期限は保証しない。
+
+ブロック状態IDを読み、重いblockAtのオブジェクト生成を避ける。最大約2msごとにsetImmediateで処理を譲り、キャッシュからの格子生成も分割する。blockUpdateでその列、chunkColumnLoad/Unloadでそのチャンクを無効化し、respawn/次元・world変更でリセット。bot終了で購読解除。botごとに最大512チャンク（各256列）のLRUキャッシュ。呼出し間で共有するが返却配列と辞書は独立している。世界を追加読み込みする副作用はない。
+
+格子全体を単一時点へ固定しない。各列の読み取り中に更新が届いた場合はその列をやり直すが、既に返却用配列へ採用した列の後の更新は次回に反映する。移動中も中心は呼出開始時に固定し、格子にはその後の読み込み／更新が反映され得る。既存observe/observeFastの結果とキャッシュは変更しない。同期のJSON.stringifyは呼出側の処理であり、このAPIの分割処理には含まれない。
+
+step=1・全列既知の模擬地形のJSONサイズは半径32/64/96で約81/317/708KB（名前辞書込み）。ブロック名と高さで変わる。実測時間・イベントループ遅延・ライブ例は`requests/2026-10-09_from-isg/10_report.md`、再実行は`node tests/study10/benchmark.cjs`、`./tests/study10/live.ps1`。
 
 ## 07 O1：完全観測の差分更新
 

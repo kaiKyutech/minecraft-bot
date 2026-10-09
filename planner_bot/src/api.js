@@ -49,6 +49,7 @@ function createBotApi(bot, options = {}) {
   const api = {
     observe: () => call('info', () => stateManager.observe(bot)),
     observeFast: (params = {}) => call('info', () => { ready();paramsObject(params);return require('./planner/fast_observation').observeFast(bot,stateManager,params) }),
+    observeTerrain: (params = {}) => call('info', () => { ready(); paramsObject(params); return require('./planner/terrain_observation').observeTerrain(bot, params) }),
     evaluateGoals: (goals, params = {}) => call('goal', () => { ready(); paramsObject(params); return require('./planner/goal_evaluator').evaluate(bot,stateManager,goals,params) }),
     reachableFacts: (params = {}) => call('goal', () => { ready(); paramsObject(params); return require('./planner/reachable_facts').reachableFacts(bot,stateManager,params) }),
     refresh: () => call('refresh', async () => { const start = performance.now(); await stateManager.refresh(bot); return { durationMs: performance.now() - start } }),
