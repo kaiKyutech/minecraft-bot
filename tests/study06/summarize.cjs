@@ -20,7 +20,9 @@ const metrics={node:process.version,mineflayer:require('mineflayer/package.json'
   trials:Array.from({length:9},(_,i)=>({index:i,goal:get('before',i).goal,position:get('before',i).position,
     ...Object.fromEntries(['before','after'].map(phase=>{const r=get(phase,i);return[phase,{ok:r.confirmedSuccess,code:r.result.error?.code||null,ms:r.durationMs,quantity:r.quantity,digs:stats(r.digs),placements:r.placements}];}))})),
   naturalDigStats:Object.fromEntries(['before','after'].map(phase=>[phase,stats(phases[phase].filter(r=>r.index<9).flatMap(r=>r.digs))])),
-  downward:Object.fromEntries(['before','after'].map(phase=>[phase,{...stats(get(phase,9).digs),results:get(phase,9).results,digs:get(phase,9).digs}])),
+  downward:Object.fromEntries(['before','after'].map(phase=>{const r=get(phase,9);return[phase,{...stats(r.digs),
+    elapsedToLastServerAirMs:Math.max(...r.digs.flatMap(d=>d.serverChanges.filter(c=>c.stateId===0).map(c=>c.at)))-r.digs[0].startedAt,
+    results:r.results,digs:r.digs}];})),
   controlled:[10,11,12,13].map(i=>({index:i,...Object.fromEntries(['before','after'].map(phase=>{const r=get(phase,i);return[phase,{label:r.label,result:r.result,digs:stats(r.digs),serverCheck:r.serverCheck,serverTable:r.serverTable,placements:r.placements}];}))})),
   lostSuccesses:Array.from({length:9},(_,i)=>i).filter(i=>get('before',i).confirmedSuccess&&!get('after',i).confirmedSuccess)};
 const matrix=JSON.parse(fs.readFileSync(path.join(cache,'matrix-B.json')));
