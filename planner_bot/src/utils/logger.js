@@ -51,6 +51,7 @@ function createLogger(options = {}) {
   }
 
   return {
+    enabled: level => shouldLogLevel(level) && shouldLogCategory(category) && shouldLogCommand(commandName),
     error: (...args) => emit('error', ...args),
     warn: (...args) => emit('warn', ...args),
     info: (...args) => emit('info', ...args),

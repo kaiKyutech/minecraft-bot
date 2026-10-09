@@ -52,13 +52,13 @@ function estimate(plan, env) {
   return {estimatedMs:Math.round(estimatedMs),estimateDetails:{model:'02-live-v1',coefficients:TIMING,steps,distanceType:'straight_line',reachabilityKnown:false,resourceSummaryComplete:env.complete},resources:[...resources.values()]}
 }
 
-async function evaluate(bot,stateManager,goals,options={}) {
+async function evaluateLocal(bot,stateManager,goals,options={}) {
   if(!Array.isArray(goals)||!goals.length||goals.some(g=>typeof g!=='string'||!g.trim()))throw failure('INVALID_ARGUMENT','A non-empty array of goal strings is required')
   const maxMs=options.maxMs??1000
   if(!Number.isFinite(maxMs)||maxMs<0)throw failure('INVALID_ARGUMENT','maxMs must be finite and non-negative')
   const perGoalMs=options.perGoalMs??Math.max(20,maxMs/goals.length)
   if(!Number.isFinite(perGoalMs)||perGoalMs<0)throw failure('INVALID_ARGUMENT','perGoalMs must be finite and non-negative')
-  const start=performance.now(),deadline=start+Math.max(0,maxMs-5)
+  const start=performance.now(),deadline=options._deadline??(start+Math.max(0,maxMs-5))
   let world=options.worldState,observationMs=0,preparationMs=0
   if(world?.kind==='fast_observation'||world?.complete===false)throw failure('INVALID_ARGUMENT','evaluateGoals requires a full worldState from observe()')
   if(!world&&!check(deadline,options.signal)){
@@ -72,7 +72,7 @@ async function evaluate(bot,stateManager,goals,options={}) {
     const facts=buildState(world)
     key=bot.version+':'+(process.env.GOAP_DISABLE_ACTION_FILTER||'')+':'+serializeState(facts)
     const t=performance.now();await goap.prepareDomain(bot.version);preparationMs=performance.now()-t
-    env=environment(world,deadline)
+    env=options._environment||environment(world,deadline)
     if(!check(deadline,options.signal))possibleFacts=require('./reachability').reachable(goap.getAllActions(),facts,deadline,options.signal)
   }
   const results=[]
@@ -89,5 +89,48 @@ async function evaluate(bot,stateManager,goals,options={}) {
     }
   }
   return {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.reason==='budget_exceeded')}
+}
+async function environmentAsync(world,deadline,signal) {
+  const closest=new Map(),origin=world.position,categories=loadBlockCategories().categories||{}
+  let complete=true,slice=performance.now()+2,n=0
+  for(const block of world.blocks?.list||[]) {
+    if(check(deadline,signal)){complete=false;break}
+    if(++n%128===0&&performance.now()>=slice){await new Promise(setImmediate);slice=performance.now()+2;if(check(deadline,signal)){complete=false;break}}
+    if(!block.position||!origin)continue
+    const distance=Math.hypot(block.position.x-origin.x,block.position.y-origin.y,block.position.z-origin.z),old=closest.get(block.name)
+    if(!old||distance<old.distance)closest.set(block.name,{position:{...block.position},distance})
+  }
+  return {closest,categories,complete}
+}
+async function evaluate(bot,stateManager,goals,options={}) {
+  if(!require('node:worker_threads').isMainThread || options.worker===false)return evaluateLocal(bot,stateManager,goals,options)
+  // Keep the existing argument errors and whole-call budget, including observation,
+  // preparation, projection, queueing, reachability, and A*.
+  if(!Array.isArray(goals)||!goals.length||goals.some(g=>typeof g!=='string'||!g.trim()))throw failure('INVALID_ARGUMENT','A non-empty array of goal strings is required')
+  const maxMs=options.maxMs??1000,perGoalMs=options.perGoalMs??Math.max(20,maxMs/goals.length)
+  if(!Number.isFinite(maxMs)||maxMs<0)throw failure('INVALID_ARGUMENT','maxMs must be finite and non-negative')
+  if(!Number.isFinite(perGoalMs)||perGoalMs<0)throw failure('INVALID_ARGUMENT','perGoalMs must be finite and non-negative')
+  const start=performance.now(),deadline=start+Math.max(0,maxMs-5),signal=options.signal
+  let world=options.worldState,observationMs=0,preparationMs=0
+  if(world?.kind==='fast_observation'||world?.complete===false)throw failure('INVALID_ARGUMENT','evaluateGoals requires a full worldState from observe()')
+  if(!world&&!check(deadline,signal)) {
+    const t=performance.now()
+    try{world=await stateManager.observe(bot,{deadline,signal})}catch(error){if(error.code!=='BUDGET_EXCEEDED')throw error}
+    observationMs=performance.now()-t
+  }
+  const finish=async()=>{
+    const result=await evaluateLocal(bot,stateManager,goals,{...options,worldState:world,_deadline:deadline})
+    return {...result,durationMs:performance.now()-start,observationMs,preparationMs}
+  }
+  if(!world||check(deadline,signal))return finish()
+  const t=performance.now();await require('./planning_service').prepare(bot.version);preparationMs=performance.now()-t
+  if(check(deadline,signal))return finish()
+  const env=await environmentAsync(world,deadline,signal)
+  if(check(deadline,signal))return finish()
+  let result
+  try{result=await require('./planning_service').evaluate(bot,goals,world,{version:bot.version,maxMs,perGoalMs,signal,_deadline:deadline,_environment:env})}
+  catch(error){if(error.code==='BUDGET_EXCEEDED')return finish();throw error}
+  check(Infinity,signal)
+  return {...result,durationMs:performance.now()-start,observationMs,preparationMs}
 }
 module.exports={evaluate,TIMING}

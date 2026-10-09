@@ -19,8 +19,9 @@ async function observeFast(bot,stateManager,options={}){
   if(!Number.isInteger(range)||range<1||range>64||!Number.isFinite(maxMs)||maxMs<0||!Number.isInteger(maxChecks)||maxChecks<0)throw failure('INVALID_ARGUMENT','range must be 1..64; budgets must be non-negative')
   const position=bot.entity.position.clone(),base=position.floored(),state=session(bot),key=`${position.x},${position.y},${position.z},${range}`
   if(state.cache?.key!==key)state.cache={key,base,range,axis:axis(range),cursor:0,resources:{},missing:0,checks:0,observedAt:Date.now()}
-  const cache=state.cache,n=cache.axis.length,total=n*n*n,deadline=start+maxMs;let checksUsed=0
+  const cache=state.cache,n=cache.axis.length,total=n*n*n,deadline=start+maxMs;let checksUsed=0,sliceDeadline=performance.now()+2
   while(cache.cursor<total&&checksUsed<maxChecks&&performance.now()<deadline){
+    if(cache.cursor%128===0&&performance.now()>=sliceDeadline){await new Promise(setImmediate);sliceDeadline=performance.now()+2;if(performance.now()>=deadline)break}
     const i=cache.cursor++,dx=cache.axis[Math.floor(i/(n*n))],dy=cache.axis[Math.floor(i/n)%n],dz=cache.axis[i%n]
     if(dx*dx+dy*dy+dz*dz>range*range)continue
     const point=base.offset(dx,dy,dz)

@@ -1,5 +1,5 @@
 const { loadStateSchema, loadBlockCategories } = require('./state_builder')
-const { scanBlocks } = require('../utils/block_scanner')
+const { scanIncremental: scanBlocks } = require('./incremental_blocks')
 const { createLogger } = require('../utils/logger')
 
 const SCAN_RANGE = process.env.STATE_SCAN_RANGE ? Number(process.env.STATE_SCAN_RANGE) : 60
@@ -45,7 +45,8 @@ class StateManager {
   }
 
   async observe(bot, options = {}) {
-    const blockData = await this.extractNearbyBlocks(bot, options)
+    const signal = options.signal || require('../utils/context').currentContext(bot).signal
+    const blockData = await this.extractNearbyBlocks(bot, { ...options, signal })
     const hasSpace = this.hasInventorySpace(bot)
 
     const state = {
@@ -164,28 +165,20 @@ class StateManager {
       signal: options.signal,
       range: scanRange,
       maxChecks: scanMaxChecks,
-      collectBlocks: true,  // ★ ブロック座標リストを収集
-      onBlock: ({ name, rawDistance }) => {
+      collectBlocks: true,
+      onBlock: ({name, rawDistance}) => {
         for (const state of environmentStates) {
-          if (nearbyBlocks[state.stateName]) continue
-          if (rawDistance > state.maxDistance) continue
-
-          if (state.type === 'single') {
-            if (name === state.blockName) {
-              nearbyBlocks[state.stateName] = true
-              remaining--
-            }
-          } else if (state.type === 'category') {
-            if (state.blockSet.has(name)) {
-              nearbyBlocks[state.stateName] = true
-              remaining--
-            }
-          }
+          if (rawDistance <= state.maxDistance && (state.type === 'single' ? name === state.blockName : state.blockSet.has(name))) nearbyBlocks[state.stateName] = true
         }
-        // 早期終了しない（全ブロックのカウントを収集するため）
         return false
       }
+
     })
+
+    for (const state of environmentStates) {
+      const names = state.type === 'single' ? [state.blockName] : [...state.blockSet]
+      if (names.some(name => (summary.nearestDistances?.[name] ?? Infinity) <= state.maxDistance)) nearbyBlocks[state.stateName] = true
+    }
 
     if (process.env.STATE_SCAN_DEBUG === '1') {
       const logger = getLogger(bot)

@@ -422,3 +422,25 @@ plan/replanにはplanId、plan、stepCount。stepにはplanId、0始まりstepIn
 callbackへ渡したplan/eventを書き換えても実行内容には影響しない。通知からAPIを呼ぶ場合は、そのAPIの所有権規則に従う。
 
 03の実測値・完了検証・残件は `requests/2026-10-09_from-isg/03_report.md`。
+
+## 07 O1：完全観測の差分更新
+
+observe/refreshはbotごとの同じブロックキャッシュを使う。初回は読み込み済みの全範囲を走査し、以降はblockUpdate、chunkColumnLoad/Unload、移動による境界部分だけをbot.blockAtから読み直す。respawnでリセットし、endでイベント購読を解除する。
+
+返却時には実座標を基準に、従来と同じ球・高度範囲・air除外・カテゴリ・整数距離順（同距離は従来のx/y/z走査順）で全一覧を作る。同期済みキャッシュの一時点を完全な観測として返し、その後に到着した更新は次の同期で取り込む。更新が続く間も返却でき、未完の初回/境界走査を完全な観測として返すことはない。予算やsignalで走査を中断した場合は次回に完全走査し直す。
+
+在庫・装備等の公開形と実行cacheの公開規則は維持する。STATE_SCAN_MAX_CHECKSを明示した有限prefix設定は従来scannerを使い、観測内容を変えない。通常の完全観測とobserveFastは短い単位でイベントループへ制御を返す。ただし大きなブロック一覧の割当て/GCと、O1段階の同期計画は残り、最大停止時間の保証はしない。
+
+## 07 O2：計画worker
+
+planGoal、evaluateGoals、executeGoal/runner内の計画・再計画は、プロセスごとの常設worker_threads workerで計算する。既存のA*、閉包、行動順序、探索上限、診断をそのまま使う。ドメインはworkerでMinecraft版に応じて従来どおり生成・準備し、実行の前提検査で使う同じ行動定義をメイン側へ渡す。
+
+workerにはbuildStateが使うworldStateの全項目をデータとして渡す。完全observeの公開内容は減らさない。評価の距離要約は全blocks.listから従来と同じ最寄り位置を短い単位で集計し、その要約を渡す。大きな一覧の同期structuredCloneを避け、推定値・資源・同距離時の選択を維持する。
+
+maxMsには観測、準備、距離集計、workerの待ち行列と探索を含める。perGoalMsと入力順、返却形、cache上限256件/内容キー/時間切れをcacheしない規則は維持する。cacheはbotごとにworkerで保持し、endまたはbotのGCで解放する。異なるMinecraft版のVERSION_CONFLICTも維持する。
+
+中断は共有フラグをworkerの探索チェックから読み、workerの終了応答を待ってからCANCELLEDを返す。planGoalにも任意のsignalを渡せる。評価や計画のsignalは実行中の別操作を停止しない。期限切れの評価は従来どおりunevaluated/budget_exceeded。workerが異常終了した場合はPLANNER_WORKER_FAILEDとし、メインスレッドで重い探索へ切り替えず、次回の呼出しでworkerを再準備する。idleのworkerはプロセス終了を妨げない。
+
+低レベルgoap.planはbotの実行文脈ではworkerを使う。独立した呼出しは従来のメイン側計画も使え、追加options.worker=trueでworkerを指定できる。options.worker=falseは照合用のメイン側計画を指定する。公開Result/plan/diagnosisの形は変わらない。ログは呼出しごとのloggerに渡す。
+
+毎回の判断には完全observeのworldStateを共有し、初回のドメイン準備を先に済ませる。大きな観測一覧の割当て、GC、Mineflayer/pathfinderやOSのスケジュールによる停止は残り、最大50msの保証をAPI契約にはしていない。実測はrequests/2026-10-09_from-isg/07_report.mdを参照。
