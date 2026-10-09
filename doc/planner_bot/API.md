@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-09、01リファクタリング＋02/03＋05 G/A/B版。Minecraft 1.20.1で回帰検証した。
+2026-10-09、01リファクタリング＋02/03＋05 G/A/B＋06実行修正版。Minecraft 1.20.1で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -160,6 +160,11 @@ primitiveはcamelCaseとsnake_caseの両方を受け付ける。
 | `findBlocks` / `find_blocks` | 同上。matchは名前、名前配列、{equals:[...]}/{includes:'...'} |
 
 道具補助 `primitives.findBestTool(bot, block)` / `equipBestToolForBlock(bot, block)` は直接関数も維持。
+
+06の採掘は開始前に最大1秒の着地待ちを行う。着地しなければ、飛行・水中等を含む現在の状態のmineflayerの採掘時間を使う。終了時のローカルの空気表示だけでは成功にせず、サーバーから対象位置の空気更新を最大1秒待つ。未確認なら直前の既知の状態へ戻して再試行し、合計3回で `BLOCK_NOT_FOUND` を返す。`createAIBot` では移動中のpathfinderの採掘にも適用する。移動時間切れ・中断時は待機中の採掘も終了させてから戻る。
+
+`place_block` スキルは、mineflayerの例外の有無にかかわらず、設置先に指定名のブロックがあることを確認する。木（原木・葉等）だけの足場では、読み込み済みの半径6・2〜8段下で頭上2ブロックが空いた固体の足場へ、合計8秒・最大3候補で移動を試す。降りられなければ現在地の従来の設置候補を試す。GOAPの計画・環境の知識とcreative設置の候補policyは変更しない。
+
 `primitives.js` 等の直接呼び出しは低レベル契約（throwや従来値）で、APIの所有権管理を通らない。
 所有権・中断・Resultが必要な呼び出しはcreateBotApiを使う。
 

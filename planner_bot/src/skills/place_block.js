@@ -3,6 +3,7 @@ const { interruptible, checkpoint } = require('../utils/context')
 const primitives = require('../primitives')
 const { skillCandidates, canPlaceBlockAt, goapFallbackCandidates } = require('../navigation/placement_search')
 const { createLogger } = require('../utils/logger')
+const { descendForPlacement } = require('../navigation/placement_ground')
 
 /**
  * 中位スキル: place_block
@@ -25,6 +26,7 @@ module.exports = async function placeBlock(bot, params = {}, stateManager) {
     if (!blockItem) {
       throw failure('ITEM_NOT_FOUND', `${params.blockName}がインベントリにありません`)
     }
+    await descendForPlacement(bot)
 
     // ブロックを手に装備
     await interruptible(bot, () => bot.equip(blockItem, 'hand'))

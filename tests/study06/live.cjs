@@ -6,10 +6,17 @@ const { wait, clean, rcon } = require('../helpers/live');
 const { sourceRuntime } = require('../study05/runtime.cjs');
 const [phase, indexText] = process.argv.slice(2), index = Number(indexText);
 const runtime = phase === 'before' ? sourceRuntime('42ac72b') : require('../../planner_bot/api');
-const starts = [{x:-12.5,y:67,z:24.5},{x:30.5,y:71,z:3.5},{x:-4.5,y:69,z:16.5}];
+const starts = [{x:10.5,y:72,z:-16.5},{x:30.5,y:71,z:3.5},{x:-4.5,y:69,z:16.5}];
 const cases = ['inventory.category.log:4','inventory.cobblestone:8','inventory.stone_pickaxe:1']
   .flatMap(goal => starts.map(position => ({goal,position})));
 const out = path.resolve(__dirname,'../../.cache/minecraft-bot/06-study',phase || 'unknown');
+async function serverHasBlock(position,name){
+  const marker=`S06CHECK_${Date.now()}_${name}`;
+  await rcon('natural',[`execute if block ${position.x} ${position.y} ${position.z} ${name} run say ${marker}`]);await wait(100);
+  // execute feedback is suppressed in this world's properties; the successful
+  // server-side say is logged, so an empty RCON response is not a pass.
+  return fs.readFileSync(path.resolve(__dirname,'../../../isg/server-natural/logs/latest.log'),'utf8').includes(`[Rcon] ${marker}`);
+}
 
 function instrument(bot, record) {
   record.digs=[]; record.placements=[]; const active=new Map();
@@ -40,7 +47,7 @@ function instrument(bot, record) {
     change(new (require('vec3').Vec3)(c.x*16+Number((v>>8n)&15n),c.y*16+Number(v&15n),c.z*16+Number((v>>4n)&15n)),Number(v>>12n),'multi_block_change');}});
   const place=bot.placeBlock.bind(bot);
   bot.placeBlock=async(ref,face)=>{
-    const dest=ref.position.plus(face),t=performance.now(),entry={position:clean(dest),held:bot.heldItem?.name,startedAt:Date.now(),botPosition:clean(bot.entity.position)};
+    const dest=ref.position.plus(face),t=performance.now(),entry={position:clean(dest),held:bot.heldItem?.name,startedAt:Date.now(),botPosition:clean(bot.entity.position),footing:bot.blockAt(bot.entity.position.floored().offset(0,-1,0))?.name};
     record.placements.push(entry);
     try {return await place(ref,face);}catch(e){entry.error=e.message;throw e;}
     finally {entry.ms=performance.now()-t;entry.actualName=bot.blockAt(dest)?.name;}
@@ -48,7 +55,7 @@ function instrument(bot, record) {
 }
 async function main(){
   if(phase==='stop'){await rcon('natural',['save-all','stop']);return;}
-  if(!['before','D1','D2','P1','after'].includes(phase)||(!cases[index]&&![9,10,11,12].includes(index)))throw Error('Invalid trial');
+  if(!['before','D1','D2','P1','after'].includes(phase)||(!cases[index]&&![9,10,11,12,13].includes(index)))throw Error('Invalid trial');
   fs.mkdirSync(out,{recursive:true});
   const username=`S06${phase}${index}${Date.now().toString(36).slice(-5)}`;
   const bot=runtime.createAIBot(1,{host:'127.0.0.1',port:25567,username,version:'1.20.1',aiBotCount:1},{autoHandleWhisper:false});
@@ -60,6 +67,7 @@ async function main(){
     if(index<9){
       const p=record.position;await rcon('natural',[`clear ${username}`,`tp ${username} ${p.x} ${p.y} ${p.z}`]);await wait(800);
       record.initialInventory=clean(bot.inventory.items());record.initialPosition=clean(bot.entity.position);
+      record.initialBodyBlocks=[0,1].map(dy=>bot.blockAt(bot.entity.position.floored().offset(0,dy,0))?.name);
       const t=performance.now();record.result=await api.executeGoal(record.goal,{signal:AbortSignal.timeout(180000),onProgress:e=>events.push(e)});record.durationMs=performance.now()-t;
     } else {
       // Supplemental controlled dig/place reproductions, distinct from empty-inventory goals.
@@ -69,25 +77,31 @@ async function main(){
         // Direct low-level calls avoid the API's post-operation observation delay.
         const primitives=phase==='before'?require(path.resolve(__dirname,'../../.cache/minecraft-bot/05-study/runtime-42ac72b/planner_bot/src/primitives')):require('../../planner_bot/src/primitives');
         record.label='six blocks straight down';record.results=[];
-        for(let y=79;y>=74;y--){try{await primitives.digBlock(bot,{position:{x:100,y,z:100}});record.results.push({ok:true});}catch(e){record.results.push({ok:false,code:e.code,message:e.message});break;}}
+        for(let y=79;y>=74;y--){try{await primitives.digBlock(bot,{position:{x:100,y,z:100}});record.results.push({ok:true});await wait(60);}catch(e){record.results.push({ok:false,code:e.code,message:e.message});break;}}
       }
       if(index===10){
         record.label='server rejection: suppress first FINISH packet';
         const write=bot._client.write.bind(bot._client);let suppressed=false;
         bot._client.write=(name,p)=>{if(!suppressed&&name==='block_dig'&&p.status===2){suppressed=true;return;}return write(name,p);};
         record.result=await api.executePrimitive('digBlock',{position:{x:100,y:79,z:100}});record.suppressed=suppressed;
-        bot._client.write=write;record.serverCheck=await rcon('natural',['execute if block 100 79 100 air run say S06_CONFIRMED_AIR']);
+        bot._client.write=write;record.serverCheck={air:await serverHasBlock({x:100,y:79,z:100},'air'),stone:await serverHasBlock({x:100,y:79,z:100},'stone')};
       }
       if(index===11){
         record.label='successful physical placement followed by missing-event exception';
         await rcon('natural',['fill 99 79 99 103 79 103 stone',`give ${username} crafting_table`,`tp ${username} 100.5 80 100.5`]);await wait(500);
         const place=bot.placeBlock.bind(bot);bot.placeBlock=async(...args)=>{await place(...args);throw Error('Injected blockUpdate timeout after actual placement');};
         record.result=await api.executeSkill('place_block',{blockName:'crafting_table'});
+        const actual=record.placements.find(p=>p.actualName==='crafting_table');record.serverTable=actual?await serverHasBlock(actual.position,'crafting_table'):false;
       }
       if(index===12){
         record.label='occluded lower stone, upper stone left intact';
         record.result=await api.executePrimitive('digBlock',{position:{x:100,y:78,z:100}});
-        record.serverCheck=await rcon('natural',['execute if block 100 78 100 air run say S06_LOWER_AIR','execute if block 100 79 100 stone run say S06_UPPER_STONE']);
+        record.serverCheck={lowerAir:await serverHasBlock({x:100,y:78,z:100},'air'),upperStone:await serverHasBlock({x:100,y:79,z:100},'stone')};
+      }
+      if(index===13){
+        record.label='placement from tree-only footing';
+        await rcon('natural',['fill 98 75 98 103 75 103 stone','fill 100 76 100 100 79 100 acacia_log',`give ${username} crafting_table`,`tp ${username} 100.5 80 100.5`]);await wait(500);
+        record.result=await api.executeSkill('place_block',{blockName:'crafting_table'});
       }
     }
     await wait(300);record.inventory=clean(bot.inventory.items());record.finalPosition=clean(bot.entity.position);

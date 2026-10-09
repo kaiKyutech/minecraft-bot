@@ -5,7 +5,7 @@ const {makePlanner,replay}=require('../study04/harness.cjs');
 const goap=require('../../planner_bot/src/planner/goap');
 const reference=require('../study04/results.json').cases.filter(r=>r.variant==='baseline');
 const phase=process.argv[2]||'A',rows=[];
-const output=path.join(__dirname,`matrix-${phase}.json`);
+const output=process.argv[3]?path.resolve(process.argv[3]):path.join(__dirname,`matrix-${phase}.json`);
 const crypto=require('node:crypto');
 const meta={node:process.version,baselineCommit:'eab3cca',productionHashes:Object.fromEntries(['goap','heuristic','relevance','state_operations'].map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname,`../../planner_bot/src/planner/${name}.js`))).digest('hex')]))};
 async function main(){
