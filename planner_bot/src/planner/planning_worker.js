@@ -29,6 +29,8 @@ async function handle(request) {
       let bot = bots.get(request.client)
       if (!bot) {bot={version:options.version,logLevel:'error'};bots.set(request.client,bot)}
       data = await require('./goal_evaluator').evaluate(bot,null,request.goals,{...options,worldState:request.world})
+    } else if (request.method === 'reachableFacts') {
+      data = require('./reachable_facts').compute(request.world, request.goals, options.deadline, signal)
     } else throw Error('Unknown planning request')
     if (signal.aborted) throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
     parentPort.postMessage({id:request.id,data,logs})
