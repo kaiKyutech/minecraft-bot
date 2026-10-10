@@ -50,7 +50,8 @@ async function planPrepared(goalInput, worldState, options = {}) {
   try {
   const serializeState = createStateSerializer()
   const domainConfig = loadDomain()
-  const actions = domainConfig.actions
+  const effort = await require('./gather_cost').gatherEffort(worldState, options)
+  const actions = require('./gather_cost').costedActions(domainConfig.actions, effort)
 
   // 目標入力をパース
   const parsedGoal = parseGoalInput(goalInput)
