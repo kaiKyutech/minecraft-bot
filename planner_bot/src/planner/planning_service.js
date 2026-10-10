@@ -72,13 +72,15 @@ function planningWorld(world) {
   for(const [key,entity]of Object.entries(world.entities||{}))if(entity?.name==='item')entities[key]={name:entity.name,position:entity.position?{x:entity.position.x,y:entity.position.y,z:entity.position.z}:null}
   return {inventory:{counts:world.inventory?.counts||{}},equipment:world.equipment,nearby:world.nearby,
     nearby_blocks:world.nearby_blocks,inventory_space:world.inventory_space,isDay:world.isDay,
-    position:world.position?{x:world.position.x,y:world.position.y,z:world.position.z}:null,entities}
+    position:world.position?{x:world.position.x,y:world.position.y,z:world.position.z}:null,entities,
+    _gatherEffort:world._gatherEffort}
 }
 async function plan(goal,world,logger,options={}) {
   if(options.signal?.aborted)throw cancelled()
   if(options.deadline!==undefined&&performance.now()>=options.deadline)throw Object.assign(new Error('Evaluation budget exceeded'),{code:'BUDGET_EXCEEDED'})
   await prepare(options.version,logger)
-  const result=await request('plan',{goal,world:planningWorld(world)},options,logger)
+  const effort=await require('./gather_cost').gatherEffort(world,options)
+  const result=await request('plan',{goal,world:planningWorld({...world,_gatherEffort:effort})},options,logger)
   if(options.signal?.aborted)throw cancelled()
   return result
 }
@@ -88,8 +90,9 @@ function client(bot) {
   bot.once?.('end',()=>{clients.delete(bot);finalized.unregister(bot);forget(id)})
   return id
 }
-function evaluate(bot,goals,world,options) {
-  return request('evaluate',{client:client(bot),goals,world:planningWorld(world)},options)
+async function evaluate(bot,goals,world,options) {
+  const effort=await require('./gather_cost').gatherEffort(world,{...options,deadline:options._deadline})
+  return request('evaluate',{client:client(bot),goals,world:planningWorld({...world,_gatherEffort:effort})},options)
 }
 function reachableFacts(world,goals,options) {
   return request('reachableFacts',{goals,world:planningWorld(world)},options)

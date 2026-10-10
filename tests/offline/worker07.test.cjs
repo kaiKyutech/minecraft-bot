@@ -31,7 +31,10 @@ test('worker resource estimates match the full-list estimator including ties and
  assert.deepEqual(threaded.results,main.results);if(threaded.results[0].resources[0])threaded.results[0].resources[0].nearestPosition.x=999;assert.equal(input.blocks.list[0].position.x,1)
 })
 test('unexpected worker exit rejects the active search and a later call prepares a new worker',async()=>{
- const task=goap.plan(row.goal,world,quiet,{worker:true});await new Promise(resolve=>setTimeout(resolve,20));const rejection=assert.rejects(task,{code:'PLANNER_WORKER_FAILED'});await service.close();await rejection
+ // Precompute projection so the exit happens during a dispatched search,
+ // rather than while the main thread is still preparing geometric input.
+ const projected={...world,_gatherEffort:await require('../../planner_bot/src/planner/gather_cost').gatherEffort(world)}
+ const task=goap.plan(row.goal,projected,quiet,{worker:true});await new Promise(resolve=>setTimeout(resolve,20));const rejection=assert.rejects(task,{code:'PLANNER_WORKER_FAILED'});await service.close();await rejection
  const result=await goap.plan('inventory.dirt:1',world,quiet,{worker:true});assert.ok(result.plan)
 })
 

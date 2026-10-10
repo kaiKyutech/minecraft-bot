@@ -69,8 +69,12 @@ async function evaluateLocal(bot,stateManager,goals,options={}) {
   let key,env,possibleFacts,cache=caches.get(bot)
   if(!cache){cache=new Map();caches.set(bot,cache)}
   if(world&&!check(deadline,options.signal)){
+    try { world={...world,_gatherEffort:await require('./gather_cost').gatherEffort(world,{deadline,signal:options.signal})} }
+    catch(error){if(error.code!=='BUDGET_EXCEEDED')throw error;world=null}
+  }
+  if(world&&!check(deadline,options.signal)){
     const facts=buildState(world)
-    key=bot.version+':'+(process.env.GOAP_DISABLE_ACTION_FILTER||'')+':'+serializeState(facts)
+    key=bot.version+':'+(process.env.GOAP_DISABLE_ACTION_FILTER||'')+':'+serializeState(facts)+':'+JSON.stringify(world._gatherEffort)
     const t=performance.now();await goap.prepareDomain(bot.version);preparationMs=performance.now()-t
     env=options._environment||environment(world,deadline)
     if(!check(deadline,options.signal))possibleFacts=require('./reachability').reachable(goap.getAllActions(),facts,deadline,options.signal)

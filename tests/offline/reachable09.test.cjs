@@ -108,7 +108,9 @@ test('queued deadlines and cancellation do not interrupt the current GOAP owner'
   const bot={version:'1.20.1',entity:{},logLevel:'error'},api=createBotApi(bot,{stateManager:{}}),operations=operationsFor(bot)
   let release;const running=operations.run('goal',()=>new Promise(resolve=>{release=resolve}))
   await new Promise(resolve=>setImmediate(resolve));const owner=operations.active
-  const blocker=goap.plan(row.goal,world,null,{worker:true,version:'1.20.1'})
+  const projected={...world,_gatherEffort:await require('../../planner_bot/src/planner/gather_cost').gatherEffort(world)}
+  const blocker=goap.plan(row.goal,projected,null,{worker:true,version:'1.20.1'})
+  await new Promise(resolve=>setImmediate(resolve)) // Let the async projection dispatch before queueing the closure.
   let ticks=0;const timer=setInterval(()=>ticks++,2)
   try {
     const timeout=await api.reachableFacts({worldState:empty,goals:['inventory.stick:1'],maxMs:10})
