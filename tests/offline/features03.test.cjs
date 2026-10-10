@@ -2,11 +2,12 @@ const {test}=require('node:test');const assert=require('node:assert/strict');con
 const {EventEmitter}=require('node:events');const {Vec3}=require('vec3');const {evaluate}=require('../../planner_bot/src/planner/goal_evaluator');
 const {observeFast}=require('../../planner_bot/src/planner/fast_observation');const {Progress}=require('../../planner_bot/src/executor/progress');
 const {load}=require('../helpers/module');
-test('evaluation preserves all 70 fixture plans/diagnoses and cache cannot be mutated through results',async()=>{
+test('evaluation matches direct planning for all 70 full observations and cache cannot be mutated through results',async()=>{
  const bot={version:'1.20.1',logLevel:'error'};
  for(const filename of fs.readdirSync(path.join(__dirname,'../fixtures')).filter(n=>n.endsWith('-plans.json'))){
   const label=filename.replace('-plans.json',''),world=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,`../fixtures/${label}.json.gz`))));
-  const expected=JSON.parse(fs.readFileSync(path.join(__dirname,'../fixtures',filename))),goals=Object.keys(expected);
+  const goals=Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname,'../fixtures',filename)))),expected={};
+  for(const goal of goals)expected[goal]=await require('../../planner_bot/src/planner/goap').plan(goal,world,null,{worker:false});
   const result=await evaluate(bot,{},goals,{worldState:world,maxMs:15000,perGoalMs:15000});
   for(const row of result.results){assert.notEqual(row.reason,'budget_exceeded');if(row.status==='unevaluated')assert.ok(['iteration_limit','frontier_exhausted'].includes(row.reason));assert.deepEqual({plan:row.plan,diagnosis:row.diagnosis},expected[row.goal])}
   const row=result.results.find(r=>r.plan?.length);if(row){const saved=structuredClone(row.plan);row.plan[0].action='tampered';const repeated=await evaluate(bot,{},[row.goal],{worldState:world,maxMs:15000,perGoalMs:15000});assert.deepEqual(repeated.results[0].plan,saved)}

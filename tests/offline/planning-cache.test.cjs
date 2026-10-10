@@ -9,11 +9,11 @@ test('search serializer preserves nested key order, arrays and immutable shared 
  assert.equal(next.nearby,state.nearby);assert.equal(state.inventory.oak_log,1);
  state.inventory.oak_log=5;assert.equal(createStateSerializer()(state),serializeState(state),'new plan must not reuse another plan cache');
 });
-test('concurrent plans on distinct snapshots keep their own signatures and exact fixture outputs',async()=>{
+test('concurrent plans on distinct snapshots match independent sequential geometric plans',async()=>{
  const tasks=[],inputs=[];
  for(const label of ['flat-stocked','natural-empty']){
   const world=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname,`../fixtures/${label}.json.gz`))));
-  const expected=JSON.parse(fs.readFileSync(path.join(__dirname,`../fixtures/${label}-plans.json`),'utf8'));
+  const expected={};for(const goal of Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname,`../fixtures/${label}-plans.json`),'utf8'))))expected[goal]=await goap.plan(goal,world,quiet);
   inputs.push([world,JSON.stringify(world)]);
   for(const [goal,result]of Object.entries(expected))tasks.push(goap.plan(goal,world,quiet).then(actual=>assert.deepEqual(JSON.parse(JSON.stringify(actual)),result)));
  }

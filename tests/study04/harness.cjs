@@ -37,14 +37,14 @@ function indexedHeuristic(maxPreconditions = false) {
 // Expose the existing 03 estimator from a VM copy, keeping its exact coefficients.
 const estimator = compile('goal_evaluator.js', fs.readFileSync(path.join(plannerDir, 'goal_evaluator.js'), 'utf8') + '\nmodule.exports.study = { environment, estimate };').study;
 
-function makePlanner({ production = false, indexed = false, cachedSignature = false, maxPreconditions = false, weight = 1, timeCost = false, stale = false, limit = 200 } = {}) {
+function makePlanner({ production = false, sourceText = null, indexed = false, cachedSignature = false, maxPreconditions = false, weight = 1, timeCost = false, stale = false, limit = 200 } = {}) {
   const metrics = {};
   let signatureCache;
   const reset = () => { signatureCache = new WeakMap(); Object.assign(metrics, { iterations: 0, expanded: 0, actionChecks: 0, transitions: 0, heuristicCalls: 0, heuristicMs: 0, stalePops: 0, maxOpen: 0, uniqueExpanded: new Set(), discovered: new Set() }); };
   reset();
   const selectedHeuristic = indexed || maxPreconditions ? indexedHeuristic(maxPreconditions) : production ? heuristic : compile('heuristic.js', readBaseline('heuristic.js'), { './relevance': baselineRelevance });
   const measuredHeuristic = { ...selectedHeuristic, calculateHeuristic(...args) { const t = performance.now(); metrics.heuristicCalls++; try { return weight * selectedHeuristic.calculateHeuristic(...args); } finally { metrics.heuristicMs += performance.now() - t; } } };
-  let source = production ? fs.readFileSync(path.join(plannerDir, 'goap.js'), 'utf8') : readBaseline('goap.js');
+  let source = sourceText || (production ? fs.readFileSync(path.join(plannerDir, 'goap.js'), 'utf8') : readBaseline('goap.js'));
   source = 'const study = require("__study")\n' + source;
   source = replace(source, 'iterations++', 'iterations++; study.metrics.iterations++');
   source = replace(source, 'const current = open.pop()', `const current = open.pop()\n    study.metrics.maxOpen = Math.max(study.metrics.maxOpen,open.size+1)\n    const studySig = serializeState(current.state)\n    if (visited.get(studySig) < current.cost) { study.metrics.stalePops++; ${stale ? 'continue' : ''} }`);

@@ -10,7 +10,9 @@ test('VM baseline, indexing, and immutable signatures preserve all 70 historical
  for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('-plans.json'))){
   const name=file.replace('-plans.json',''),world=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir,name+'.json.gz')))),before=structuredClone(world),golden=JSON.parse(fs.readFileSync(path.join(dir,file)));
   for(const [goal,expected]of Object.entries(golden)){
-   const original=await goap.plan(goal,world,quiet),a=await baseline.run(goal,world),b=await combined.run(goal,world);
+   // Task 12 changes geometric costs. This historical speed-study comparison
+   // still verifies the original cost domain with count-only observations.
+   const original=await goap.plan(goal,{...world,blocks:{list:[]}},quiet),a=await baseline.run(goal,world),b=await combined.run(goal,world);
    assert.deepEqual(JSON.parse(JSON.stringify(original)),expected);assert.deepEqual(a.result,original);assert.deepEqual(b.result,original);assert.equal(a.metrics.iterations,b.metrics.iterations);
    if(original.plan)assert.equal(replay(goal,world,original.plan).valid,true,`${name} ${goal}`);
    cases++;
