@@ -13,8 +13,8 @@ function check(deadline, signal) {
   if(signal?.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
   return performance.now() >= deadline
 }
-function environment(world, deadline) {
-  const closest=new Map(), origin=world.position, categories=loadBlockCategories().categories||{}
+function environment(world, deadline, version) {
+  const closest=new Map(), origin=world.position, categories=loadBlockCategories(version).categories||{}
   let complete=true
   for(const block of world.blocks?.list||[]) {
     if(performance.now()>=deadline){complete=false;break}
@@ -69,14 +69,14 @@ async function evaluateLocal(bot,stateManager,goals,options={}) {
   let key,env,possibleFacts,cache=caches.get(bot)
   if(!cache){cache=new Map();caches.set(bot,cache)}
   if(world&&!check(deadline,options.signal)){
-    try { world={...world,_gatherEffort:await require('./gather_cost').gatherEffort(world,{deadline,signal:options.signal})} }
+    try { world={...world,_gatherEffort:await require('./gather_cost').gatherEffort(world,{deadline,signal:options.signal,version:bot.version})} }
     catch(error){if(error.code!=='BUDGET_EXCEEDED')throw error;world=null}
   }
   if(world&&!check(deadline,options.signal)){
-    const facts=buildState(world)
+    const facts=buildState(world,bot.version)
     key=bot.version+':'+(process.env.GOAP_DISABLE_ACTION_FILTER||'')+':'+serializeState(facts)+':'+JSON.stringify(world._gatherEffort)
     const t=performance.now();await goap.prepareDomain(bot.version);preparationMs=performance.now()-t
-    env=options._environment||environment(world,deadline)
+    env=options._environment||environment(world,deadline,bot.version)
     if(!check(deadline,options.signal))possibleFacts=require('./reachability').reachable(goap.getAllActions(),facts,deadline,options.signal)
   }
   const results=[]
@@ -94,8 +94,8 @@ async function evaluateLocal(bot,stateManager,goals,options={}) {
   }
   return {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.reason==='budget_exceeded')}
 }
-async function environmentAsync(world,deadline,signal) {
-  const closest=new Map(),origin=world.position,categories=loadBlockCategories().categories||{}
+async function environmentAsync(world,deadline,signal,version) {
+  const closest=new Map(),origin=world.position,categories=loadBlockCategories(version).categories||{}
   let complete=true,slice=performance.now()+2,n=0
   for(const block of world.blocks?.list||[]) {
     if(check(deadline,signal)){complete=false;break}
@@ -129,7 +129,7 @@ async function evaluate(bot,stateManager,goals,options={}) {
   if(!world||check(deadline,signal))return finish()
   const t=performance.now();await require('./planning_service').prepare(bot.version);preparationMs=performance.now()-t
   if(check(deadline,signal))return finish()
-  const env=await environmentAsync(world,deadline,signal)
+  const env=await environmentAsync(world,deadline,signal,bot.version)
   if(check(deadline,signal))return finish()
   let result
   try{result=await require('./planning_service').evaluate(bot,goals,world,{version:bot.version,maxMs,perGoalMs,signal,_deadline:deadline,_environment:env})}

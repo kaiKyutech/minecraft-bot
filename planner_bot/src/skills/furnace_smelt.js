@@ -106,6 +106,11 @@ module.exports = async function furnaceSmelt(bot, params = {}, stateManager) {
  * カテゴリ名（log, planks）や個別名（oak_log）に対応
  */
 function resolveItemFromName(bot, mcData, itemName) {
+  if (bot.version === '1.21.4' && (itemName === 'log' || itemName === 'planks')) {
+    const categories = require('../planner/state_builder').loadBlockCategories(bot.version)
+    const members = categories.item_categories[itemName === 'log' ? 'log' : 'plank'].items
+    return bot.inventory.items().find(item => members.includes(item.name))
+  }
   // カテゴリ名の場合（log, planks等）
   if (itemName === 'log') {
     // 任意の種類の原木を探す

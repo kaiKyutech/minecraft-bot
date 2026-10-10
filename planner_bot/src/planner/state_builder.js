@@ -15,22 +15,23 @@ function loadStateSchema() {
   return stateSchema
 }
 
-function loadBlockCategories() {
-  if (blockCategories) return blockCategories
-  const raw = fs.readFileSync(CATEGORIES_PATH, 'utf8')
-  blockCategories = YAML.parse(raw)
-  return blockCategories
+function loadBlockCategories(version) {
+  if (!blockCategories) {
+    const raw = fs.readFileSync(CATEGORIES_PATH, 'utf8')
+    blockCategories = YAML.parse(raw)
+  }
+  return require('./version_categories').categoriesFor(blockCategories, version)
 }
 
 /**
  * 状態スキーマに基づいてボットの現在状態を構築
  */
-function buildState(worldState) {
+function buildState(worldState, version) {
   const schema = loadStateSchema()
   const facts = Object.create(null)
 
   // インベントリ状態の構築
-  buildInventoryStates(facts, worldState, schema.inventory_states)
+  buildInventoryStates(facts, worldState, schema.inventory_states, version)
 
   // 環境状態の構築
   buildEnvironmentStates(facts, worldState, schema.environment_states)
@@ -47,9 +48,9 @@ function buildState(worldState) {
   return facts
 }
 
-function buildInventoryStates(facts, worldState, inventorySchema) {
+function buildInventoryStates(facts, worldState, inventorySchema, version) {
   const counts = worldState?.inventory?.counts || {}
-  const categories = loadBlockCategories()
+  const categories = loadBlockCategories(version)
 
   // 各状態の初期値設定
   for (const [stateName, config] of Object.entries(inventorySchema)) {

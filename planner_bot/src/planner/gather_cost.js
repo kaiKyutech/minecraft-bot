@@ -18,7 +18,7 @@ async function gatherEffort(world, options = {}) {
   // for ordinary observation spheres. Fall back for arbitrary remote snapshots.
   const base={x:Math.floor(origin.x),y:Math.floor(origin.y),z:Math.floor(origin.z)}
   const voxel=p=>{const x=p.x-base.x+512,y=p.y-base.y+512,z=p.z-base.z+512;return x>=0&&x<1024&&y>=0&&y<1024&&z>=0&&z<1024 ? (x*1024+y)*1024+z : key(p)}
-  const categories = loadBlockCategories().categories || {}, membership = new Map()
+  const categories = loadBlockCategories(options.version).categories || {}, membership = new Map()
   for (const [name,cfg] of Object.entries(categories)) for (const block of cfg.blocks || []) {
     if (!membership.has(block)) membership.set(block,[])
     membership.get(block).push(name)

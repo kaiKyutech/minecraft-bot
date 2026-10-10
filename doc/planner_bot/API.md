@@ -41,6 +41,19 @@ ESMからは `import { createAIBot, createBotApi } from './minecraft-bot/planner
 既存botにpathfinderとstateManagerがある場合、`createBotApi(bot, { stateManager })` で使える。
 同じbotから複数のAPIを作っても操作管理は共有する。
 
+### Minecraft 1.21.4（⑭）
+
+`createAIBot(..., { version: '1.21.4', ... })`、またはCLIの`MC_VERSION=1.21.4`で選ぶ。
+接続後のbot.versionでカテゴリ・行動生成・観測・実行を切り替える。1.20.1のカテゴリ、生成行動、計画・コストは従来のまま。
+1.21.4では新しい原木・板をカテゴリへ含め、全クラフトレシピの異なる材料を保持する。
+全樹種で配置・出力が同じ板レシピはカテゴリとしてまとめ、実行時は所持する板（混合も可）で配置を組む。
+樹種固有の成果物は具体材料を要求する。原木・板・作業台など、環境ブロックを資源として採る動作も維持する。
+
+生成YAMLとmanifestは`.cache/minecraft-bot/actions/<version>/`に分かれる。
+同一プロセスの計画workerは1版専用。切り替えはbotプロセスを停止・再起動し、1.20.1へ戻すときは`MC_VERSION=1.20.1`またはfactoryの`version:'1.20.1'`を指定する。
+1.21.4のワールドを1.20.1のサーバーへ戻さず、版ごとに独立したサーバー・ワールドを使う。
+1.21.4では草/カメの甲羅の名前は`short_grass`/`turtle_scute`。旧名の自動変換は行わない。
+
 ## 結果契約
 
 以下のAPIメソッドと `handleChatCommand` はすべて `Promise<Result>` を返す。

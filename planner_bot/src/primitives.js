@@ -334,6 +334,15 @@ async function craftItem(bot, params = {}) {
   const count = params.count ?? 1
   const tableBlock = params.table || null
 
+  if (bot.version === '1.21.4' && params.craftingRecipe) {
+    for (let i = 0; i < count; i++) {
+      checkpoint(bot)
+      const recipe = require('./utils/version_recipes').resolveCraftRecipe(bot, params.craftingRecipe, params.itemName)
+      await interruptible(bot, () => bot.craft(recipe, 1, tableBlock))
+    }
+    return
+  }
+
   const recipes = bot.recipesFor(recipeItem.id, params.metadata ?? null, count, tableBlock)
   if (!recipes || recipes.length === 0) {
     throw failure('RECIPE_NOT_FOUND', '利用可能なレシピが見つかりません')

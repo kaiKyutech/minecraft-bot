@@ -127,7 +127,18 @@ function prepareDomain(version, logger = createLogger({ category: 'setup' })) {
       }
     }
     const next = readDomain(staging, logger)
+    const manifest = {
+      version: resolved,
+      generatorRevision: resolved === '1.21.4' ? 'variants-and-categories-v1' : 'legacy-v1',
+      minecraftDataVersion: require('minecraft-data/package.json').version,
+      categoriesHash: require('node:crypto').createHash('sha256')
+        .update(JSON.stringify(require('./state_builder').loadBlockCategories(resolved))).digest('hex'),
+      files: Object.fromEntries(GENERATED_FILES.map(filename => [filename, require('node:crypto').createHash('sha256')
+        .update(fs.readFileSync(path.join(staging, filename))).digest('hex')]))
+    }
+    fs.writeFileSync(path.join(staging, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
     for (const filename of GENERATED_FILES) fs.renameSync(path.join(staging, filename), path.join(outputDir, filename))
+    fs.renameSync(path.join(staging, 'manifest.json'), path.join(outputDir, 'manifest.json'))
     fs.rmdirSync(staging)
     preparedDomain = next
     return next
