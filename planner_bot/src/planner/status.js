@@ -6,7 +6,7 @@ async function status(bot, stateManager) {
   await stateManager.refresh(bot)
   const worldState = await stateManager.getState(bot)
   const { buildState } = require('../planner/state_builder')
-  const goapState = buildState(worldState)
+  const goapState = buildState(worldState, bot.version)
 
   const messages = []
 

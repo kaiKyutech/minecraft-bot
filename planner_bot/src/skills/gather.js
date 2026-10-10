@@ -251,7 +251,7 @@ async function resolveItemName(params, bot) {
   const itemName = params.itemName
 
   // カテゴリ名の場合は近くで最適なブロックを選択
-  const categories = loadBlockCategories()
+  const categories = loadBlockCategories(bot.version)
   if (categories?.categories?.[itemName]) {
     return await interruptible(bot, () => selectBestBlockFromCategory(bot, itemName, categories, mcData, params))
   }

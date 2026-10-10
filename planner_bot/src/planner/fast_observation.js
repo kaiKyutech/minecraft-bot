@@ -36,7 +36,7 @@ async function observeFast(bot,stateManager,options={}){
   const resources=structuredClone(cache.resources)
   for(const row of Object.values(resources))if(row.nearestPosition)row.nearestDistance=Math.hypot(row.nearestPosition.x-position.x,row.nearestPosition.y-position.y,row.nearestPosition.z-position.z)
   const categories={}
-  for(const [name,category]of Object.entries(loadBlockCategories().categories||{})){
+  for(const [name,category]of Object.entries(loadBlockCategories(bot.version).categories||{})){
     const rows=(category.blocks||[]).map(b=>resources[b]).filter(Boolean)
     const nearest=rows.reduce((a,b)=>!a||b.nearestDistance<a.nearestDistance?b:a,null)
     categories[name]={count:rows.reduce((s,r)=>s+r.count,0),nearestPosition:nearest?.nearestPosition||null,nearestDistance:nearest?.nearestDistance??null}

@@ -41,7 +41,13 @@ async function generateCraftActions(version, outputDir) {
   }
 
   const { allowedHand, allowedWorkbench } = loadAllowedRecipesFromStatic();
-  const categories = loadBlockCategories();
+  const categories = loadBlockCategories(mcVersion);
+  if (mcVersion === '1.21.4') {
+    const generated = require('./craft_variants').generateVariants(mcData, categories, buildLogToPlankCategoryAction());
+    writeYaml(logger, HAND_FILE, generated.hand, 'hand_craft');
+    writeYaml(logger, WORKBENCH_FILE, generated.workbench, 'workbench_craft');
+    return generated;
+  }
   const itemCategories = categories?.item_categories || {};
   const itemToCountCategories = buildItemCategoryLookup(itemCategories, "count");
   const itemToBooleanCategories = buildItemCategoryLookup(itemCategories, "boolean");

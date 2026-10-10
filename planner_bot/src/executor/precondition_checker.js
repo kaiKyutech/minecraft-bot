@@ -63,13 +63,13 @@ function areStepPreconditionsSatisfied(step, currentState) {
  */
 async function checkStepPreconditions(bot, step, stateManager) {
   const currentState = await stateManager.getState(bot)
-  const builtState = buildState(currentState)
+  const builtState = buildState(currentState, bot.version)
   return areStepPreconditionsSatisfied(step, builtState)
 }
 
 async function analyseStepPreconditions(bot, step, stateManager) {
   const currentWorld = await stateManager.getState(bot)
-  const goapState = buildState(currentWorld)
+  const goapState = buildState(currentWorld, bot.version)
   const missing = listUnsatisfiedPreconditions(step, goapState)
   return {
     satisfied: missing.length === 0,

@@ -127,7 +127,7 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
         if (parsedGoal) {
           await interruptible(bot, () => stateManager.refresh(bot))
           const latestWorld = await interruptible(bot, () => stateManager.getState(bot))
-          const goapState = buildState(latestWorld)
+          const goapState = buildState(latestWorld, bot.version)
           const currentValue = Number(getNestedStateValue(goapState, parsedGoal.base)) || 0
           const remaining = parsedGoal.quantity - currentValue
 

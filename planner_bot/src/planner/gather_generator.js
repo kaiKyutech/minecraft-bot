@@ -39,7 +39,7 @@ async function generateGatherActions(version, outputDir) {
     return [];
   }
 
-  const categories = loadBlockCategories();
+  const categories = loadBlockCategories(mcVersion);
   const blockCategories = categories?.categories || {};
   const itemCategories = categories?.item_categories || {};
 

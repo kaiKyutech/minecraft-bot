@@ -65,7 +65,8 @@ module.exports = async function workbenchCraft(bot, params = {}, stateManager) {
     await interruptible(bot, () => primitives.craftItem(bot, {
       itemName: itemName,
       count: count,
-      table: workbench  // Blockインスタンスそのものを渡す
+      table: workbench,  // Blockインスタンスそのものを渡す
+      ...(params.craftingRecipe ? { craftingRecipe: params.craftingRecipe } : {})
     }))
 
     logger.info(`[WORKBENCH_CRAFT] レシピ「${params.recipe}」の作成が完了`)

@@ -32,7 +32,8 @@ module.exports = async function handCraft(bot, params = {}, stateManager) {
     await interruptible(bot, () => primitives.craftItem(bot, {
       itemName: itemName,
       count: count,
-      table: null  // 手クラフト（2x2グリッド）
+      table: null,  // 手クラフト（2x2グリッド）
+      ...(params.craftingRecipe ? { craftingRecipe: params.craftingRecipe } : {})
     }))
 
     logger.info(`[HAND_CRAFT] レシピ「${params.recipe}」の作成が完了`)

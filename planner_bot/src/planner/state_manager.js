@@ -129,7 +129,7 @@ class StateManager {
     // state_schema.yamlの環境設定を読み込み
     // 状態スキーマに基づいて動的にブロック検索
     const schema = loadStateSchema()
-    const categories = loadBlockCategories()
+    const categories = loadBlockCategories(bot.version)
     const nearbyBlocks = {}
 
     if (!schema.environment_states) return nearbyBlocks
@@ -204,7 +204,7 @@ class StateManager {
   logCurrentState(bot) {
     const logger = getLogger(bot, 'state')
     const { buildState } = require('./state_builder')
-    const goapState = buildState(this.cache)
+    const goapState = buildState(this.cache, bot.version)
 
     // Boolean値、Numeric値、装備状態を分類して表示
     const booleanStates = []
