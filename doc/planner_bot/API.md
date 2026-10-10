@@ -85,6 +85,7 @@ factoryと内部の低レベル関数にはこの契約を適用しない。
 | `TIMEOUT`, `CANCELLED`, `OPERATION_CONFLICT` | 移動時間超過、中断、向き指定visionの競合 |
 | `VISION_CAPTURE_FAILED`, `EXECUTION_FAILED`, `INTERNAL_ERROR` | 撮影失敗、その他の実行失敗、想定外エラー |
 | `VISION_NOT_STARTED` | captureVision前にstartVisionが必要 |
+| `INTERJECT_NOT_ALLOWED`, `INTERJECT_BUSY` | 未許可の挟み込み、待機/実行中の挟み込みとの重複 |
 
 内部依存の例外に独自codeがある場合は保持する。未知の失敗は汎用codeとmessageを受け取る。
 
@@ -538,6 +539,31 @@ plan/replanにはplanId、plan、stepCount。stepにはplanId、0始まりstepIn
 callbackへ渡したplan/eventを書き換えても実行内容には影響しない。通知からAPIを呼ぶ場合は、そのAPIの所有権規則に従う。
 
 03の実測値・完了検証・残件は `requests/2026-10-09_from-isg/03_report.md`。
+
+## 目標に松明を挟む（17）
+
+`interject('placeTorch', params={}, {signal}={})` は `Promise<Result>`。paramsと成功dataは既存placeTorchと同じ。許可する種類はplaceTorchだけで、その他は `INTERJECT_NOT_ALLOWED`。実行中のGOAP目標がなければ通常のplaceTorchとしてOperationManagerで実行する。
+
+```js
+const running = api.executeGoal('inventory.category.log:8', {
+  signal: goalController.signal,
+  onProgress(event) { /* interject_start/end/resume、通常のstep/replan */ }
+})
+// 暗くなったとき。goalControllerをabortせず、再prepareもしない。
+const lit = await api.interject('placeTorch', { placement: 'auto' })
+if (!lit.ok) console.log(lit.error.code) // 設置失敗でも目標は続く
+const finished = await running
+```
+
+executePreparedGoalの実行中にも同じ呼び方を使う。所有者/controllerは元のgoalのまま。計画配列・planId・次のstepIndexを保存したまま、発行済みの歩行・掘削・クラフトの完了を待って挟む。採集スキル内では各ブロックの間、接近完了後、最後の掘削後にも挟める。採集のcompleted数をリセットしない。placeTorchが変えた手の装備を戻し、次の対象の再取得・道具再装備、または次stepの通常refresh/前提確認から続ける。
+
+**1秒以内の保証はない。** 進行中のnative goto/dig/craftを強制中断しないため、長い歩行や掘削では完了まで待つ。デモ向けに掘りかけ・クラフトの作用を捨てない小さな実装とした。残る計画の前提は各stepで順に確認し、挟み込み後の次stepが不成立なら既存replanを呼ぶ。将来stepの前提を実行前に一括検査しない（前のstepの効果で成立するため）。相対数量の既存の失敗時retry/replan規則は維持する。
+
+挟み込みは同時に1件まで（待機中も含む）。後の要求は `INTERJECT_BUSY` で断る。引数不正・未許可・開始前abortは元のgoalに影響しない。受理後のinterjectのsignal、goalのsignal、stop、新しい物理操作、bot終了は元のgoalごと中断する。発行済み作用の終了まで所有権を保持し、CANCELLEDを返す。目標が先に終了/停止して安全な区切りへ到達しなかった要求もCANCELLEDになる。
+
+物理変更を伴う要求を受理した時点で、未実行の⑯handleは無効にする。在庫・装備・周囲が変わり得るため、通常の物理APIと同じ扱い。実行中のprepared goalの計画は保持する。candidateは⑯同様に保持し、次のprepare時に最新factsを確認する。
+
+元のgoalのonProgressに `interject_start`（kind/boundary/planId/stepIndex/waitMs）、`interject_end`（Result、waitMs/durationMs/totalMs、resume）、`interject_resume`（mode）を追加する。operationId/sequenceは元のgoalと共有する。mode=`same_plan` は同じ計画の継続、`replan` は次stepの前提衝突、`repair_subplan` は補助計画の前提回復。採集内の継続にはcontinuation=`same_skill`。実際の再計画は通常のreplanイベントと新planIdで確認できる。既存APIを単独で使う既定の中断規則・Resultは維持する。
 
 ## 周囲の地表格子（10 M1）
 

@@ -130,6 +130,13 @@ function createBotApi(bot, options = {}) {
       const settings = torchOptions(params)
       return operations.run('placeTorch', () => placeTorch(bot, settings), params)
     }, 'PLACEMENT_FAILED'),
+    interject: (kind, params = {}, execution = {}) => call('interject', () => {
+      if (kind !== 'placeTorch') throw failure('INTERJECT_NOT_ALLOWED', 'Only placeTorch can be interjected')
+      ready(); paramsObject(params); paramsObject(execution)
+      const { torchOptions, placeTorch } = require('./navigation/torch_placement')
+      const settings = torchOptions(params)
+      return operations.interject(kind, () => placeTorch(bot, settings), execution)
+    }, 'PLACEMENT_FAILED'),
     info: (type, params = {}) => call('info', () => {
       if (!['all', 'vision', 'scanBlocks', 'recipesFor', 'recipesUsing'].includes(type)) throw failure(type ? 'UNKNOWN_ACTION' : 'INVALID_ARGUMENT', `Unknown information type: ${type}`)
       paramsObject(params)

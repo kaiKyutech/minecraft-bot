@@ -1,5 +1,6 @@
 const { failure } = require('../utils/result')
 const { interruptible, checkpoint } = require('../utils/context')
+const { interjectBoundary } = require('../executor/interjection')
 const primitives = require('../primitives')
 const { createLogger } = require('../utils/logger')
 const minecraftData = require('minecraft-data')
@@ -149,6 +150,9 @@ module.exports = async function gather(bot, params = {}, stateManager) {
   }
 
   while (completed < loopCount) {
+    // An issued move/dig finishes first; completed is never reset by a torch.
+    const pending = interjectBoundary(bot, 'gather_block')
+    if (pending) await pending
     if (attempts++ >= maxAttempts) {
       throw failure('EXECUTION_FAILED', '資源の収集に失敗しました: 試行回数が上限に達しました')
     }
@@ -169,6 +173,9 @@ module.exports = async function gather(bot, params = {}, stateManager) {
         range: approachRange,
         timeout: moveTimeoutMs
       }))
+
+      const pending = interjectBoundary(bot, 'gather_arrived')
+      if (pending) await pending
 
       // 掘削直前に選択したツールを再装備
       if (selectedTool) {
@@ -213,6 +220,9 @@ module.exports = async function gather(bot, params = {}, stateManager) {
       throw failure(error.code || 'EXECUTION_FAILED', `資源の収集に失敗しました: ${error.message}`)
     }
   }
+
+  const pending = interjectBoundary(bot, 'gather_dug')
+  if (pending) await pending
 
   // 全ブロック掘削完了後、最後に1回だけドロップ回収
   if (collectName) {

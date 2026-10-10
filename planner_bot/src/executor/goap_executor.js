@@ -1,6 +1,7 @@
 const { withContext, currentContext, checkpoint, interruptible } = require('../utils/context')
 const { FailureGuard } = require('./failure_guard')
 const { progress } = require('./progress')
+const { interjectBoundary } = require('./interjection')
 const goapPlanner = require('../planner/goap')
 const skills = require('../skills')
 const { analyseStepPreconditions, getStateValue } = require('./precondition_checker')
@@ -43,6 +44,8 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
       throw error
     }
 
+    const pending = interjectBoundary(bot, 'step', { goal: goalName, planId, stepIndex })
+    if (pending) await pending
     const step = currentPlan[stepIndex]
 
     if (!step.skill) {
@@ -53,9 +56,25 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
 
     // アクション開始前に最新状態へ更新（各ステップ1回）もしかするとこれじゃgoapが崩れるかもしれない。実験的にここだけにしてみる。
     progress(bot)?.emit('step_start',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step})
+    const requested = interjectBoundary(bot, 'step', { goal: goalName, planId, stepIndex })
+    if (requested) await requested
     await interruptible(bot, () => stateManager.refresh(bot))
 
     const preconditionStatus = await interruptible(bot, () => analyseStepPreconditions(bot, step, stateManager))
+
+    if (currentContext(bot).takeInterjected?.()) {
+      // An inverted false predicate is already fulfilled: retain the existing skip.
+      const conflict = !preconditionStatus.satisfied && !preconditionStatus.missing.every(m => m.condition === false && Boolean(m.currentValue) === true)
+      const mode = conflict ? 'replan' : 'same_plan'
+      progress(bot)?.emit('interject_resume', { goal: goalName, planId, stepIndex, mode })
+      if (conflict) {
+        currentContext(bot).failureGuard.note(goalName, step, { code: 'PRECONDITION_MISSING', message: JSON.stringify(preconditionStatus.missing) }, await stateManager.getState(bot), bot)
+        currentPlan = await interruptible(bot, () => replan(bot, goalName, stateManager, signal, missingPreconditions))
+        planId = progress(bot)?.plan(goalName, currentPlan, 'replan')
+        stepIndex = 0
+        continue
+      }
+    }
 
     if (!preconditionStatus.satisfied) {
       // 逆転前提（本来false要求だがtrueになっているなど）はスキップ扱いにする
@@ -103,7 +122,7 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
 
     // ステップ実行（実行時エラーもリプランニングで対応）
     try {
-      await interruptible(bot, () => executeStep(bot, step, stateManager, signal))
+      await interruptible(bot, () => withContext({ interjectStep: { goal: goalName, planId, stepIndex } }, () => executeStep(bot, step, stateManager, signal)))
       progress(bot)?.emit('step_success',{goal:goalName,planId,stepIndex,stepCount:currentPlan.length,step})
       stepIndex++
 
@@ -133,6 +152,10 @@ async function executePlanPrepared(bot, goalName, initialPlan, stateManager, sig
       continue
     }
   }
+
+  const pending = interjectBoundary(bot, 'plan_end', { goal: goalName, planId, stepIndex })
+  if (pending) await pending
+  if (currentContext(bot).takeInterjected?.()) progress(bot)?.emit('interject_resume', { goal: goalName, planId, stepIndex, mode: 'same_plan' })
 
   goapExecLog(bot, `[EXECUTION] 全${currentPlan.length}ステップ完了`)
   goapExecLog(bot, `[EXECUTION] 最終プラン: ${currentPlan.map(s => s.action).join(' -> ')}`)
@@ -387,6 +410,8 @@ function deriveSubGoalInput(missing, goapState) {
 async function executeSimplePlan(bot, plan, stateManager, signal = null, goal = null) {
   const planId=progress(bot)?.plan(goal,plan)
   for (const [stepIndex,step] of plan.entries()) {
+    const pending = interjectBoundary(bot, 'subplan_step', { goal, planId, stepIndex })
+    if (pending) await pending
     // キャンセルチェック
     if (signal && signal.aborted) {
       const error = new Error('Cancelled') // デモ用: シンプルなメッセージ
@@ -399,11 +424,12 @@ async function executeSimplePlan(bot, plan, stateManager, signal = null, goal = 
     await interruptible(bot, () => stateManager.refresh(bot))
 
     const status = await interruptible(bot, () => analyseStepPreconditions(bot, step, stateManager))
+    if (currentContext(bot).takeInterjected?.()) progress(bot)?.emit('interject_resume', { goal, planId, stepIndex, mode: status.satisfied ? 'same_plan' : 'repair_subplan' })
     if (!status.satisfied) {
       throw new Error(`サブプランのステップ ${step.action} の前提条件を満たせません`)
     }
     progress(bot)?.emit('step_start',{goal,planId,stepIndex,stepCount:plan.length,step})
-    try {await interruptible(bot, () => executeStep(bot, step, stateManager, signal));progress(bot)?.emit('step_success',{goal,planId,stepIndex,stepCount:plan.length,step})}
+    try {await interruptible(bot, () => withContext({ interjectStep: { goal, planId, stepIndex } }, () => executeStep(bot, step, stateManager, signal)));progress(bot)?.emit('step_success',{goal,planId,stepIndex,stepCount:plan.length,step})}
     catch(error){progress(bot)?.emit('step_failure',{goal,planId,stepIndex,stepCount:plan.length,step,code:error.code||'EXECUTION_FAILED',message:error.message});throw error}
   }
 }
