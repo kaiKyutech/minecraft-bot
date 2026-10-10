@@ -62,6 +62,8 @@ class OperationManager {
 
   run(kind, fn, options = {}) {
     if (options.signal?.aborted) return Promise.reject(cancelled())
+    const prepared = require('./prepared_goals')
+    prepared.invalidate(this.bot, options[prepared.HANDOFF])
     const entry = { kind, controller: new AbortController(), signal: options.signal, generation: ++this.generation, running: false, pending: true }
     entry.forwardAbort = () => {
       entry.controller.abort()
@@ -108,6 +110,7 @@ class OperationManager {
 
   continueChest(fn, options = {}) {
     if (options.signal?.aborted) return Promise.reject(cancelled())
+    require('./prepared_goals').invalidate(this.bot)
     const generation = this.generation
     const work = this.tail.then(async () => {
       if (generation !== this.generation) throw cancelled()
@@ -134,6 +137,7 @@ class OperationManager {
   }
 
   stop() {
+    require('./prepared_goals').invalidate(this.bot)
     const stoppedActions = this.describe()
     this.generation++
     this.interrupt()

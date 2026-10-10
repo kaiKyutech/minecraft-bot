@@ -3,7 +3,7 @@ const { performance } = require('node:perf_hooks')
 const path = require('node:path')
 const domain = require('./domain')
 const { createLogger } = require('../utils/logger')
-let worker, preparing, sequence=0, clientSequence=0
+let worker, preparing, sequence=0, clientSequence=0, epoch=0
 const pending=new Map(),clients=new WeakMap()
 function forget(id) { try { worker?.postMessage({method:'forget',client:id}) } catch {} }
 const finalized=new FinalizationRegistry(forget)
@@ -14,7 +14,8 @@ function start() {
   worker=next
   const failed=error=>{
     if(worker!==next)return
-    worker=null;preparing=null
+    worker=null;preparing=null;epoch++
+    require('../executor/prepared_goals').invalidateDomain()
     const failure=Object.assign(new Error(error.message||'Planning worker exited'),{code:'PLANNER_WORKER_FAILED'})
     for(const job of pending.values()){job.cleanup();job.reject(failure)}pending.clear()
   }
@@ -98,4 +99,4 @@ function reachableFacts(world,goals,options) {
   return request('reachableFacts',{goals,world:planningWorld(world)},options)
 }
 async function close() {const current=worker;if(current)await current.terminate()}
-module.exports={prepare,plan,evaluate,reachableFacts,close,planningWorld}
+module.exports={prepare,plan,evaluate,reachableFacts,close,planningWorld,getEpoch:()=>epoch}
