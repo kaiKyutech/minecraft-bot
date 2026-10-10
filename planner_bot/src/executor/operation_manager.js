@@ -1,4 +1,5 @@
-const { withContext, checkpoint, cancelled } = require('../utils/context')
+const { withContext, currentContext, interruptible, checkpoint, cancelled } = require('../utils/context')
+const { failure, fromLegacy, errorResult } = require('../utils/result')
 const { stopIdle } = require('../navigation/idle')
 const { stopLookWatch } = require('../navigation/look')
 const { drainDigging } = require('../utils/dig_execution')
@@ -54,10 +55,73 @@ class OperationManager {
   }
 
   release(entry) {
+    if (entry.interjection) {
+      entry.interjection.reject(cancelled())
+      entry.interjection = null
+    }
     entry.signal?.removeEventListener('abort', entry.forwardAbort)
     if (entry.stopPhysical) entry.controller.signal.removeEventListener('abort', entry.stopPhysical)
     if (this.active === entry) this.active = null
     if (this.bot.currentAbortController === entry.controller) this.bot.currentAbortController = null
+  }
+
+  interject(kind, fn, options = {}) {
+    if (options.signal?.aborted) return Promise.reject(cancelled())
+    const entry = this.active
+    if (!entry?.running || entry.kind !== 'goal') return this.run(kind, fn, options)
+    checkpoint(this.bot, entry.controller.signal)
+    if (entry.interjection) return Promise.reject(failure('INTERJECT_BUSY', 'An interjection is already pending or running'))
+    require('./prepared_goals').invalidate(this.bot)
+    return new Promise((resolve, reject) => {
+      const abort = () => entry.controller.abort()
+      options.signal?.addEventListener('abort', abort, { once: true })
+      this.bot.once?.('end', abort)
+      const finish = (callback, value) => {
+        options.signal?.removeEventListener('abort', abort)
+        this.bot.removeListener?.('end', abort)
+        callback(value)
+      }
+      entry.interjection = { kind, fn, requestedAt: Date.now(),
+        resolve: value => finish(resolve, value), reject: error => finish(reject, error) }
+    })
+  }
+
+  // Called only at explicit safe boundaries in the goal's own async context.
+  // Keep the same owner, controller, plan cursor and gather counter throughout.
+  interjectBoundary(boundary, details = {}) {
+    const entry = this.active, request = entry?.interjection
+    if (!request || request.running) return null
+    request.running = true
+    return (async () => {
+      const bot = this.bot, reporter = currentContext(bot).progress
+      const metadata = { ...currentContext(bot).interjectStep, ...details, kind: request.kind, boundary }
+      const startedAt = Date.now(), heldType = bot.heldItem?.type ?? null
+      reporter?.emit('interject_start', { ...metadata, waitMs: startedAt - request.requestedAt })
+      let value, error
+      try {
+        checkpoint(bot, entry.controller.signal)
+        try { value = await request.fn() } catch (caught) { error = caught }
+        // placeTorch equips a torch. Restore the goal's hand before resuming.
+        checkpoint(bot, entry.controller.signal)
+        if (heldType !== null) {
+          const item = bot.inventory.items().find(item => item.type === heldType)
+          if (item) await interruptible(bot, () => bot.equip(item, 'hand'))
+          else await interruptible(bot, () => bot.unequip('hand'))
+        } else await interruptible(bot, () => bot.unequip('hand'))
+        checkpoint(bot, entry.controller.signal)
+      } catch (caught) { error = caught }
+      const result = error ? errorResult(error, 'PLACEMENT_FAILED') : fromLegacy(value, 'PLACEMENT_FAILED')
+      reporter?.emit('interject_end', { ...metadata, result, waitMs: startedAt - request.requestedAt,
+        durationMs: Date.now() - startedAt, totalMs: Date.now() - request.requestedAt,
+        resume: entry.controller.signal.aborted ? 'stopped' : boundary.startsWith('gather_') ? 'same_skill' : 'check_preconditions' })
+      if (!entry.controller.signal.aborted && boundary.startsWith('gather_')) {
+        reporter?.emit('interject_resume', { ...metadata, mode: 'same_plan', continuation: 'same_skill' })
+      }
+      entry.interjection = null
+      entry.interjected = true
+      if (error) request.reject(error); else request.resolve(value)
+      checkpoint(bot, entry.controller.signal)
+    })()
   }
 
   run(kind, fn, options = {}) {
@@ -87,7 +151,10 @@ class OperationManager {
       this.bot.currentAbortController = entry.controller
       entry.running = true
       try {
-        const value = await withContext({ bot: this.bot, signal: entry.controller.signal }, () => fn(entry.controller.signal))
+        const value = await withContext({ bot: this.bot, signal: entry.controller.signal,
+          interjectBoundary: kind === 'goal' ? (boundary, metadata) => this.interjectBoundary(boundary, metadata) : undefined,
+          takeInterjected: kind === 'goal' ? () => { const changed = entry.interjected; entry.interjected = false; return changed } : undefined
+        }, () => fn(entry.controller.signal))
         checkpoint(this.bot, entry.controller.signal)
         return value
       } catch (error) {
