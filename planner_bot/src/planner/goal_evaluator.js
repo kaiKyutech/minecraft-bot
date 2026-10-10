@@ -92,7 +92,8 @@ async function evaluateLocal(bot,stateManager,goals,options={}) {
       results.push({goal,status:'unevaluated',plan:null,stepCount:null,estimatedMs:null,resources:[],diagnosis:null,reason:'budget_exceeded'})
     }
   }
-  return {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.reason==='budget_exceeded')}
+  const output = {results,durationMs:performance.now()-start,observationMs,preparationMs,timedOut:results.some(r=>r.reason==='budget_exceeded')}
+  return options.includePrepared && require('node:worker_threads').isMainThread ? require('../executor/prepared_goals').retain(bot, output, world) : output
 }
 async function environmentAsync(world,deadline,signal,version) {
   const closest=new Map(),origin=world.position,categories=loadBlockCategories(version).categories||{}
@@ -135,6 +136,7 @@ async function evaluate(bot,stateManager,goals,options={}) {
   try{result=await require('./planning_service').evaluate(bot,goals,world,{version:bot.version,maxMs,perGoalMs,signal,_deadline:deadline,_environment:env})}
   catch(error){if(error.code==='BUDGET_EXCEEDED')return finish();throw error}
   check(Infinity,signal)
-  return {...result,durationMs:performance.now()-start,observationMs,preparationMs}
+  const output = {...result,durationMs:performance.now()-start,observationMs,preparationMs}
+  return options.includePrepared ? require('../executor/prepared_goals').retain(bot, output, world) : output
 }
 module.exports={evaluate,TIMING}

@@ -26,7 +26,7 @@ async function runGoal(...args) {
   try{const result=await runGoalPrepared(...args);ok=true;return result}
   finally{if(nested)reporter.emit('subgoal_exit',{goal,ok});reporter?.stack.pop()}
 }
-async function runGoalPrepared(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null, allowPrep = true) {
+async function runGoalPrepared(bot, username, goalName, stateManager, signal = null, depth = 0, maxDepth = 10, missingPreconditions = null, attemptedGoals = null, allowPrep = true, prepared = null) {
   // ルート呼び出しの場合のみ初期化
   if (depth === 0 && !missingPreconditions) {
     missingPreconditions = []
@@ -59,8 +59,8 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
   }
 
   // プランニング前に必ず最新の状態を取得
-  await interruptible(bot, () => stateManager.refresh(bot))
-  let worldState = await interruptible(bot, () => stateManager.getState(bot))
+  if (!prepared) await interruptible(bot, () => stateManager.refresh(bot))
+  let worldState = prepared ? prepared.world : await interruptible(bot, () => stateManager.getState(bot))
 
   await interruptible(bot, () => goapPlanner.prepareDomain(bot?.version || process.env.MC_VERSION || '1.20.1'))
 
@@ -88,7 +88,7 @@ async function runGoalPrepared(bot, username, goalName, stateManager, signal = n
   }
 
   const logger = createLogger({ bot, category: 'goap', commandName: bot.currentCommandName || 'goal' })
-  const result = await interruptible(bot, () => goapPlanner.plan(goalName, worldState, logger))
+  const result = prepared ? { plan: prepared.plan, diagnosis: null } : await interruptible(bot, () => goapPlanner.plan(goalName, worldState, logger))
 
   // goapPlanner.plan() は常に { plan: [...], diagnosis: {...} } 形式を返す
   const plan = result.plan
@@ -572,6 +572,7 @@ module.exports = function (...args) {
 }
 module.exports.checkCompositeState = checkCompositeState
 module.exports.buildStructuredDiagnosis = buildStructuredDiagnosis
+module.exports.buildPickaxePreparationGoals = buildPickaxePreparationGoals
 
 /**
  * ゴール達成に必要なツールを判定し、段階的に事前準備する。

@@ -1,6 +1,6 @@
 # Planner Bot 関数API
 
-2026-10-10、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋07非同期観測・計画＋08照度・松明＋09到達事実＋10地形API版。Minecraft 1.20.1で回帰検証した。
+2026-10-11、01リファクタリング＋02/03＋05 G/A/B＋06実行修正＋07非同期観測・計画＋08照度・松明＋09到達事実＋10地形API＋14版対応＋16準備済みgoal版。Minecraft 1.20.1 / 1.21.4で回帰検証した。
 公開入口は `planner_bot/api.js`（package の main）。読み込むだけでは接続・dotenv読込・viewer起動を行わない。
 単体起動は従来どおり `node planner_bot/index.js`。
 
@@ -95,6 +95,8 @@ factoryと内部の低レベル関数にはこの契約を適用しない。
 | `observe()` | 新しいworldState。実行用cacheを上書きしない |
 | `refresh()` | 実行用cacheを更新。dataは `{ durationMs }` |
 | `planGoal(goal, { worldState } = {})` | worldState省略時は独立観測。dataは `{ plan, diagnosis }` |
+| `prepareGoal(goal, { candidate, signal } = {})` | 旧操作を続けて準備。dataは `{handle,goal,reused,alreadySatisfied,preparationGoal}` |
+| `executePreparedGoal(handle, { signal, onProgress } = {})` | 準備したhandleを1回消費して引き継ぎ、dataは `{goal,message}` |
 | `info(type, params = {})` | 下表の情報payloadが直接dataに入る |
 | `status()` | 従来の状態表示をログへ出し、worldStateを返す |
 
@@ -198,8 +200,8 @@ primitiveはcamelCaseとsnake_caseの両方を受け付ける。
 
 | 新しい呼び出し | 既存の実行・移動等への作用 |
 |---|---|
-| observe / planGoal / refresh / info（vision以外）/ status | 継続 |
-| executeGoal / executeSkill / executePrimitive / placeBlock / placeTorch / navigate（下記chest続行以外） | 中断・終了を待つ。follow/idle/watchも停止、チェストを閉じる |
+| observe / planGoal / prepareGoal / evaluateGoals / refresh / info（vision以外）/ status | 継続 |
+| executeGoal / executePreparedGoal / executeSkill / executePrimitive / placeBlock / placeTorch / navigate（下記chest続行以外） | 中断・終了を待つ。follow/idle/watchも停止、チェストを閉じる |
 | chestDeposit / chestWithdraw / chestClose | 開いたセッション内で逐次実行。stop・置換後の未開始続行はCANCELLED |
 | look / startIdle | 従来どおりカメラ操作を開始。実行の置換はしない |
 | chat / echo / history / speak系 | 継続。chatは開いたチェストを閉じる |
@@ -580,6 +582,64 @@ dataには`radius/step/width/height/bounds/order/fields/names/cells`のほか、
 格子全体を単一時点へ固定しない。各列の読み取り中に更新が届いた場合はその列をやり直すが、既に返却用配列へ採用した列の後の更新は次回に反映する。移動中も中心は呼出開始時に固定し、格子にはその後の読み込み／更新が反映され得る。既存observe/observeFastの結果とキャッシュは変更しない。同期のJSON.stringifyは呼出側の処理であり、このAPIの分割処理には含まれない。
 
 step=1・全列既知の模擬地形のJSONサイズは半径32/64/96で約81/317/708KB（名前辞書込み）。ブロック名と高さで変わる。実測時間・イベントループ遅延・ライブ例は`requests/2026-10-09_from-isg/10_report.md`、再実行は`node tests/study10/benchmark.cjs`、`./tests/study10/live.ps1`。
+
+## 16：評価の計画を準備して切り替える
+
+`evaluateGoals(goals, {includePrepared:true, ...options})` は、plannableな各結果に不透明な文字列 `candidate` を追加する。指定しない場合の結果・評価予算・入力順・cacheは従来どおり。IDは同じbot/session内だけで使用する。返されたplanを変更しても保持した計画は変わらない。
+
+`prepareGoal(goal, {candidate?, signal?}={})` は `Promise<Result>`。成功dataは `{handle, goal, reused, alreadySatisfied, preparationGoal}`。読み取りと計画だけを行い、実行・移動の所有権を取得しない。旧操作は準備中も継続する。有効な候補を使える場合はrootの再計画を省く。ID不明・別goal/bot・期限切れ・版/domain不一致では再利用せず、現在の完全観測から計画する。異なるMinecraft版を同じプロセスで使えない従来のVERSION_CONFLICTは維持する。
+
+現在の在庫・装備から既存runnerの道具準備を判断する。必要なら最初の道具goalを先に計画し、`preparationGoal` に返す。この場合reused=falseで、道具作成後の残る準備とroot計画は実行中に行う。位置・材料・資源の変化そのものを候補の失効条件にしない。再利用でも、実行時の各手順のrefresh・前提検査・補助目標・再計画は維持する。
+
+`executePreparedGoal(handle, {signal?, onProgress?}={})` は `Promise<Result>`。handleは1回だけ消費する。通常のOperationManagerで旧操作の中断、発行済み作用のdrain、cleanupを待ってから実行する。成功dataはexecuteGoalと同じ `{goal,message}`、進捗の形式も同じ。古い/別bot/消費済み/失効済みhandleは `PREPARED_GOAL_INVALID`。無効handleを渡しても旧操作を中断しない。準備後にprepareのsignalがabortされたhandleはCANCELLEDになる。
+
+後続prepareは以前の準備とhandleを無効にする。stop、通常の物理操作（移動/実行/視線/idle等）、bot終了でも無効化する。準備要求が遅れて完了した場合や、handoffのdrain中に新しい準備が発行された場合、古い準備からスキルを開始しない。実行開始後の中断はexecute側signalまたはstopで行う。prepareのsignalは、すでに走っている旧操作の中断には使わない。
+
+候補は最大3評価回・128件・60秒。handleは最新準備の1件・60秒。bot終了とplanner worker失敗で保持を解放し、次回の操作でも失効を確認する。短い状態一致や2秒以内という条件は設けない。古い候補のestimatedMs/資源位置は評価時の見積もりで、実行時間や到達性を保証しない。
+
+Boolean目標が準備時に既達成ならalreadySatisfied=true。呼び出し側は旧操作を続ける選択ができる。executeを呼んだ場合も実行時の在庫で再確認し、達成済みなら作り直さない。数値は「実行開始時の在庫にさらにN個」を維持する。空の計画でも実行時に未達なら既存runnerで回復を試す。終了時に開始在庫から解決した目標を確認し、未達は `GOAL_NOT_SATISFIED` を返す。既存executeGoalの空計画・数量retryの仕様は変更していない。
+
+isg側ではcandidateを選択したgoalと一緒に保持する。pendingの準備とcurrentの実行を分け、旧currentのcontrollerを先にabortしない。例：
+
+```js
+const evaluated = await api.evaluateGoals(goals, {
+  includePrepared: true, maxMs: 3000, perGoalMs: 400
+})
+// 選択したplannable行を保存する。candidateを落とさない。
+const choice = evaluated.data.results.find(row => row.goal === selectedGoal)
+
+let selection = 0, pending = null, current = null
+async function switchGoal(choice) {
+  const generation = ++selection
+  pending?.abort()
+  const controller = new AbortController()
+  pending = controller
+  const prepared = await api.prepareGoal(choice.goal, {
+    candidate: choice.candidate, signal: controller.signal
+  })
+  if (generation !== selection) return
+  pending = null
+  if (!prepared.ok || prepared.data.alreadySatisfied) return // 旧操作を継続
+  const owner = {generation, controller: new AbortController()}
+  current = owner
+  try {
+    return await api.executePreparedGoal(prepared.data.handle, {
+      signal: owner.controller.signal,
+      onProgress(event) { /* event.operationIdで旧実行と区別する */ }
+    })
+  } finally {
+    if (current === owner) current = null // 遅い旧finishで新currentを消さない
+  }
+}
+async function stopAll() {
+  ++selection
+  pending?.abort()
+  pending = null
+  await api.stop()
+}
+```
+
+背景評価の重複発行を避け、spawn後にdomainをwarm-upする。初期計画の再利用は、前提が変わった場合の補助計画・再計画や道具準備後のroot計画のworker待ちまで解消するものではない。
 
 ## 07 O1：完全観測の差分更新
 

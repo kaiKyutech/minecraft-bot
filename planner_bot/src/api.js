@@ -50,7 +50,26 @@ function createBotApi(bot, options = {}) {
     observe: () => call('info', () => stateManager.observe(bot)),
     observeFast: (params = {}) => call('info', () => { ready();paramsObject(params);return require('./planner/fast_observation').observeFast(bot,stateManager,params) }),
     observeTerrain: (params = {}) => call('info', () => { ready(); paramsObject(params); return require('./planner/terrain_observation').observeTerrain(bot, params) }),
-    evaluateGoals: (goals, params = {}) => call('goal', () => { ready(); paramsObject(params); return require('./planner/goal_evaluator').evaluate(bot,stateManager,goals,params) }),
+    evaluateGoals: (goals, params = {}) => call('goal', () => { ready(); paramsObject(params); if(params.includePrepared!==undefined&&typeof params.includePrepared!=='boolean')throw failure('INVALID_ARGUMENT','includePrepared must be a boolean');return require('./planner/goal_evaluator').evaluate(bot,stateManager,goals,params) }),
+    prepareGoal: (goal, params = {}) => call('goal', () => {
+      ready(); paramsObject(params)
+      if(typeof goal!=='string'||!goal.trim())throw failure('INVALID_ARGUMENT','A goal string is required')
+      if(params.candidate!==undefined&&typeof params.candidate!=='string')throw failure('INVALID_ARGUMENT','candidate must be an opaque ID')
+      return require('./executor/prepared_goals').prepare(bot,stateManager,goal,params)
+    }),
+    executePreparedGoal: (handle, params = {}) => call('goal', async () => {
+      ready();paramsObject(params)
+      if(typeof handle!=='string'||!handle)throw failure('INVALID_ARGUMENT','A prepared handle is required')
+      if(params.onProgress!==undefined&&typeof params.onProgress!=='function')throw failure('INVALID_ARGUMENT','onProgress must be a function')
+      if(params.signal?.aborted)throw Object.assign(new Error('Cancelled'),{name:'AbortError',code:'CANCELLED'})
+      const prepared=require('./executor/prepared_goals'),record=prepared.consume(bot,handle)
+      const {Progress}=require('./executor/progress'),progress=new Progress(bot,params.onProgress)
+      return operations.run('goal', signal => withContext({progress},async()=>{
+        progress.emit('goal_start',{goal:record.goal})
+        try{await prepared.execute(bot,stateManager,record,signal);progress.emit('goal_end',{goal:record.goal,ok:true});return {goal:record.goal,message:`目標「${record.goal}」を完了しました`}}
+        catch(error){progress.emit('goal_end',{goal:record.goal,ok:false,code:error.name==='AbortError'?'CANCELLED':error.code||'EXECUTION_FAILED'});throw error}
+      }), {...params,[prepared.HANDOFF]:record})
+    },'EXECUTION_FAILED'),
     reachableFacts: (params = {}) => call('goal', () => { ready(); paramsObject(params); return require('./planner/reachable_facts').reachableFacts(bot,stateManager,params) }),
     refresh: () => call('refresh', async () => { const start = performance.now(); await stateManager.refresh(bot); return { durationMs: performance.now() - start } }),
     planGoal: (goal, params = {}) => call('goal', async () => {
@@ -125,8 +144,8 @@ function createBotApi(bot, options = {}) {
     startVision: (params = {}) => call('info', () => {ready();paramsObject(params);return operations.capture(()=>require('./vision/persistent').start(bot,params))},'VISION_CAPTURE_FAILED'),
     captureVision: (params = {}) => call('info', () => {ready();paramsObject(params);return operations.capture(()=>require('./vision/persistent').capture(bot,params))},'VISION_CAPTURE_FAILED'),
     stopVision: () => call('info', () => operations.capture(()=>require('./vision/persistent').stop(bot)),'VISION_CAPTURE_FAILED'),
-    look: (name, params = {}) => call('look', () => look(bot, name, paramsObject(params))),
-    startIdle: (params = {}) => call('idle_on', () => start(bot, paramsObject(params))),
+    look: (name, params = {}) => call('look', () => {paramsObject(params);require('./executor/prepared_goals').invalidate(bot);return look(bot, name, params)}),
+    startIdle: (params = {}) => call('idle_on', () => {paramsObject(params);require('./executor/prepared_goals').invalidate(bot);return start(bot, params)}),
     stop: () => call('stop', () => operations.stop()),
     chat: (params = {}) => call('chat', async () => {
       paramsObject(params)
